@@ -1,0 +1,3 @@
+[submodule "staged-releases"]
+	path = staged-releases
+	url = https://github.com/balena-io-projects/staged-releases.git
