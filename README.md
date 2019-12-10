@@ -25,6 +25,10 @@ A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main
    1. [docker-ce](https://docs.docker.com/install/)
    2. [docker-compose](https://docs.docker.com/compose/install/)
 
+And for the extensions required:
+
+   1. [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
+
 As far for installation requirements, the required secrets should be present in:
 
    1. `balena_cli_configs/token` --> Token so that `balena-cli` can work without problems. Get it on [balena access-tokens page](https://dashboard.balena-cloud.com/preferences/access-tokens)
