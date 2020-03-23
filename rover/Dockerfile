@@ -34,7 +34,7 @@ RUN \
     rm -rf *.tbz2 && \
     dpkg --remove cuda-repo-l4t-10-0-local-10.0.326 && \
     dpkg -P cuda-repo-l4t-10-0-local-10.0.326
-    
+
 # -----------------------------------------------------------------------------
 # Install Tensorflow and its dependencies
 # https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform/index.html
@@ -69,6 +69,25 @@ protobuf \
 pybind11 && \
 # Installing TensorFlow
 pip3 install --pre --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v43 tensorflow
+
+# -----------------------------------------------------------------------------
+# Installing ros2
+# https://index.ros.org/doc/ros2/Installation/Crystal/Linux-Install-Debians/
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+RUN \ 
+apt update && \ 
+apt install curl \ 
+gnupg2 \ 
+lsb-release && \ 
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
+apt update && \ 
+# ROS-Base Install (Bare Bones): Communication libraries, message packages, 
+# command line tools. No GUI tools.
+apt-get install -y ros-dashing-ros-base && \ 
+# ROS 2 command line tools use argcomplete to autocompletion
+apt install python3-argcomplete
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here
