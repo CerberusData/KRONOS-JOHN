@@ -26,49 +26,71 @@ RUN \
     sudo apt-key add /var/cuda-repo-10-0-local-10.0.326/7fa2af80.pub && \
     apt-get update && \
     apt-get install -y --no-install-recommends apt-utils && \
-    apt-get install cuda-toolkit-10-0 cuda-libraries-dev-10-0 -y && \
+    apt-get install -y cuda-toolkit-10-0 cuda-libraries-dev-10-0 && \
     dpkg -i libnvinfer5_5.1.6-1+cuda10.0_arm64.deb \
     libnvinfer-dev_5.1.6-1+cuda10.0_arm64.deb && \
     # Remove packages files
     rm -rf *.deb && \
-    rm -rf *.tbz2 && \
     dpkg --remove cuda-repo-l4t-10-0-local-10.0.326 && \
     dpkg -P cuda-repo-l4t-10-0-local-10.0.326
 
 # -----------------------------------------------------------------------------
 # Install Tensorflow and its dependencies
 # https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform/index.html
+# https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform-release-notes/tf-jetson-rel.html#tf-jetson-rel
+ENV JP_VERSION=43
+ENV TF_VERSION=2.1.0
 RUN \
-apt-get update && \ 
-ldconfig && \ 
-# Install system packages required by TensorFlow
-apt-get -y install libhdf5-serial-dev \
-hdf5-tools \
-libhdf5-dev \
-zlib1g-dev \
-zip \
-libjpeg8-dev \
-liblapack-dev \
-libblas-dev \
-gfortran \
-python3-h5py && \
-# Install and upgrade pip3
-apt-get -y install python3-pip && \
-pip3 install -U pip testresources \
-setuptools && \
-# Install the Python package dependencies.
-pip3 install -U numpy==1.16.1 \
-future==0.17.1 \
-mock==3.0.5 \
-# h5py==2.9.0 \ 
-keras_preprocessing==1.0.5 \
-keras_applications==1.0.8 \
-gast==0.2.2 \
-futures \
-protobuf \
-pybind11 && \
-# Installing TensorFlow
-pip3 install --pre --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v43 tensorflow
+    apt-get update && \ 
+    ldconfig && \ 
+    # Install system packages required by TensorFlow
+    apt-get -y install libhdf5-serial-dev \
+    hdf5-tools \
+    libhdf5-dev \
+    zlib1g-dev \
+    zip \
+    libjpeg8-dev \
+    liblapack-dev \
+    libblas-dev \
+    gfortran \
+    python3-h5py && \
+    # Install and upgrade pip3
+    apt-get -y install python3-pip && \
+    pip3 install -U pip testresources \
+    setuptools && \
+    # Install the Python package dependencies.
+    pip3 install -U numpy==1.16.1 \
+    future==0.17.1 \
+    mock==3.0.5 \
+    # h5py==2.9.0 \ 
+    keras_preprocessing==1.0.5 \
+    keras_applications==1.0.8 \
+    gast==0.2.2 \
+    futures \
+    protobuf \
+    pybind11 && \
+    # Installing TensorFlow
+    pip3 install --pre --extra-index-url \
+    https://developer.download.nvidia.com/compute/redist/jp/v$JP_VERSION \
+    tensorflow==$TF_VERSION
+
+# Watch out for the libGL cp, we need a suitable version that cotains grm 
+# ssymbols to develop.
+RUN apt-get update && apt-get install --no-install-recommends \
+    bzip2 \
+    xorg -y && \
+    tar xjf nvidia_drivers.tbz2 -C / && \
+    tar xjf config.tbz2 -C / --exclude=etc/hosts --exclude=etc/hostname && \
+    echo "/usr/lib/aarch64-linux-gnu/tegra" > /etc/ld.so.conf.d/nvidia-tegra.conf && \
+    # cp /usr/lib/aarch64-linux-gnu/tegra/libGL.so.1 /usr/lib/aarch64-linux-gnu/mesa/ && \
+    ldconfig && \
+    tar xvf nv_tools.tbz2 -C / --exclude=/home && \
+    tar xvf nvgstapps.tbz2 -C / && \
+    # bash -c "yes | gst-install --prefix=/usr --version=1.8.3" && \
+    tar -C /usr/src/app --strip-components=2 -xvf nv_tools.tbz2 usr/bin/ && \
+    ln -s /etc/nvpmodel/nvpmodel_t186.conf /etc/nvpmodel.conf && \
+    rm *.tbz2 && \
+    rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # Installing ros2
@@ -76,18 +98,20 @@ pip3 install --pre --extra-index-url https://developer.download.nvidia.com/compu
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 RUN \ 
-apt update && \ 
-apt install curl \ 
-gnupg2 \ 
-lsb-release && \ 
-apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
-sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
-apt update && \ 
-# ROS-Base Install (Bare Bones): Communication libraries, message packages, 
-# command line tools. No GUI tools.
-apt-get install -y ros-dashing-ros-base && \ 
-# ROS 2 command line tools use argcomplete to autocompletion
-apt install python3-argcomplete
+    apt update && \ 
+    apt-get install -y curl \ 
+    gnupg2 \ 
+    lsb-release && \ 
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
+    apt update && \ 
+    # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
+    # command line tools. No GUI tools.
+    apt-get install -y ros-dashing-ros-base \ 
+    # ROS 2 command line tools use argcomplete to autocompletion
+   python3-argcomplete
+
+# RUN source /opt/ros/dashing/setup.bash
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here
