@@ -5,13 +5,17 @@
 FROM balenalib/jetson-tx2-ubuntu:bionic
 MAINTAINER john@kiwibot.com
 
+ENV DEBIAN_FRONTEND noninteractive
+
 WORKDIR /usr/src/app
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y wget bzip2 && \
+    apt-get install --no-install-recommends -y \
+    wget \
+    bzip2 \
+    lbzip2 \ 
+    tar && \
     rm -rf /var/lib/apt/lists/*
-
-ENV DEBIAN_FRONTEND noninteractive
 
 # -----------------------------------------------------------------------------
 # Script get all the packages from official nvidia packages.
@@ -25,7 +29,7 @@ RUN \
     libcudnn7-dev_7.5.0.56-1+cuda10.0_arm64.deb && \
     sudo apt-key add /var/cuda-repo-10-0-local-10.0.326/7fa2af80.pub && \
     apt-get update && \
-    apt-get install -y --no-install-recommends apt-utils && \
+    apt-get install --no-install-recommends -y apt-utils && \
     apt-get install -y cuda-toolkit-10-0 cuda-libraries-dev-10-0 && \
     dpkg -i libnvinfer5_5.1.6-1+cuda10.0_arm64.deb \
     libnvinfer-dev_5.1.6-1+cuda10.0_arm64.deb && \
@@ -39,7 +43,7 @@ RUN \
 # https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform/index.html
 # https://docs.nvidia.com/deeplearning/frameworks/install-tf-jetson-platform-release-notes/tf-jetson-rel.html#tf-jetson-rel
 ENV JP_VERSION=43
-ENV TF_VERSION=2.1.0
+ENV TF_VERSION=2.0.0
 RUN \
     apt-get update && \ 
     ldconfig && \ 
@@ -72,13 +76,13 @@ RUN \
     # Installing TensorFlow
     pip3 install --pre --extra-index-url \
     https://developer.download.nvidia.com/compute/redist/jp/v$JP_VERSION \
-    tensorflow==$TF_VERSION
+    tensorflow-gpu==$TF_VERSION
 
 # Watch out for the libGL cp, we need a suitable version that cotains grm 
 # ssymbols to develop.
-RUN apt-get update && apt-get install --no-install-recommends \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     bzip2 \
-    xorg -y && \
+    xorg && \
     tar xjf nvidia_drivers.tbz2 -C / && \
     tar xjf config.tbz2 -C / --exclude=etc/hosts --exclude=etc/hostname && \
     echo "/usr/lib/aarch64-linux-gnu/tegra" > /etc/ld.so.conf.d/nvidia-tegra.conf && \
@@ -86,11 +90,32 @@ RUN apt-get update && apt-get install --no-install-recommends \
     ldconfig && \
     tar xvf nv_tools.tbz2 -C / --exclude=/home && \
     tar xvf nvgstapps.tbz2 -C / && \
-    # bash -c "yes | gst-install --prefix=/usr --version=1.8.3" && \
+    # bash -c "yes | gst-install --prefix=/usr --version=1.14.5" && \
     tar -C /usr/src/app --strip-components=2 -xvf nv_tools.tbz2 usr/bin/ && \
     ln -s /etc/nvpmodel/nvpmodel_t186.conf /etc/nvpmodel.conf && \
     rm *.tbz2 && \
     rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
+# Installing GStreaming
+# https://developer.download.nvidia.com/embedded/L4T/r32_Release_v1.0/Docs/
+# Accelerated_GStreamer_User_Guide.pdf?cYoROY2BkiZ8J2ngNzXuQ7y63YLmK6ua_gy3K
+# fRsgIIZkVSd4ZG31nlTlQ2zbwqlBze2rgRmJRkazxM7Eqdq17xRnRF309ua3GTFufz3sRx2Pnu
+# TGXknJ0pnYRpVUn0jlS_OGEK5my4Xj7Ma8L5kCowDsZ_6_UcqkuzDJ3VeWVuveH1npLs
+RUN \
+    apt-get update && \
+    apt-get install -y  \
+    gstreamer1.0-tools gstreamer1.0-alsa \
+    gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav && \
+    apt-get install -y \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-good1.0-dev \
+    libgstreamer-plugins-bad1.0-dev \
+    xterm
+ENV DISPLAY=:0
 
 # -----------------------------------------------------------------------------
 # Installing ros2
@@ -109,9 +134,7 @@ RUN \
     # command line tools. No GUI tools.
     apt-get install -y ros-dashing-ros-base \ 
     # ROS 2 command line tools use argcomplete to autocompletion
-   python3-argcomplete
-
-# RUN source /opt/ros/dashing/setup.bash
+    python3-argcomplete
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here
@@ -123,7 +146,9 @@ RUN \
 
 # -----------------------------------------------------------------------------
 COPY balena_configs/balena_start.sh .
+COPY data/ /usr/src/app/
 
+# -----------------------------------------------------------------------------
 # Start a udev service
 ENV UDEV=1
 
