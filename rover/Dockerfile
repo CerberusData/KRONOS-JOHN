@@ -3,7 +3,6 @@
 
 # https://www.balena.io/docs/reference/base-images/base-images/#balena-base-images?ref=dockerhub
 FROM balenalib/jetson-tx2-ubuntu:bionic
-MAINTAINER john@kiwibot.com
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -135,6 +134,7 @@ RUN \
     apt-get install -y ros-dashing-ros-base \ 
     # ROS 2 command line tools use argcomplete to autocompletion
     python3-argcomplete
+RUN /bin/bash -c "source /opt/ros/dashing/setup.bash"
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here
@@ -146,10 +146,10 @@ RUN \
 
 # -----------------------------------------------------------------------------
 COPY balena_configs/balena_start.sh .
-COPY data/ /usr/src/app/
+COPY data/ /usr/src/app/data
 
 # -----------------------------------------------------------------------------
 # Start a udev service
 ENV UDEV=1
-
+WORKDIR /usr/src/app
 CMD [ "bash", "balena_start.sh" ]
