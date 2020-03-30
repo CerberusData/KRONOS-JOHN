@@ -137,6 +137,61 @@ RUN \
 RUN /bin/bash -c "source /opt/ros/dashing/setup.bash"
 
 # -----------------------------------------------------------------------------
+# OpenCV Installation with contrib
+# https://linuxize.com/post/how-to-install-opencv-on-ubuntu-18-04/
+ENV OPENCV_VERSION=4.2.0
+ENV OPENCV_CONTRIB_VERSION=4.2.0
+RUN  \ 
+    apt install -y  \
+    build-essential \
+    cmake \
+    git \
+    pkg-config \ 
+    libgtk-3-dev \
+    libavcodec-dev \
+    libavformat-dev \ 
+    libswscale-dev \
+    libv4l-dev \
+    libxvidcore-dev \ 
+    libx264-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
+    # gfortran  \
+    openexr \
+    libatlas-base-dev \
+    # python3-dev \
+    # python3-numpy \
+    libtbb2 \
+    libtbb-dev \
+    libdc1394-22-dev
+RUN \
+    mkdir ~/opencv_build && \
+    cd ~/opencv_build && \
+    git clone -q --branch $OPENCV_VERSION https://github.com/opencv/opencv.git && \
+    git clone -q --branch $OPENCV_CONTRIB_VERSION https://github.com/opencv/opencv_contrib.git && \
+    cd ~/opencv_build/opencv && \
+    mkdir build && cd build && \
+    cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    # -D WITH_CUDA=OFF \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D INSTALL_C_EXAMPLES=OFF \
+    -D INSTALL_PYTHON_EXAMPLES=OFF \
+    -D OPENCV_GENERATE_PKGCONFIG=ON \
+    -D OPENCV_EXTRA_MODULES_PATH=~/opencv_build/opencv_contrib/modules \
+    -D BUILD_EXAMPLES=OFF .. && \
+    make -j && \
+    make install && \
+    rm -r ~/opencv_build
+
+# -----------------------------------------------------------------------------
+# Add development, debugging utils/dependencies here
+RUN \
+    apt-get update && \
+    apt-get install -y \
+    htop
+
+# -----------------------------------------------------------------------------
 # Add personalized dependencies in here
 # RUN \
 #     apt-get update && \
@@ -147,6 +202,7 @@ RUN /bin/bash -c "source /opt/ros/dashing/setup.bash"
 # -----------------------------------------------------------------------------
 COPY balena_configs/balena_start.sh .
 COPY data/ /usr/src/app/data
+
 
 # -----------------------------------------------------------------------------
 # Start a udev service
