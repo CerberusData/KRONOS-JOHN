@@ -14,7 +14,7 @@
 # jetson_clocks.sh
 
 # wget https://s3.amazonaws.com/kiwibot/eyes.mp4 -nc -q
-nvgstplayer-1.0 -i /data/eyes.mp4 --svd="omxh264dec" --svs="nvoverlaysink # display-id=0" --loop-forever
+# nvgstplayer-1.0 -i /data/eyes.mp4 --svd="omxh264dec" --svs="nvoverlaysink # display-id=0" --loop-forever
 
 # Source ROS2 and execute ROS launch
 echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc || true
