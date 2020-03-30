@@ -209,10 +209,14 @@ RUN \
 COPY balena_configs/balena_start.sh .
 COPY data/ /usr/src/app/data
 
-# Creating ROS workspace
+# Creating ROS2 workspace
 RUN mkdir -p /dev_ws && \
     mkdir -p /dev_ws/src
 COPY ros2/src/ dev_ws/src/
+
+# Compiling ROS2 workspace
+WORKDIR /dev_ws
+RUN /bin/bash -c "source /opt/ros/dashing/setup.bash ; colcon build; colcon test"
 
 # -----------------------------------------------------------------------------
 # Start a udev service
