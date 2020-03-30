@@ -132,9 +132,15 @@ RUN \
     # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
     # command line tools. No GUI tools.
     apt-get install -y ros-dashing-ros-base \ 
+    python3-colcon-common-extensions \ 
     # ROS 2 command line tools use argcomplete to autocompletion
     python3-argcomplete
+    
 RUN /bin/bash -c "source /opt/ros/dashing/setup.bash"
+# ROS 2
+RUN \ 
+    pip3 install rosdep && \ 
+    rosdep init && rosdep update
 
 # -----------------------------------------------------------------------------
 # OpenCV Installation with contrib
@@ -173,7 +179,7 @@ RUN \
     cd ~/opencv_build/opencv && \
     mkdir build && cd build && \
     cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    # -D WITH_CUDA=OFF \
+    -D WITH_CUDA=ON \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
     -D INSTALL_C_EXAMPLES=OFF \
     -D INSTALL_PYTHON_EXAMPLES=OFF \
@@ -203,6 +209,10 @@ RUN \
 COPY balena_configs/balena_start.sh .
 COPY data/ /usr/src/app/data
 
+# Creating ROS workspace
+RUN mkdir -p /dev_ws && \
+    mkdir -p /dev_ws/src
+COPY ros2/src/ dev_ws/src/
 
 # -----------------------------------------------------------------------------
 # Start a udev service
