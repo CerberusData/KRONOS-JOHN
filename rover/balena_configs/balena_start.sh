@@ -19,7 +19,7 @@
 
 # Source ROS2 and execute ROS launch
 echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc || true
-# echo "source /dev_ws/install/setup.bash" >> ~/.bashrc
+echo "source /dev_ws/install/setup.bash" >> ~/.bashrc || true
 
 # Start ROS2 stuff
 # -> Code Here
