@@ -1,0 +1,41 @@
+#!/bin/bash
+# /etc/init.d/startBot
+
+### BEGIN INIT INFO
+# Provides:          Robot
+# Required-Start:    $syslog
+# Required-Stop:     $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Script to start a Robot at init
+# Description:       Script to start Robot at boot time
+### END INIT INFO
+
+# If you want a command to always run, put it here
+# Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+    echo  "Starting Robot"
+#     run application you want to start
+      clear
+      source ~/ros2_dashing/ros2-linux/setup.bash
+      source "${PWD%}/ros2/install/setup.bash"
+      source "${PWD%}/configs/local_env_vars.sh"
+      # roslaunch "${PWD%}/configs/Launch/kiwibot-local.launch"
+      #supervisord -c "${PWD%}/resin_files/supervisord-local.conf"
+    ;;
+  stop)
+    echo "Stopping Robot"
+    # kill application you want to stop
+    # for i in $( rosnode list ); do
+    # rosnode kill $i;
+    # done
+    # killall roscore
+    ;;
+  *)
+    echo "Usage: /etc/init.d/Robot {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
