@@ -1,0 +1,19 @@
+[0.718s] running egg_info
+[0.721s] writing /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/PKG-INFO
+[0.724s] writing dependency_links to /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/dependency_links.txt
+[0.726s] writing entry points to /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/entry_points.txt
+[0.727s] writing requirements to /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/requires.txt
+[0.727s] writing top-level names to /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/top_level.txt
+[0.780s] reading manifest file '/home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/SOURCES.txt'
+[0.784s] writing manifest file '/home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/SOURCES.txt'
+[0.788s] running build
+[0.789s] running build_py
+[0.791s] running install
+[0.791s] running install_lib
+[0.795s] running install_data
+[0.797s] running install_egg_info
+[0.802s] removing '/home/dev-john/Documents/medusa-project/rover/ros2/install/vision/lib/python3.6/site-packages/vision-2.0.0-py3.6.egg-info' (and everything under it)
+[0.804s] Copying /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info to /home/dev-john/Documents/medusa-project/rover/ros2/install/vision/lib/python3.6/site-packages/vision-2.0.0-py3.6.egg-info
+[0.807s] running install_scripts
+[0.841s] Installing video_mapping script to /home/dev-john/Documents/medusa-project/rover/ros2/install/vision/lib/vision
+[0.845s] writing list of installed files to '/home/dev-john/Documents/medusa-project/rover/ros2/build/vision/install.log'

@@ -1,0 +1,10 @@
+Metadata-Version: 1.2
+Name: vision
+Version: 2.0.0
+Summary: Nodes for cameras launch, computer vision algorithms, and other vision utils
+Home-page: UNKNOWN
+Maintainer: dev-john
+Maintainer-email: john@kiwibot.com
+License: Apache License 2.0
+Description: UNKNOWN
+Platform: UNKNOWN

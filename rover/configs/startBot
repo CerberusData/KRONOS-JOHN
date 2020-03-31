@@ -16,13 +16,16 @@
 case "$1" in
   start)
     echo  "Starting Robot"
-#     run application you want to start
+      # run application you want to start
       clear
       source ~/ros2_dashing/ros2-linux/setup.bash
       source "${PWD%}/ros2/install/setup.bash"
       source "${PWD%}/configs/local_env_vars.sh"
-      # roslaunch "${PWD%}/configs/Launch/kiwibot-local.launch"
-      #supervisord -c "${PWD%}/resin_files/supervisord-local.conf"
+      clear && cd ${PWD%}/ros2
+      colcon build
+      echo  "ROS2 Build successful ... "
+      sleep 2 && clear && cd ..
+      ros2 launch "${PWD%}/configs/bot_local.launch.py"
     ;;
   stop)
     echo "Stopping Robot"

@@ -1,0 +1,31 @@
+[0.726s] running egg_info
+[0.731s] creating /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info
+[0.733s] writing /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/PKG-INFO
+[0.734s] writing dependency_links to /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/dependency_links.txt
+[0.734s] writing entry points to /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/entry_points.txt
+[0.736s] writing requirements to /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/requires.txt
+[0.736s] writing top-level names to /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/top_level.txt
+[0.745s] writing manifest file '/home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/SOURCES.txt'
+[0.811s] reading manifest file '/home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/SOURCES.txt'
+[0.812s] writing manifest file '/home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info/SOURCES.txt'
+[0.813s] running build
+[0.815s] running build_py
+[0.816s] creating /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/build
+[0.816s] creating /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/build/lib
+[0.816s] creating /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/build/lib/video_mapping
+[0.816s] copying video_mapping/__init__.py -> /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/build/lib/video_mapping
+[0.817s] running install
+[0.821s] running install_lib
+[0.822s] creating /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/lib/python3.6/site-packages/video_mapping
+[0.822s] copying /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/build/lib/video_mapping/__init__.py -> /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/lib/python3.6/site-packages/video_mapping
+[0.823s] byte-compiling /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/lib/python3.6/site-packages/video_mapping/__init__.py to __init__.cpython-36.pyc
+[0.823s] running install_data
+[0.827s] creating /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/share/ament_index
+[0.827s] creating /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/share/ament_index/resource_index
+[0.828s] creating /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/share/ament_index/resource_index/packages
+[0.828s] copying resource/video_mapping -> /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/share/ament_index/resource_index/packages
+[0.828s] copying package.xml -> /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/share/video_mapping
+[0.829s] running install_egg_info
+[0.837s] Copying /home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/video_mapping.egg-info to /home/dev-john/Documents/medusa-project/rover/ros2/install/video_mapping/lib/python3.6/site-packages/video_mapping-0.0.0-py3.6.egg-info
+[0.838s] running install_scripts
+[0.884s] writing list of installed files to '/home/dev-john/Documents/medusa-project/rover/ros2/build/video_mapping/install.log'

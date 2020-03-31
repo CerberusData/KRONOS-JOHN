@@ -1,0 +1,3 @@
+[console_scripts]
+video_mapping = vision.video_mapping:main
+
