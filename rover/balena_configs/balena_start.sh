@@ -25,6 +25,6 @@ echo "source /dev_ws/install/setup.bash" >> ~/.bashrc || true
 export CONF_PATH="${PWD%}"
 
 # Start ROS2 stuff
-# -> Code Here
+# ros2 launch "bot_local.launch.py"
 
 sleep infinity 

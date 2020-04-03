@@ -14,6 +14,7 @@ import rclpy
 from rclpy.node import Node
 
 from vision.utils.cam_handler import read_cams_configuration
+from vision.utils.cam_handler import CamerasSupervisor
 
 from rclpy.logging import get_logger
 
@@ -43,10 +44,10 @@ class VideoPublishers(Node):
             self.get_logger().info("cameras configuration loaded")
         
         # Start cameras handler with configuration
-        # cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
+        cameras_supervisor = CamerasSupervisor(cams_config=self.cams_config)
     
         #self.publisher_ = self.create_publisher(String, 'topic', 10)
-        timer_period = 0.5  # seconds
+        # timer_period = 0.5  # seconds
         #self.timer = self.create_timer(timer_period, self.timer_callback)
         #self.i = 0
 
