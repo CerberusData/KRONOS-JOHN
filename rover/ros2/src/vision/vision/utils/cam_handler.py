@@ -17,19 +17,17 @@ import yaml
 import rclpy
 
 # =============================================================================
-def read_cams_configuration(
-    FILE_PATH=os.path.dirname(os.path.abspath(__file__)), 
-    FILE_NAME="cams_config.yaml"):
+def read_cams_configuration(CONF_PATH, FILE_NAME):
     """ Reads the camera labels, ports and other settings from file
     Args:
-        FILE_PATH: `string` absolute path to configuration of cameras
+        CONF_PATH: `string` absolute path to configuration of cameras
         FILE_NAME: `string` name of cameras configuration file 
     Returns:
         _: `dictionary` key: camera labels, values: dictionary with camera 
             properties and settings, see yaml file for more details
     """    
 
-    abs_path = os.path.join(FILE_PATH, FILE_NAME)
+    abs_path = os.path.join(CONF_PATH, FILE_NAME)
     if os.path.isfile(abs_path):
         with open(abs_path, 'r') as stream:
             data_loaded = yaml.safe_load(stream)

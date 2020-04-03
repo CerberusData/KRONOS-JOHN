@@ -28,26 +28,23 @@ class VideoPublishers(Node):
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360)) 
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640)) 
         self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0)) 
-
-        self.get_logger().info('HOLA HP:')
+        self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
+            default=os.path.dirname(os.path.abspath(__file__))))
 
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
         # the cameras
         self.cams_config = read_cams_configuration(FILE_NAME="cams_conf_local.yaml" 
-            if self._LOCAL_RUN else "cams_conf.yaml")
-        #if self.cams_config is None : # Validate cameras status
-        #    pass
-            #"No cameras were configured in configuration file, video mapping node stopped", 
-            #log_type="err")
+            if self._LOCAL_RUN else "cams_conf.yaml", CONF_PATH=self._CONF_PATH)
+        if self.cams_config is None : # Validate cameras status
+            self.get_logger().error("No cameras were configured in configuration")
+            exit()
+        else:
+            self.get_logger().info("cameras configuration loaded")
         
-        print(self.cams_config)
-
-
         # Start cameras handler with configuration
-        # cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
+        cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
     
-
         #self.publisher_ = self.create_publisher(String, 'topic', 10)
         timer_period = 0.5  # seconds
         #self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -59,7 +56,6 @@ class VideoPublishers(Node):
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
 
-
 # =============================================================================
 def main(args=None):
 
@@ -68,7 +64,6 @@ def main(args=None):
 
     # Execute work and block until the context associated with the executor 
     # is shutdown.
-
     video_publishers = VideoPublishers()
     rclpy.spin(video_publishers)
 
@@ -78,5 +73,6 @@ def main(args=None):
     minimal_publisher.destroy_node()
     rclpy.shutdown()
 
+# =============================================================================
 if __name__ == '__main__':
     main()

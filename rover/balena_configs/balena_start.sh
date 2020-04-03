@@ -21,6 +21,9 @@
 echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc || true
 echo "source /dev_ws/install/setup.bash" >> ~/.bashrc || true
 
+# Configuration and settings files absolute path
+export CONF_PATH="${PWD%}"
+
 # Start ROS2 stuff
 # -> Code Here
 

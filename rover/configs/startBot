@@ -37,7 +37,7 @@ case "$1" in
 
       sleep 2 && clear
       echo  "ROS2 launching ... "
-      ros2 launch "${PWD%}/configs/bot_local.launch.py" #--ros-args --log-level debug
+      ros2 launch "${PWD%}/configs/bot_local.launch.py"
     ;;
   stop)
     echo "Stopping Robot"

@@ -143,6 +143,8 @@ RUN \
     rosdep init && rosdep update
 
 # Logging variables
+# https://index.ros.org/doc/ros2/Tutorials/Logging-and-logger-configuration/
+# # If you would like more or less verbose formatting
 ENV RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity}][{time}][{name}]: {message}"
 # If you would like to force enabling or disabling it
 # the output is colorized when it’s targeting a terminal. 

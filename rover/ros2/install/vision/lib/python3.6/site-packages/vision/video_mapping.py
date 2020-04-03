@@ -28,22 +28,20 @@ class VideoPublishers(Node):
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360)) 
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640)) 
         self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0)) 
-
-        self.get_logger().info('HOLA HP:')
+        self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
+            default=os.path.dirname(os.path.abspath(__file__))))
 
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
         # the cameras
         self.cams_config = read_cams_configuration(FILE_NAME="cams_conf_local.yaml" 
-            if self._LOCAL_RUN else "cams_conf.yaml")
-        #if self.cams_config is None : # Validate cameras status
-        #    pass
-            #"No cameras were configured in configuration file, video mapping node stopped", 
-            #log_type="err")
+            if self._LOCAL_RUN else "cams_conf.yaml", CONF_PATH=self._CONF_PATH)
+        if self.cams_config is None : # Validate cameras status
+            self.get_logger().error("No cameras were configured in configuration")
+            exit()
+        else:
+            self.get_logger().info("cameras configuration loaded")
         
-        print(self.cams_config)
-
-
         # Start cameras handler with configuration
         # cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
     
