@@ -43,7 +43,7 @@ class VideoPublishers(Node):
             self.get_logger().info("cameras configuration loaded")
         
         # Start cameras handler with configuration
-        cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
+        # cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
     
         #self.publisher_ = self.create_publisher(String, 'topic', 10)
         timer_period = 0.5  # seconds
