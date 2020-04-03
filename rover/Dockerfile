@@ -142,6 +142,15 @@ RUN \
     pip3 install rosdep && \ 
     rosdep init && rosdep update
 
+# Logging variables
+ENV RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity}][{time}][{name}]: {message}"
+# If you would like to force enabling or disabling it
+# the output is colorized when it’s targeting a terminal. 
+ENV RCUTILS_COLORIZED_OUTPUT=1                                   
+# By default, info and debug log calls aren’t line buffered. 
+# You can force it using 
+ENV RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   
+
 # -----------------------------------------------------------------------------
 # OpenCV Installation with contrib
 # https://linuxize.com/post/how-to-install-opencv-on-ubuntu-18-04/
