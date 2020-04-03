@@ -12,3 +12,13 @@ export KIWIBOT_ID=1206     # [int] Robot ID
                            # NOTE: Should be undefined in the robot
 export LOCAL_LAUNCH=1      # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
                            # NOTE: Should be zero in the robot
+export DEBUG_MODE=0        # [int-bolean] Disable(1)/Enable(0) - Debug mode
+                           # NOTE: Should be zero in the robot or not defined
+
+# -----------------------------------------------------------------------------
+# ROS2 Logging variables 
+export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity} {time}] [{name}]: {message} ({function_name}() at {file_name}:{line_number})"
+export RCUTILS_COLORIZED_OUTPUT=1               # the output is colorized when it’s targeting a terminal. 
+                                                # If you would like to force enabling or disabling it
+export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   # By default, info and debug log calls aren’t line buffered. 
+                                                # You can force it using 

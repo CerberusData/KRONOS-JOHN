@@ -1,10 +1,11 @@
 Metadata-Version: 1.2
 Name: vision
 Version: 2.0.0
-Summary: Nodes for cameras launch, computer vision algorithms, and other vision utils
-Home-page: UNKNOWN
-Maintainer: dev-john
+Summary: Packages with nodes for cameras launch/handlers, computer vision algorithms, and other vision utils
+Home-page: put link here
+Maintainer: JohnBetaCode
 Maintainer-email: john@kiwibot.com
 License: Apache License 2.0
 Description: UNKNOWN
+Keywords: Ai,Computer Vision,OpenCV
 Platform: UNKNOWN

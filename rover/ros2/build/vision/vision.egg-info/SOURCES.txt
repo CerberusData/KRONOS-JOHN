@@ -9,8 +9,7 @@ setup.py
 /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/top_level.txt
 /home/dev-john/Documents/medusa-project/rover/ros2/build/vision/vision.egg-info/zip-safe
 resource/vision
-test/test_copyright.py
-test/test_flake8.py
-test/test_pep257.py
 vision/__init__.py
 vision/video_mapping.py
+vision/utils/__init__.py
+vision/utils/cam_handler.py

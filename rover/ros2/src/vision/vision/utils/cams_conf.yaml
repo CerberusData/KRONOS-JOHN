@@ -1,0 +1,114 @@
+# Code Information:
+#   Programmer: Eng. John Alberto Betancourt G
+# 	Mail: john@kiwicampus.com
+# 	Kiwi Campus Computer Vision &Ai Team
+
+# CAMX:
+#   PORT: "1.0.0" # Video device port
+#   FPS: 30. # Desired video frame rate
+#   WIDTH: 640 # cv2.CAP_PROP_FRAME_WIDTH: Width of the frames in the video stream
+#   HEIGHT: 360 # cv2.CAP_PROP_FRAME_HEIGHT: Height of the frames in the video stream
+#   GAIN: 0.0 # cv2.CAP_PROP_GAIN: 
+#   HUE: 0.5 # cv2.CAP_PROP_HUE: Hue of the image (only for cameras)
+#   SATURATION: 0.4375 # cv2.CAP_PROP_SATURATION: Saturation of the image (only for cameras)
+#   CONTRAST: 0.5 # cv2.CAP_PROP_CONTRAST: Contrast of the image (only for cameras)
+#   BRIGHTNESS: 0.5 # Brightness of the image (only for cameras)
+
+# Our Cameras:
+# USBFHD06H: http://www.webcamerausb.com/elp-2mp-h264-sony-imx322-001lux-usb-camera-low-illumination-elpusbfhd06hl36-p-187.html
+# ELP-USBFHD01M-L180: https://www.alibaba.com/product-detail/ELP-Ominivison-OV2710-1080P-USB2-0_60762575821.html?spm=a2700.7724838.2017115.25.3307a221OgOEG0
+
+# Supported Camera Resolutions: 
+#     Aspect ratio 4:3  -> (240, 320), (480, 640), (600, 800)
+#     Aspect ratio 16:9 -> (180, 320), (360, 640), (720, 1280), (1080, 1920)
+# https://shimat.github.io/opencvsharp_docs/html/5e5a9f7a-b360-809c-b542-799b01ac1aa2.htm
+
+C:
+  PORT: "2.3"
+  FPS: 15.
+  FLIP: -1
+  WIDTH: [3, 640]
+  HEIGHT: [4, 360]
+  GAIN: [14, 0.0]
+  HUE: [13, 0.5]
+  SATURATION: [12, 0.4375]
+  CONTRAST: [11, 0.5]
+  BRIGHTNESS: [10, 0.5]
+  AUTO_EXPOSURE: [21, 0.75]
+  FOURCC: [6, 1196444237.]
+  TOPIC: None # "bot/streaming/central_camera"
+
+# L:
+#   PORT: "2.2"
+#   FPS: 30.
+#   FLIP: -1
+#   WIDTH: [3, 640]
+#   HEIGHT: [4, 360]
+#   GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+#   TOPIC: None # "bot/streaming/central_left_camera"
+
+# R:
+#   PORT: "2.4.1"
+#   FPS: 30.
+#   FLIP: -1
+#   WIDTH: [3, 640]
+#   HEIGHT: [4, 360]
+#   GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+#   TOPIC: None # "bot/streaming/central_right_camera"
+
+LL:
+  PORT: "2.4.3"
+  FPS: 10.
+  FLIP: -1
+  WIDTH: [3, 320]
+  HEIGHT: [4, 180]
+  GAIN: [14, 0.0]
+  HUE: [13, 0.5]
+  SATURATION: [12, 0.4375]
+  CONTRAST: [11, 0.5]
+  BRIGHTNESS: [10, 0.5]
+  AUTO_EXPOSURE: [21, 0.75]
+  FOURCC: [6, 1196444237.]
+  TOPIC: "/bot/streaming/left_camera"
+
+RR:
+  PORT: "2.4.4"
+  FPS: 10.
+  FLIP: -1
+  WIDTH: [3, 320]
+  HEIGHT: [4, 180]
+  GAIN: [14, 0.0]
+  HUE: [13, 0.5]
+  SATURATION: [12, 0.4375]
+  CONTRAST: [11, 0.5]
+  BRIGHTNESS: [10, 0.5]
+  AUTO_EXPOSURE: [21, 0.75]
+  FOURCC: [6, 1196444237.]
+  TOPIC: "/bot/streaming/right_camera"
+
+B:
+  PORT: "2.4.2"
+  FPS: 10.
+  FLIP: -1
+  WIDTH: [3, 320]
+  HEIGHT: [4, 180]
+  GAIN: [14, 0.0]
+  HUE: [13, 0.5]
+  SATURATION: [12, 0.4375]
+  CONTRAST: [11, 0.5]
+  BRIGHTNESS: [10, 0.5]
+  AUTO_EXPOSURE: [21, 0.75]
+  FOURCC: [6, 1196444237.]
+  TOPIC: "/bot/streaming/back_camera"
