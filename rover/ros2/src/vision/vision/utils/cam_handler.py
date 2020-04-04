@@ -16,12 +16,15 @@ https://www.ximea.com/support/wiki/usb3/multiple_cameras_setup
 import numpy as np
 import subprocess
 import yaml
-import os
+import time
 import cv2
+import os
 import re
 
 from threading import Thread, Event
 from .vision_utils import printlog
+
+LOCAL_RUN = int(os.getenv(key="LOCAL_RUN", default=0)) 
 
 # =============================================================================
 def read_cams_configuration(CONF_PATH, FILE_NAME):
@@ -164,7 +167,7 @@ class CameraHandler(Thread):
         # Thread variables
         self.run_event = Event()
         self.run_event.set()
-        self.daemon = True
+        # self.daemon = True
         
         # Start camera port
         self.init_video_handler() 
@@ -190,8 +193,7 @@ class CameraHandler(Thread):
 
                 if self.grabbed:
                     self.video_format = decode_fourcc(self.video_handler.get(cv2.CAP_PROP_FOURCC))
-                    # TODO
-                    print("(GOT VIDEO) {}: DEVICE:{} - SIZE:{}X{} - FPS:{}/{} - PROP_MODE:{} - EXPOSURE:{}".format(
+                    printlog("(GOT VIDEO) {}: DEVICE:{} - SIZE:{}X{} - FPS:{}/{} - PROP_MODE:{} - EXPOSURE:{}".format(
                         self.cam_label, self.cam_device_number, 
                         int(self.video_handler.get(cv2.CAP_PROP_FRAME_WIDTH)),
                         int(self.video_handler.get(cv2.CAP_PROP_FRAME_HEIGHT)), 
@@ -208,43 +210,28 @@ class CameraHandler(Thread):
                             self.cam_label, self.cam_device_number), 
                             msg_type="OKGREEN")
 
-                    # # Print info if video size can not be setted
-                    # if self.image.shape[0]!=self.video_height or self.image.shape[1]!=self.video_width:
-                    #     self.image=cv2.resize(self.image, (self.video_width, self.video_height), interpolation=cv2.INTER_LINEAR)
-                    #     self.debugger(DEBUG_LEVEL_0, "{}: CANT NOT SET VIDEO SIZE, DEFAULT IS {}x{}, IMAGE WILL BE RESIZED TO {}x{}".format(
-                    #         self.cam_label, 
-                    #         int(self.video_handler.get(cv2.CAP_PROP_FRAME_WIDTH)), 
-                    #         int(self.video_handler.get(cv2.CAP_PROP_FRAME_HEIGHT)), 
-                    #         self.video_width,
-                    #         self.video_height),
-                    #         log_type="warn")
-                            
                     # Print warning if desired fps are not supported
                     if self.cam_config["FPS"]>float(self.video_handler.get(cv2.CAP_PROP_FPS)):
-                        # TODO
-                        print("{}: FRAME RATE AS {} NOT SUPPORTED, SETTED AS {}".format(
-                            self.cam_label, int(self.cam_config["FPS"]), int(self.video_handler.get(cv2.CAP_PROP_FPS))),
-                            flush=True) # warn
+                        printlog("{}: FRAME RATE AS {} NOT SUPPORTED, SETTED AS {}".format(
+                            self.cam_label, int(self.cam_config["FPS"]), int(self.video_handler.get(cv2.CAP_PROP_FPS))), 
+                            msg_type="WARN")
                         self.cam_config["FPS"]=self.video_handler.get(cv2.CAP_PROP_FPS)
 
                 else:
-                    # TODO
-                    print("{}:{} did not capture first image, possibly not space left on device".format(
-                        self.cam_label, self.cam_device_number), flush=True) # warn
+                    printlog("{}:{} did not capture first image, possibly not space left on device".format(
+                        self.cam_label, self.cam_device_number), msg_type="WARN")
                     self.set_error_image("{} NO SPACE ON DEVICE".format(self.cam_label))
 
             # If not possible open camera port print exception 
             except Exception as e:
-                # TODO
-                print("Something error ocurred reading frames from camera {} (device {}) -> {}".format(
-                        self.cam_label, self.cam_device_number, e), flush=True) # err
+                printlog("Something error ocurred reading frames from camera {} (device {}) -> {}".format(
+                    self.cam_label, self.cam_device_number, e), msg_type="ERROR")
                 self.grabbed = False
                 self.set_error_image("{} READING ERROR".format(self.cam_label))
         else:
             if not self.disconnected:
-                # TODO
-                print("{}: {} not recognized".format(
-                    self.cam_label, self.cam_device_number), flush=True) # warn
+                printlog("{}: {} not recognized".format(
+                    self.cam_label, self.cam_device_number), msg_type="WARN")
             self.set_error_image("{} {}".format(self.cam_label, "NO RECOGNIZED" if not self.disconnected else "DISCONNECTED"))
             self.video_handler = None
     
@@ -259,14 +246,13 @@ class CameraHandler(Thread):
                 prop_val = self.video_handler.get(self.cam_config[cam_prop_key][0])
                 if prop_val!= self.cam_config[cam_prop_key][1]:
                     if cam_prop_key=="FOURCC":
-                        # TODO
-                        print("{} - DEVICE:{} CAN NOT SET PIXEL FORMAT AS {}".format(
-                            self.cam_label, self.cam_device_number, decode_fourcc(self.cam_config[cam_prop_key][1])), flush=True) # warn
+                        printlog("{} - DEVICE:{} CAN NOT SET PIXEL FORMAT AS {}".format(
+                            self.cam_label, self.cam_device_number, decode_fourcc(
+                                self.cam_config[cam_prop_key][1])), msg_type="WARN")
                     elif cam_prop_key!="WIDTH" and cam_prop_key!="HEIGHT":
-                        # TODO
-                        print("{} - DEVICE:{} CAN NOT SET {} AS {}".format(
+                        printlog("{} - DEVICE:{} CAN NOT SET {} AS {}".format(
                             self.cam_label, self.cam_device_number, cam_prop_key, 
-                            self.cam_config[cam_prop_key][1]), flush=True) # warn
+                            self.cam_config[cam_prop_key][1]), msg_type="WARN")
 
     def set_error_image(self, error_msg):
         """ Set in camera thread image a default error image
@@ -291,8 +277,9 @@ class CameraHandler(Thread):
         return _str
 
     def run(self):
+
         tries_limit = 0 # NUmber of tries if a camera is disconnected
-        time_prev = 0.; time_wait=0.; time_elapsed=0.; # Times to capture frame
+        time_prev = 0.; time_wait=0.; time_elapsed=0. # Times to capture frame
         desired_fps = float(self.cam_config["FPS"]); time_fps=float(1./desired_fps)
         fps_cnt = 0; fps_tic=time.time() # FPS count variable
         
@@ -302,15 +289,15 @@ class CameraHandler(Thread):
                 if self.grabbed: # If camera got image capture new frame 
                     try: # Grab a frame
                         self.grabbed, image = self.video_handler.read()
-    
+
                         # Flip the image if option is enable
                         if self.video_flip is not None:
                             image=cv2.flip(src=image, flipCode=-1)
 
                         # Resize image
                         self.image=image
-                        # self.image=cv2.resize(image, (self.video_width, self.video_height), interpolation=cv2.INTER_LINEAR
-                        #         ) if image.shape[0]!=self.video_height or image.shape[1]!=self.video_width else image
+                        self.image=cv2.resize(image, (self.video_width, self.video_height), interpolation=cv2.INTER_LINEAR
+                                ) if image.shape[0]!=self.video_height or image.shape[1]!=self.video_width else image
                             
                         if LOCAL_RUN: # DEBUG - DEBUG - DEBUG - DEBUG - DEBUG -
                             cv2.putText(image, "{}:{}".format(self.cam_label, self.fps), 
@@ -324,16 +311,14 @@ class CameraHandler(Thread):
 
                     except Exception as e: # Error reading image
                         self.set_error_image("{} ERROR WHILE READING".format(self.cam_label))
-                        # TODO
-                        print("Camera: {} error while reading".format(
-                            self.cam_label), flush=True) # err
+                        printlog("Camera: {} error while reading: {}".format(
+                            self.cam_label, e), msg_type="ERROR")
                         self.disconnected = True
                         self.fps = 0
 
                     if not self.grabbed: # If camera was disconnected
-                        # TODO
-                        print("Camera: {} HOT Unplugged!".format(
-                            self.cam_label), flush=True) # err
+                        printlog("Camera: {} HOT Unplugged!".format(
+                            self.cam_label), msg_type="ERROR")
                         self.video_handler.release()
                         self.video_handler = None
                         self.disconnected = True
@@ -345,9 +330,8 @@ class CameraHandler(Thread):
                     tries_limit+=1
                     self.set_error_image("RECONNECTING")
                     if tries_limit>self.video_idle: # in [seconds]
-                        # TODO
-                        print("Camera: {} has reached the limit of reconnecting trials".format(
-                            self.cam_label), flush=True) # warn
+                        printlog("Camera: {} has reached the limit of reconnecting trials".format(
+                            self.cam_label), msg_type="WARN")
                         self.set_error_image("{} LOST".format(self.cam_label))
                         self.fps = 0
                         self.set_error_image("LOST")
@@ -376,39 +360,31 @@ class CameraHandler(Thread):
 
 class CamerasSupervisorBase():
 
-    def __init__(self, cams_config, CameraClass=CameraHandler):
+    def __init__(self, cams_config):
 
         # Get available connected cameras
         self.usb_ports_cameras = find_cameras()
+        printlog("Video device numbers detected: {}".format(
+            len(self.usb_ports_cameras)))
 
-        # TODO
-        # Print some info
-        #self.debugger(DEBUG_LEVEL_0, "Video device numbers detected: {}".format(
-        #    len(self.usb_ports_cameras)), log_type="warn" if not len(self.usb_ports_cameras) else "info")
-        print("Video device numbers detected: {}".format(len(self.usb_ports_cameras)), flush=True)
-
+        # Get camera ports for usb devices
         cams_ports=[cam_dic["PORT"] for cam_dic in cams_config.values()]
-        self.video_numbers = [self.usb_ports_cameras[str(port)] if port in self.usb_ports_cameras 
+        self.video_numbers = [self.usb_ports_cameras[str(port)] 
+            if port in self.usb_ports_cameras 
             else None for port in cams_ports]
 
         # Initializes camera handler threads objects
         self.camera_handlers = dict(
-            (camera_label, CameraClass(device_number=device_number, cam_config=cams_config[camera_label], cam_label=camera_label) ) 
-            for device_number, camera_label in zip(self.video_numbers, cams_config.keys()) )
-
-        return
+            (camera_label, CameraHandler(
+                device_number=device_number, 
+                cam_config=cams_config[camera_label], 
+                cam_label=camera_label) ) 
+            for device_number, camera_label in zip(
+                self.video_numbers, cams_config.keys()) )
 
         # Check cameras status
         self.cameras_status = ["{}:{}".format(cam_key, int(self.camera_handlers[cam_key].grabbed)
             ) for cam_key in self.camera_handlers.keys()]
-
-        # TODO remove form class status service
-        # Create services to report cameras status
-        # rospy.Service('video_mapping/cameras_status', CamerasStatus, 
-        #     self.get_cameras_status_verbose)
-        
-    def get_cameras_status_verbose(self, data):
-        return CamerasStatusResponse(self.cameras_status)
 
 class CamerasSupervisor(CamerasSupervisorBase):
 
@@ -418,6 +394,6 @@ class CamerasSupervisor(CamerasSupervisorBase):
         super(CamerasSupervisor, self).__init__(cams_config=cams_config)
 
         # Start video capture of handlers
-        # map(lambda o: o.start(), self.camera_handlers.values())
-
+        list(map(lambda o: o.start(), self.camera_handlers.values()))
+    
 # =============================================================================
