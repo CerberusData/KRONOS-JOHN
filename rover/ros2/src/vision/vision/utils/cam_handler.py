@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # =============================================================================
 """
 Code Information:
@@ -20,6 +21,7 @@ import cv2
 import re
 
 from threading import Thread, Event
+from .vision_utils import printlog
 
 # =============================================================================
 def read_cams_configuration(CONF_PATH, FILE_NAME):
@@ -103,12 +105,12 @@ def find_usb_ports(cameras):
             path = subprocess.check_output("udevadm info --query=path --name=/dev/video" + str(cam), shell=True).decode('utf-8')
 
         except Exception as e:
-            print("----- ERROR READING VIDEO DEVICE ----- (Error: {})".format(e), flush=True)
+            printlog(msg="----- ERROR READING VIDEO DEVICE ----- (Error: {})".format(
+                e), msg_type="ERROR")
             avail_ports.append('None-{}'.format(cam))
             continue
 
-        # TODO
-        print(path.strip('\n'), flush=True)
+        printlog(msg=path.strip('\n'), msg_type="INFO")
         path = path[0:path.find("video4linux")].split('/')[-2] #get last item where the port is explicit
         info = p.match(path) #get actual address
         if info:
@@ -202,9 +204,9 @@ class CameraHandler(Thread):
                     # If camera was disconnected
                     if self.disconnected:
                         self.disconnected=False 
-                        # TODO
-                        print("{}:{} has been re-connected".format(
-                            self.cam_label, self.cam_device_number), flush=True)
+                        printlog(msg="{}:{} has been re-connected".format(
+                            self.cam_label, self.cam_device_number), 
+                            msg_type="OKGREEN")
 
                     # # Print info if video size can not be setted
                     # if self.image.shape[0]!=self.video_height or self.image.shape[1]!=self.video_width:
