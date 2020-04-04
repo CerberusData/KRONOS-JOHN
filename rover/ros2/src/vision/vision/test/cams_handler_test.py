@@ -10,6 +10,7 @@ Code Information:
 
 # =============================================================================
 import inspect
+import time
 import sys
 import os
 
@@ -20,7 +21,10 @@ sys.path.insert(0, os.path.dirname(currentdir))
 
 from utils.cam_handler import read_cams_configuration
 from utils.cam_handler import CamerasSupervisor
+from utils.vision_utils import show_local_gui
 from utils.vision_utils import printlog
+
+import cv2
 
 # =============================================================================
 def main(args=None):
@@ -41,9 +45,23 @@ def main(args=None):
         exit()
     else:
         printlog("cameras configuration loaded")
-
+    
     # ---------------------------------------------------------------------
     cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
+    rate = max(list(map(lambda o: int(o.cam_config["FPS"]), 
+        cameras_supervisor.camera_handlers.values())))
+
+    while True:
+        start = time.time()
+
+        images_dict = dict(map(lambda o: (o.cam_label, o.image), 
+                cameras_supervisor.camera_handlers.values()))
+        show_local_gui(images_dict)
+
+        end = time.time()
+        remain = start + 1/float(rate) - end
+        if remain > 0.:
+            time.sleep(remain)
 
 # =============================================================================
 if __name__ == '__main__':
