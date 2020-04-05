@@ -9,7 +9,7 @@
 
 # -----------------------------------------------------------------------------
 # DO NOT DEFINE IN ROBOT - DO NOT DEFINE IN ROBOT - DO NOT DEFINE IN ROBOT
-export KIWIBOT_ID=1206     # [int] Robot ID
+export ROBOBOT_ID=666      # [int] Robot ID
                            # NOTE: Should be undefined in the robot
 export LOCAL_LAUNCH=1      # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
                            # NOTE: Should be zero in the robot
@@ -17,8 +17,8 @@ export CONF_PATH="${PWD%}/configs"
 
 # -----------------------------------------------------------------------------
 # Video streaming variables
-export VIDEO_HEIGHT=360
-export VIDEO_WIDTH=640
+export VIDEO_WIDTH=640          # [int][pix] Cameras Video width
+export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
 
 # -----------------------------------------------------------------------------
 # ROS2 Logging variables 
@@ -32,4 +32,8 @@ export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   # By default, info and debug log
 
 # -----------------------------------------------------------------------------
 # Fredoom robotics enviroment variables
-export FR_AGENT=0
+export FR_AGENT=0                   # [int-bolean] (1):Enable/(0):Disable freedom robotics agent 
+export FR_STREAMING_IDLE_TIME=10    # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
+export FR_STREAMING_FACTOR=0.2      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative 
+export FR_STREAMING_IDLE_FACTOR=0.4 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
+export FR_STREAMING_OPTIMIZER=1     # [int-bolean] (1):Enable/(0):Disable freedom video streaming optimizer
