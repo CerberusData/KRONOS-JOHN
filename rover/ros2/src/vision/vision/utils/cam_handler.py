@@ -178,6 +178,12 @@ class CameraHandler(Thread):
         Returns:
         """
 
+        if self.cam_device_number is None:
+            printlog("{}: not recognized".format(self.cam_label), msg_type="WARN")
+            self.set_error_image("{} {}".format(self.cam_label, "NO RECOGNIZED" if not self.disconnected else "DISCONNECTED"))
+            self.video_handler = None
+            return
+
         # Open camera port
         self.video_handler = cv2.VideoCapture(self.cam_device_path)
 

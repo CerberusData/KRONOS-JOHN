@@ -29,13 +29,13 @@ C:
   FLIP: -1
   WIDTH: [3, 640]
   HEIGHT: [4, 360]
-  GAIN: [14, 0.0]
-  HUE: [13, 0.5]
-  SATURATION: [12, 0.4375]
-  CONTRAST: [11, 0.5]
-  BRIGHTNESS: [10, 0.5]
-  AUTO_EXPOSURE: [21, 0.75]
-  FOURCC: [6, 1196444237.]
+  # GAIN: [14, 0.0]
+  # HUE: [13, 0.5]
+  # SATURATION: [12, 0.4375]
+  # CONTRAST: [11, 0.5]
+  # BRIGHTNESS: [10, 0.5]
+  # AUTO_EXPOSURE: [21, 0.75]
+  # FOURCC: [6, 1196444237.]
   TOPIC: None # "bot/streaming/central_camera"
 
 # L:
@@ -74,13 +74,13 @@ LL:
   FLIP: -1
   WIDTH: [3, 320]
   HEIGHT: [4, 180]
-  GAIN: [14, 0.0]
-  HUE: [13, 0.5]
-  SATURATION: [12, 0.4375]
-  CONTRAST: [11, 0.5]
-  BRIGHTNESS: [10, 0.5]
-  AUTO_EXPOSURE: [21, 0.75]
-  FOURCC: [6, 1196444237.]
+  # GAIN: [14, 0.0]
+  # HUE: [13, 0.5]
+  # SATURATION: [12, 0.4375]
+  # CONTRAST: [11, 0.5]
+  # BRIGHTNESS: [10, 0.5]
+  # AUTO_EXPOSURE: [21, 0.75]
+  # FOURCC: [6, 1196444237.]
   TOPIC: "/bot/streaming/left_camera"
 
 RR:
@@ -89,13 +89,13 @@ RR:
   FLIP: -1
   WIDTH: [3, 320]
   HEIGHT: [4, 180]
-  GAIN: [14, 0.0]
-  HUE: [13, 0.5]
-  SATURATION: [12, 0.4375]
-  CONTRAST: [11, 0.5]
-  BRIGHTNESS: [10, 0.5]
-  AUTO_EXPOSURE: [21, 0.75]
-  FOURCC: [6, 1196444237.]
+  # GAIN: [14, 0.0]
+  # HUE: [13, 0.5]
+  # SATURATION: [12, 0.4375]
+  # CONTRAST: [11, 0.5]
+  # BRIGHTNESS: [10, 0.5]
+  # AUTO_EXPOSURE: [21, 0.75]
+  # FOURCC: [6, 1196444237.]
   TOPIC: "/bot/streaming/right_camera"
 
 B:
@@ -104,11 +104,11 @@ B:
   FLIP: -1
   WIDTH: [3, 320]
   HEIGHT: [4, 180]
-  GAIN: [14, 0.0]
-  HUE: [13, 0.5]
-  SATURATION: [12, 0.4375]
-  CONTRAST: [11, 0.5]
-  BRIGHTNESS: [10, 0.5]
-  AUTO_EXPOSURE: [21, 0.75]
-  FOURCC: [6, 1196444237.]
+  # GAIN: [14, 0.0]
+  # HUE: [13, 0.5]
+  # SATURATION: [12, 0.4375]
+  # CONTRAST: [11, 0.5]
+  # BRIGHTNESS: [10, 0.5]
+  # AUTO_EXPOSURE: [21, 0.75]
+  # FOURCC: [6, 1196444237.]
   TOPIC: "/bot/streaming/back_camera"
