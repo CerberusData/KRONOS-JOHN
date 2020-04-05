@@ -202,6 +202,12 @@ RUN \
     rm -r ~/opencv_build
 
 # -----------------------------------------------------------------------------
+# Install stuff of freedoom robotics
+# https://docs.freedomrobotics.ai/docs/install
+RUN \
+    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
+
+# -----------------------------------------------------------------------------
 # Add development, debugging utils/dependencies here
 RUN \
     apt-get update && \
@@ -217,8 +223,12 @@ RUN \
 #     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
+COPY configs/freedom_robotics/ /usr/src/app/freedom_robotics/
 COPY balena_configs/balena_start.sh .
 COPY data/ /usr/src/app/data
+COPY configs/bot_local.launch.py /usr/src/app/configs/
+COPY configs/cams_conf.yaml /usr/src/app/configs/
+ENV CONF_PATH="/usr/src/app/configs/"
 
 # Creating ROS2 workspace
 RUN mkdir -p /dev_ws && \
@@ -226,8 +236,9 @@ RUN mkdir -p /dev_ws && \
 COPY ros2/src/ dev_ws/src/
 
 # Compiling ROS2 workspace
-WORKDIR /dev_ws
+WORKDIR /usr/src/app/dev_ws
 RUN /bin/bash -c "source /opt/ros/dashing/setup.bash ; colcon build; colcon test"
+RUN /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
 
 # -----------------------------------------------------------------------------
 # Start a udev service

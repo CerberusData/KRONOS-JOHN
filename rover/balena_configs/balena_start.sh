@@ -1,30 +1,41 @@
 #! /bin/bash
-
+# -----------------------------------------------------------------------------
 # Download from nvidia packages to build GPU containers for balena
 # Davidnet (david@kiwibot.com)
 # JohnBetaCode (john@kiwibot.com)
 
+# -----------------------------------------------------------------------------
 # Safe bash script
 # set -euo pipefail 
 
+# -----------------------------------------------------------------------------
 # Use the maximum frequency of the CPU
-# nvpmodel -m 0 --verbose
+# nvpmodel -m 0 #--verbose
 
 # Turn on the jetson fan
-# jetson_clocks.sh
+# bash /usr/src/app/jetson_clocks.sh
 
+# -----------------------------------------------------------------------------
 # Eyer/Face videos
 # wget https://s3.amazonaws.com/kiwibot/eyes.mp4 -nc -q
 # nvgstplayer-1.0 -i /data/eyes.mp4 --svd="omxh264dec" --svs="nvoverlaysink # display-id=0" --loop-forever
 
+# -----------------------------------------------------------------------------
 # Source ROS2 and execute ROS launch
-echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc || true
-echo "source /dev_ws/install/setup.bash" >> ~/.bashrc || true
+echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc
+echo "source /usr/src/app/dev_ws/install/setup.bash" >> ~/.bashrc
+source /opt/ros/dashing/setup.bash
+source /usr/src/app/dev_ws/install/setup.bash
+ros2 launch /usr/src/app/configs/bot_local.launch.py
 
-# Configuration and settings files absolute path
-export CONF_PATH="${PWD%}"
+# -----------------------------------------------------------------------------
+# Run Freedoom agent stuff
+# Freedom Robotics services
+if [ "$FR_AGENT" == "1" ]
+then 
+    python2 /usr/src/app/freedom_robotics/inject_freedom.py
+    python2 /usr/src/app/freedom_robotics/keep_alive_freedom.py &
+fi
 
-# Start ROS2 stuff
-# ros2 launch "bot_local.launch.py"
-
+# -----------------------------------------------------------------------------
 sleep infinity 
