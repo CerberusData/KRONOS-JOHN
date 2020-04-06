@@ -1,6 +1,7 @@
 #!/bin/bash
 # /etc/init.d/startBot
 
+# -----------------------------------------------------------------------------
 ### BEGIN INIT INFO
 # Provides:          Robot
 # Required-Start:    $syslog
@@ -13,12 +14,27 @@
 
 set -e
 
+# -----------------------------------------------------------------------------
 # If you want a command to always run, put it here
 # Carry out specific functions when asked to by the system 
 case "$1" in
   start)
     echo  "Starting Robot"
-      # run application you want to start
+
+      #  ----------------------------------------------------------------------
+      #  ROS2 cv_bridge dependency
+      if [ -d "${PWD%}/ros2/src/vision_opencv" ] 
+      then
+          echo "cv_bridge already exits" 
+      else
+          cd ${PWD%}/ros2/src
+          git clone https://github.com/ros-perception/vision_opencv.git
+          cd vision_opencv
+          git checkout ros2
+          cd .. && cd .. && cd ..
+      fi
+
+      #  ----------------------------------------------------------------------
       clear
       echo  "ROS2 Removing old shit ... "
       rm -r ${PWD%}/ros2/build
@@ -26,20 +42,28 @@ case "$1" in
       rm -r ${PWD%}/ros2/install
       sleep 2 && clear 
 
+      #  ----------------------------------------------------------------------
+      #  Build ROS2 packages
       clear && cd ${PWD%}/ros2    
       echo  "ROS2 Building new stuff ... "
       colcon build
       echo  "ROS2 Build successful ... "
       sleep 2 && clear && cd ..
        
+      #  ----------------------------------------------------------------------
+      #  Source ROS2
       echo  "ROS2 Sourcing ... "
       source ~/ros2_dashing/ros2-linux/setup.bash
       source "${PWD%}/ros2/install/setup.bash"
       source "${PWD%}/configs/local_env_vars.sh"
 
+      #  ----------------------------------------------------------------------
+      #  ROS2 Launching
       sleep 2 && clear
       echo  "ROS2 launching ... "
       ros2 launch "${PWD%}/configs/bot_local.launch.py"
+
+      #  ----------------------------------------------------------------------
     ;;
   stop)
     echo "Stopping Robot"
