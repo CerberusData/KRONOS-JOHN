@@ -7,5 +7,6 @@ ssh-keys/id_balena
 rover/ros2/build/
 rover/ros2/install/
 rover/ros2/log/
+rover/ros2/src/vision_opencv/
 *.pyc
 .vscode
