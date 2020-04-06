@@ -141,10 +141,6 @@ RUN /bin/bash -c "source /opt/ros/dashing/setup.bash"
 RUN \ 
     pip3 install rosdep && \ 
     rosdep init && rosdep update
-# ROS 2 extra packages
-RUN \
-    sudo apt install -y \
-    ros-dashing-cv-bridge
 
 # Logging variables
 # https://index.ros.org/doc/ros2/Tutorials/Logging-and-logger-configuration/
@@ -227,6 +223,7 @@ RUN \
 #     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
+# Copy configuration and other file
 COPY configs/freedom_robotics/ /usr/src/app/freedom_robotics/
 COPY balena_configs/balena_start.sh .
 COPY data/ /usr/src/app/data
@@ -234,6 +231,7 @@ COPY configs/bot_local.launch.py /usr/src/app/configs/
 COPY configs/cams_conf.yaml /usr/src/app/configs/
 ENV CONF_PATH="/usr/src/app/configs/"
 
+# -----------------------------------------------------------------------------
 # Creating ROS2 workspace
 RUN mkdir -p /dev_ws && \
     mkdir -p /dev_ws/src
@@ -241,6 +239,11 @@ COPY ros2/src/ dev_ws/src/
 
 # Compiling ROS2 workspace
 WORKDIR /usr/src/app/dev_ws
+#  Install cv_bridge
+RUN  \
+    git clone https://github.com/ros-perception/vision_opencv.git && \ 
+    cd vision_opencv && \ 
+    git checkout ros2
 RUN /bin/bash -c "source /opt/ros/dashing/setup.bash ; colcon build; colcon test"
 RUN /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
 
@@ -249,3 +252,5 @@ RUN /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
 ENV UDEV=1
 WORKDIR /usr/src/app
 CMD [ "bash", "balena_start.sh" ]
+
+# -----------------------------------------------------------------------------
