@@ -370,8 +370,15 @@ class CamerasSupervisorBase():
 
         # Get available connected cameras
         self.usb_ports_cameras = find_cameras()
-        printlog("Video device numbers detected: {}".format(
-            len(self.usb_ports_cameras)))
+        if not len(self.usb_ports_cameras):
+            printlog("No video devices detected", 
+                msg_type="ERROR")
+        elif len(self.usb_ports_cameras)/2 < len(cams_config):
+            printlog("Video device numbers detected (no enough): {}".format(
+                len(self.usb_ports_cameras)), msg_type="WARN")
+        else:
+            printlog("Video device numbers detected: {}".format(
+                len(self.usb_ports_cameras)))
 
         # Get camera ports for usb devices
         cams_ports=[cam_dic["PORT"] for cam_dic in cams_config.values()]
@@ -402,4 +409,10 @@ class CamerasSupervisor(CamerasSupervisorBase):
         # Start video capture of handlers
         list(map(lambda o: o.start(), self.camera_handlers.values()))
     
+    def get_cameras_status(self):
+
+        return {key: True if not cam_handler.video_handler is None else False 
+            for key, cam_handler in self.camera_handlers.items()}
+        
+
 # =============================================================================

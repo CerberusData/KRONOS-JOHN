@@ -14,7 +14,9 @@ import time
 import sys
 import os
 
+# uncomment if using python2 and ROS1 Kinetic
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
 sys.path.insert(0, os.path.dirname(currentdir))
@@ -50,6 +52,8 @@ def main(args=None):
     cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
     rate = max(list(map(lambda o: int(o.cam_config["FPS"]), 
         cameras_supervisor.camera_handlers.values())))
+    # Get cameras status
+    # print(cameras_supervisor.get_cameras_status())
 
     while True:
         start = time.time()

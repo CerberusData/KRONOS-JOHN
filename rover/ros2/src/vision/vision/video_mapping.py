@@ -12,11 +12,13 @@ import os
 
 import rclpy
 from rclpy.node import Node
+from rclpy.logging import get_logger
 
 from vision.utils.cam_handler import read_cams_configuration
 from vision.utils.cam_handler import CamerasSupervisor
 
-from rclpy.logging import get_logger
+from usr_srv.srv import CamerasStatus
+from cv_bridge import CvBridge, CvBridgeError
 
 # =============================================================================
 class VideoPublishers(Node):
@@ -44,12 +46,24 @@ class VideoPublishers(Node):
             self.get_logger().info("cameras configuration loaded")
         
         # Start cameras handler with configuration
-        cameras_supervisor = CamerasSupervisor(cams_config=self.cams_config)
-    
+        self.cameras_supervisor = CamerasSupervisor(cams_config=self.cams_config)
+        
+        # ---------------------------------------------------------------------
+        # Services
+        self.srv_cams_status = self.create_service(srv_type=CamerasStatus, 
+            srv_name="streaming/cam_status", callback=self.cb_cams_status)
+        
+        # ---------------------------------------------------------------------
+        # Publishers
         #self.publisher_ = self.create_publisher(String, 'topic', 10)
         # timer_period = 0.5  # seconds
         #self.timer = self.create_timer(timer_period, self.timer_callback)
         #self.i = 0
+
+    def cb_cams_status(self, request, response):
+        response.cameras_status = ["{}:{}".format(cam_key, int(cam_status)
+            ) for cam_key, cam_status in self.cameras_supervisor.get_cameras_status()]
+        return response
 
     def timer_callback(self):
         msg = String()

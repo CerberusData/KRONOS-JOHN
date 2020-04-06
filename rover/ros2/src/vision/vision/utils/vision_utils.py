@@ -37,7 +37,7 @@ class bcolors:
 def printlog(msg, msg_type="INFO", flush=True):
     org = os.path.splitext(os.path.basename(inspect.stack()[1][1]))[0].upper()
     caller = inspect.stack()[1][3].upper()
-    _str = "[{}][{}][{}]: {}".format(org, caller, msg_type, msg)
+    _str = "[{}][{}][{}]: {}".format(msg_type, org, caller, msg)
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
     
 def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO"):

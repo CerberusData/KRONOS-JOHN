@@ -6,7 +6,9 @@
   <description>Nodes for cameras launch, computer vision algorithms, and other vision utils</description>
   <maintainer email="john@kiwibot.com">dev-john</maintainer>
   <license>Apache License 2.0</license>
-
+  
+ <!-- These test dependencies are optional
+  Their purpose is to make sure that the code passes the linters -->
   <!-- <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

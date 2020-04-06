@@ -1,7 +1,7 @@
 # Code Information:
 #   Programmer: Eng. John Alberto Betancourt G
 # 	Mail: john@kiwicampus.com
-# 	Kiwi Campus Computer Vision &Ai Team
+# 	Kiwi Campus Computer Vision & Ai Team
 
 # CAMX:
 #   PORT: "1.0.0" # Video device port
@@ -29,44 +29,14 @@ C:
   FLIP: -1
   WIDTH: [3, 640]
   HEIGHT: [4, 360]
-  # GAIN: [14, 0.0]
+  GAIN: [14, 0.0]
   # HUE: [13, 0.5]
   # SATURATION: [12, 0.4375]
   # CONTRAST: [11, 0.5]
   # BRIGHTNESS: [10, 0.5]
   # AUTO_EXPOSURE: [21, 0.75]
-  # FOURCC: [6, 1196444237.]
-  TOPIC: None # "bot/streaming/central_camera"
-
-# L:
-#   PORT: "2.2"
-#   FPS: 30.
-#   FLIP: -1
-#   WIDTH: [3, 640]
-#   HEIGHT: [4, 360]
-#   GAIN: [14, 0.0]
-#   HUE: [13, 0.5]
-#   SATURATION: [12, 0.4375]
-#   CONTRAST: [11, 0.5]
-#   BRIGHTNESS: [10, 0.5]
-#   AUTO_EXPOSURE: [21, 0.75]
-#   FOURCC: [6, 1196444237.]
-#   TOPIC: None # "bot/streaming/central_left_camera"
-
-# R:
-#   PORT: "2.4.1"
-#   FPS: 30.
-#   FLIP: -1
-#   WIDTH: [3, 640]
-#   HEIGHT: [4, 360]
-#   GAIN: [14, 0.0]
-#   HUE: [13, 0.5]
-#   SATURATION: [12, 0.4375]
-#   CONTRAST: [11, 0.5]
-#   BRIGHTNESS: [10, 0.5]
-#   AUTO_EXPOSURE: [21, 0.75]
-#   FOURCC: [6, 1196444237.]
-#   TOPIC: None # "bot/streaming/central_right_camera"
+  FOURCC: [6, 1196444237.]
+  TOPIC: "streaming/cam_central"
 
 LL:
   PORT: "2.4.3"
@@ -74,14 +44,14 @@ LL:
   FLIP: -1
   WIDTH: [3, 320]
   HEIGHT: [4, 180]
-  # GAIN: [14, 0.0]
-  # HUE: [13, 0.5]
-  # SATURATION: [12, 0.4375]
-  # CONTRAST: [11, 0.5]
-  # BRIGHTNESS: [10, 0.5]
-  # AUTO_EXPOSURE: [21, 0.75]
-  # FOURCC: [6, 1196444237.]
-  TOPIC: "/bot/streaming/left_camera"
+  GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+  TOPIC: "streaming/cam_left"
 
 RR:
   PORT: "2.4.4"
@@ -89,14 +59,14 @@ RR:
   FLIP: -1
   WIDTH: [3, 320]
   HEIGHT: [4, 180]
-  # GAIN: [14, 0.0]
-  # HUE: [13, 0.5]
-  # SATURATION: [12, 0.4375]
-  # CONTRAST: [11, 0.5]
-  # BRIGHTNESS: [10, 0.5]
-  # AUTO_EXPOSURE: [21, 0.75]
-  # FOURCC: [6, 1196444237.]
-  TOPIC: "/bot/streaming/right_camera"
+  GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+  TOPIC: "streaming/cam_right"
 
 B:
   PORT: "2.4.2"
@@ -104,11 +74,11 @@ B:
   FLIP: -1
   WIDTH: [3, 320]
   HEIGHT: [4, 180]
-  # GAIN: [14, 0.0]
-  # HUE: [13, 0.5]
-  # SATURATION: [12, 0.4375]
-  # CONTRAST: [11, 0.5]
-  # BRIGHTNESS: [10, 0.5]
-  # AUTO_EXPOSURE: [21, 0.75]
-  # FOURCC: [6, 1196444237.]
-  TOPIC: "/bot/streaming/back_camera"
+  GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+  TOPIC: "streaming/cam_rear"
