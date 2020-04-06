@@ -141,6 +141,10 @@ RUN /bin/bash -c "source /opt/ros/dashing/setup.bash"
 RUN \ 
     pip3 install rosdep && \ 
     rosdep init && rosdep update
+# ROS 2 extra packages
+RUN \
+    sudo apt install -y \
+    ros-dashing-cv-bridge
 
 # Logging variables
 # https://index.ros.org/doc/ros2/Tutorials/Logging-and-logger-configuration/
