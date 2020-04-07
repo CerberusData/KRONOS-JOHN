@@ -35,12 +35,12 @@ case "$1" in
       fi
 
       #  ----------------------------------------------------------------------
-      clear
-      echo  "ROS2 Removing old shit ... "
-      rm -r ${PWD%}/ros2/build
-      rm -r ${PWD%}/ros2/log
-      rm -r ${PWD%}/ros2/install
-      sleep 2 && clear 
+      # clear
+      # echo  "ROS2 Removing old shit ... "
+      # rm -r ${PWD%}/ros2/build
+      # rm -r ${PWD%}/ros2/log
+      # rm -r ${PWD%}/ros2/install
+      # sleep 2 && clear 
 
       #  ----------------------------------------------------------------------
       #  Build ROS2 packages

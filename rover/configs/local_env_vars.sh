@@ -17,8 +17,6 @@ export CONF_PATH="${PWD%}/configs"
 
 # -----------------------------------------------------------------------------
 # Video streaming variables
-export VIDEO_WIDTH=640          # [int][pix] Cameras Video width
-export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
 
 # -----------------------------------------------------------------------------
 # ROS2 Logging variables 
