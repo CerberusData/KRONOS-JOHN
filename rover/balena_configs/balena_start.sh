@@ -26,15 +26,20 @@ echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc
 echo "source /usr/src/app/dev_ws/install/setup.bash" >> ~/.bashrc
 source /opt/ros/dashing/setup.bash
 source /usr/src/app/dev_ws/install/setup.bash
-ros2 launch /usr/src/app/configs/bot_local.launch.py
+ros2 launch /usr/src/app/configs/bot_local.launch.py &
+
+sleep 10
 
 # -----------------------------------------------------------------------------
 # Run Freedoom agent stuff
 # Freedom Robotics services
 if [ "$FR_AGENT" == "1" ]
 then 
+    echo "launching freedom agent"
     python3 /usr/src/app/freedom_robotics/inject_freedom.py
     python3 /usr/src/app/freedom_robotics/keep_alive_freedom.py &
+else
+    echo "No fredoom robotics agent configured"
 fi
 
 # -----------------------------------------------------------------------------
