@@ -136,12 +136,11 @@ RUN \
     # ROS 2 command line tools use argcomplete to autocompletion
     python3-argcomplete
     
-RUN /bin/bash -c "source /opt/ros/dashing/setup.bash"
 # ROS 2
 RUN \ 
     pip3 install rosdep && \ 
     rosdep init && rosdep update
-
+    
 # Logging variables
 # https://index.ros.org/doc/ros2/Tutorials/Logging-and-logger-configuration/
 # # If you would like more or less verbose formatting
@@ -237,15 +236,26 @@ RUN mkdir -p /dev_ws && \
     mkdir -p /dev_ws/src
 COPY ros2/src/ dev_ws/src/
 
-# Compiling ROS2 workspace
-WORKDIR /usr/src/app/dev_ws
-#  Install cv_bridge
+# Download cv_bridge package
+WORKDIR /usr/src/app/dev_ws/src
 RUN  \
     git clone https://github.com/ros-perception/vision_opencv.git && \ 
     cd vision_opencv && \ 
     git checkout ros2
-RUN /bin/bash -c "source /opt/ros/dashing/setup.bash ; colcon build; colcon test"
-RUN /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
+RUN  \
+    apt-get install -y cmake \ 
+    libblkid-dev \
+    e2fslibs-dev \
+    libboost-all-dev \
+    libaudit-dev
+
+# Compiling ROS2 workspace
+WORKDIR /usr/src/app/dev_ws
+RUN  \
+    . /opt/ros/dashing/setup.sh && \ 
+    colcon build && \ 
+    colcon test && \ 
+    /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
 
 # -----------------------------------------------------------------------------
 # Start a udev service
@@ -254,3 +264,5 @@ WORKDIR /usr/src/app
 CMD [ "bash", "balena_start.sh" ]
 
 # -----------------------------------------------------------------------------
+
+

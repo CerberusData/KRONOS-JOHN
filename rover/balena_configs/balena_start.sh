@@ -31,11 +31,11 @@ ros2 launch /usr/src/app/configs/bot_local.launch.py
 # -----------------------------------------------------------------------------
 # Run Freedoom agent stuff
 # Freedom Robotics services
-if [ "$FR_AGENT" == "1" ]
-then 
-    python2 /usr/src/app/freedom_robotics/inject_freedom.py
-    python2 /usr/src/app/freedom_robotics/keep_alive_freedom.py &
-fi
+# if [ "$FR_AGENT" == "1" ]
+# then 
+#     python2 /usr/src/app/freedom_robotics/inject_freedom.py
+#     python2 /usr/src/app/freedom_robotics/keep_alive_freedom.py &
+# fi
 
 # -----------------------------------------------------------------------------
 sleep infinity 
