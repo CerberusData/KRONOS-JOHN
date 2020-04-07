@@ -70,14 +70,20 @@ class VideoPublishers(Node):
 
         # ---------------------------------------------------------------------
         # Timers
-        self.cam_timers = {cam_label:self.create_timer(0.5, partial(
-            self.timer_callback, cam_label))
+        self.cam_timers = {cam_label:self.create_timer(
+            timer_period_sec=1./self.cams_config[cam_label]["FPS"], 
+            callback=partial(self.timer_callback, cam_label))
             for cam_label in self.cams_config.keys()
             if cams_status[cam_label] or self._LOCAL_RUN}
 
         # ---------------------------------------------------------------------  
         # Local gui
-        self.local_gui = local_gui()
+        # self.gui_rate = max(list(map(lambda o: int(o.cam_config["FPS"]), 
+        #     self.cameras_supervisor.camera_handlers.values())))
+        # self.gui_local = local_gui()
+        # self.gui_timer = self.create_timer(
+        #     timer_period_sec=1./self.cams_config[cam_label]["FPS"], 
+        #     callback=partial(self.timer_callback, cam_label))
 
     def cb_cams_status(self, request, response):
 
