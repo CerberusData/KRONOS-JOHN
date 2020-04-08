@@ -267,7 +267,7 @@ class CameraHandler(Thread):
         Returns:
         """
         self.image = np.zeros((self.video_height, self.video_width, 3), dtype=np.uint8)
-        font_size = 0.0015625*self.video_width + 0.5 #empirical formula so that: when w=6400 -> font=1.5 and w=1920 -> font=3.5
+        font_size = 0.0015625*self.video_width + 0.3 #empirical formula so that: when w=6400 -> font=1.5 and w=1920 -> font=3.5
         cv2.putText(self.image, error_msg, (self.video_width//8, self.video_height//2),
             cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 4)
 

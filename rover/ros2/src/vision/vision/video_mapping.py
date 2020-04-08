@@ -34,9 +34,9 @@ class VideoPublishers(Node):
 
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
-        self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0)) 
         self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
             default=os.path.dirname(os.path.abspath(__file__))))
+        self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0)) 
 
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
@@ -53,7 +53,8 @@ class VideoPublishers(Node):
         self.cameras_supervisor = CamerasSupervisor(cams_config=self.cams_config)
         cams_status = self.cameras_supervisor.get_cameras_status()
         self.img_bridge = CvBridge()
-        
+        self.img_optimizer = streaming_optimizer()
+
         # ---------------------------------------------------------------------
         # Services
         self.srv_cams_status = self.create_service(srv_type=CamerasStatus, 
@@ -70,20 +71,21 @@ class VideoPublishers(Node):
 
         # ---------------------------------------------------------------------
         # Timers
-        self.cam_timers = {cam_label:self.create_timer(
-            timer_period_sec=1./self.cams_config[cam_label]["FPS"], 
-            callback=partial(self.timer_callback, cam_label))
-            for cam_label in self.cams_config.keys()
-            if cams_status[cam_label] or self._LOCAL_RUN}
+        if self._LOCAL_RUN:
+            self.cam_timers = {cam_label:self.create_timer(
+                timer_period_sec=1./float(self.cams_config[cam_label]["FPS"]), 
+                callback=partial(self.cb_cam_img_pub, cam_label))
+                for cam_label in self.cams_config.keys()
+                if cams_status[cam_label] or self._LOCAL_RUN}
 
         # ---------------------------------------------------------------------  
         # Local gui
-        # self.gui_rate = max(list(map(lambda o: int(o.cam_config["FPS"]), 
-        #     self.cameras_supervisor.camera_handlers.values())))
-        # self.gui_local = local_gui()
-        # self.gui_timer = self.create_timer(
-        #     timer_period_sec=1./self.cams_config[cam_label]["FPS"], 
-        #     callback=partial(self.timer_callback, cam_label))
+        if self._LOCAL_RUN:
+            self.gui_rate = 1./float(max(list(map(lambda o: int(o.cam_config["FPS"]), 
+                self.cameras_supervisor.camera_handlers.values()))))
+            self.gui_timer = self.create_timer(
+                timer_period_sec=self.gui_rate, 
+                callback=self.cb_draw_local_gui)
 
     def cb_cams_status(self, request, response):
 
@@ -91,10 +93,12 @@ class VideoPublishers(Node):
             ) for cam_key, cam_status in self.cameras_supervisor.get_cameras_status()]
         return response
 
-    def timer_callback(self, cam_label):
+    def cb_cam_img_pub(self, cam_label):
 
         img = self.cameras_supervisor.camera_handlers[cam_label].image
         if img is not None:
+            img = self.img_optimizer.optimize(
+                img=img, cam_label=cam_label)
             # Send supervisor's image message to topic
             try:
                 img_msg = self.img_bridge.cv2_to_imgmsg(
@@ -102,17 +106,74 @@ class VideoPublishers(Node):
                     encoding="bgr8")
                 # img_msg.header.stamp = time.time()
                 self.cam_publishers[cam_label].publish(img_msg)
+
             except CvBridgeError as e:
                 self.get_logger().error("publishing CAM{} image in topic, {}".format(
                     cam_label, e))
 
-class local_gui():
+    def cb_draw_local_gui(self):
+
+        show_local_gui(
+            imgs_dic=dict(map(lambda o: (o.cam_label, o.image), 
+                self.cameras_supervisor.camera_handlers.values())), 
+            win_name="LOCAL_VIDEO_STREAMING")
+
+class streaming_optimizer(object):
 
     def __init__(self):
+        """     
+            Creates video optimizer object for third party services to get the 
+            parameters with images quality are reduced to be sent.
+        Args:
+        Returns:
+        """
+        # Read local variables of video streaming configuration
+        self.IDLE_TIME = int(os.environ.get("FR_STREAMING_IDLE_TIME", 120))
+        self.STREAMING_FACTOR = float(os.getenv("FR_STREAMING_FACTOR", 0.4)) 
+        self.STREAMING_IDLE_FACTOR = float(os.getenv("FR_STREAMING_IDLE_FACTOR", 0.2))  
+        
+        self.inactive_timer = 0
+        self._time_tick = time.time()
 
-        self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
+    def optimize(self, img, cam_label=None):
+        """     
+            reduces the images quality to be sent.
+        Args:
+            img: `cv2.math` image to reduce quality
+        Returns:
+        """
 
+        if self.inactive_timer < self.IDLE_TIME + 1:
+            self.inactive_timer = time.time() - self._time_tick
 
+        if cam_label is not None:  
+            hfc = 0.2 if img.shape[1] < 500 else 0.4
+            org = (int(img.shape[1]*hfc), int(img.shape[0]*0.90))      
+            img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
+                color=(0, 0, 0), thickness = 4, lineType = cv2.LINE_AA)
+            img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
+                color=(0, 255, 255), thickness = 1, lineType = cv2.LINE_AA)
+
+        elif self.inactive_timer>=self.IDLE_TIME:
+            img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
+                dsize=(int(img.shape[1] * self.STREAMING_IDLE_FACTOR), 
+                       int(img.shape[0] * self.STREAMING_IDLE_FACTOR)))
+            img = cv2.cvtColor(src=img, code=cv2.COLOR_GRAY2BGR)
+
+        return img
+
+    # TODO(JOHN): Integrate robot actions to reset idle time 
+    def cb_actuator_action(self):
+        """     
+            Reset inactive timer when a action coming from actuator reference
+            control is received
+        Args:
+        Returns:
+        """
+        self._time_tick = time.time()
+    
 
 # =============================================================================
 def main(args=None):
