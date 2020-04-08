@@ -24,10 +24,10 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     credentials = {
-        "account": str(get_env_var("FR_ACCOUNT")),
-        "device": str(get_env_var("FR_DEVICE")),
-        "token": str(get_env_var("FR_TOKEN")),
-        "secret": str(get_env_var("FR_SECRET")),
+        "account": str(get_env_var("FR_ACCOUNT"),'utf-8'),
+        "device": str(get_env_var("FR_DEVICE"),'utf-8'),
+        "token": str(get_env_var("FR_TOKEN"),'utf-8'),
+        "secret": str(get_env_var("FR_SECRET"),'utf-8'),
         "install_elements" : ["webrtc"],
         }
 

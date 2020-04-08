@@ -9,7 +9,7 @@ def execute(cmd):
 
     """
     try:
-        return subprocess.check_output(cmd, shell=True).strip()
+        return str(subprocess.check_output(cmd, shell=True).strip(),'utf-8')
     except Exception as e:
         return None
 
@@ -20,7 +20,7 @@ def get_freedomrobotics_python_package_path( ):
 
     """
 
-    result = execute( 'pip show freedomrobotics | grep "Location:"' ).split("\n")
+    result = execute('pip3 show freedomrobotics | grep "Location:"' ).split("\n")
 
     for l in result:
         if "Location:" in l:

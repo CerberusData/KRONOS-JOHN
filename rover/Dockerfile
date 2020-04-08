@@ -157,6 +157,7 @@ ENV RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1
 # https://linuxize.com/post/how-to-install-opencv-on-ubuntu-18-04/
 ENV OPENCV_VERSION=4.2.0
 ENV OPENCV_CONTRIB_VERSION=4.2.0
+ENV OPENCV_LOG_LEVEL=ERROR
 RUN  \ 
     apt install -y  \
     build-essential \
