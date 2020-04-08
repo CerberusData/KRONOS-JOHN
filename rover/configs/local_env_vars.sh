@@ -31,7 +31,10 @@ export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   # By default, info and debug log
 # -----------------------------------------------------------------------------
 # Fredoom robotics enviroment variables
 export FR_AGENT=0                   # [int-bolean] (1):Enable/(0):Disable freedom robotics agent 
-export FR_STREAMING_IDLE_TIME=10    # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
-export FR_STREAMING_FACTOR=0.2      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative 
-export FR_STREAMING_IDLE_FACTOR=0.4 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
 export FR_STREAMING_OPTIMIZER=1     # [int-bolean] (1):Enable/(0):Disable freedom video streaming optimizer
+export FR_STREAMING_FACTOR=0.4      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative
+export FR_STREAMING_IDLE_TIME=120   # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
+export FR_STREAMING_IDLE_FACTOR=0.2 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
+
+# -----------------------------------------------------------------------------
+
