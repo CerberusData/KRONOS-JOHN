@@ -186,6 +186,7 @@ class CameraHandler(Thread):
 
         # Open camera port
         self.video_handler = cv2.VideoCapture(self.cam_device_path)
+        self.video_handler.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
 
         # opens successfully the camera
         if self.video_handler.isOpened(): 
@@ -295,6 +296,10 @@ class CameraHandler(Thread):
                 if self.grabbed: # If camera got image capture new frame 
                     try: # Grab a frame
                         self.grabbed, image = self.video_handler.read()
+                        if image is None: 
+                            raise Exception(
+                                "video_handler did not catch image for {} camera".format(
+                                    self.cam_label))
 
                         # Flip the image if option is enable
                         if self.video_flip is not None:
