@@ -159,14 +159,14 @@ ENV OPENCV_VERSION=4.2.0
 ENV OPENCV_CONTRIB_VERSION=4.2.0
 ENV OPENCV_LOG_LEVEL=ERROR
 RUN  \ 
-    apt install -y  \
+    apt install -y \
     build-essential \
     cmake \
     git \
-    pkg-config \ 
+    pkg-config \
     libgtk-3-dev \
     libavcodec-dev \
-    libavformat-dev \ 
+    libavformat-dev \
     libswscale-dev \
     libv4l-dev \
     libxvidcore-dev \ 
@@ -191,6 +191,10 @@ RUN \
     mkdir build && cd build && \
     cmake -D CMAKE_BUILD_TYPE=RELEASE \
     -D WITH_CUDA=ON \
+    -D WITH_CUBLAS=ON \ 
+    -D WITH_V4L=ON \    
+    -D ENABLE_FAST_MATH=1 \        
+    -D CUDA_FAST_MATH=1 \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
     -D INSTALL_C_EXAMPLES=OFF \
     -D INSTALL_PYTHON_EXAMPLES=OFF \
