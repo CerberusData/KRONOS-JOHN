@@ -69,7 +69,7 @@ RR:
   TOPIC: "streaming/cam_right"
 
 B:
-  PORT: "2.4.2"
+  PORT: "2.4.1"
   FPS: 10.
   FLIP: -1
   WIDTH: [3, 320]
