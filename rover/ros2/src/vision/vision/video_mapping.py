@@ -67,16 +67,16 @@ class VideoPublishers(Node):
             self.cam_publishers = {cam_label:self.create_publisher(Image, 
                 'streaming/cam_{}'.format(cam_label), 5) 
                 for cam_label in self.cams_config.keys()
-                if cams_status[cam_label] or self._LOCAL_RUN}        
-
+                if cams_status[cam_label] or self._LOCAL_RUN}
+                
         # ---------------------------------------------------------------------
         # Timers
-        if self._LOCAL_RUN:
-            self.cam_timers = {cam_label:self.create_timer(
-                timer_period_sec=1./float(self.cams_config[cam_label]["FPS"]), 
-                callback=partial(self.cb_cam_img_pub, cam_label))
-                for cam_label in self.cams_config.keys()
-                if cams_status[cam_label] or self._LOCAL_RUN}
+        self.cam_timers = {}
+        self.cam_timers = {cam_label:self.create_timer(
+            timer_period_sec=1./float(self.cams_config[cam_label]["FPS"]), 
+            callback=partial(self.cb_cam_img_pub, cam_label))
+            for cam_label in self.cams_config.keys()
+            if cams_status[cam_label] or self._LOCAL_RUN}
 
         # ---------------------------------------------------------------------  
         # Local gui
@@ -99,11 +99,11 @@ class VideoPublishers(Node):
         if img is not None:
             img = self.img_optimizer.optimize(
                 img=img, cam_label=cam_label)
+
             # Send supervisor's image message to topic
             try:
                 img_msg = self.img_bridge.cv2_to_imgmsg(
-                    cvim=img, 
-                    encoding="bgr8")
+                    cvim=img, encoding="bgr8")
                 # img_msg.header.stamp = time.time()
                 self.cam_publishers[cam_label].publish(img_msg)
 
