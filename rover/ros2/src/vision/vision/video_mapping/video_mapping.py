@@ -58,7 +58,7 @@ class VideoPublishers(Node):
         # ---------------------------------------------------------------------
         # Services
         self.srv_cams_status = self.create_service(srv_type=CamerasStatus, 
-            srv_name="streaming/cam_status", callback=self.cb_cams_status)
+            srv_name="video_mapping/cams_status", callback=self.cb_cams_status)
         
         # ---------------------------------------------------------------------
         # Publishers
