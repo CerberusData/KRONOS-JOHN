@@ -33,8 +33,6 @@ def main(args=None):
 
     # ---------------------------------------------------------------------
     LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=1)) 
-    VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360)) 
-    VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640)) 
     CONF_PATH = os.path.abspath(__file__ + "/../../../../../../configs")
 
     # ---------------------------------------------------------------------
