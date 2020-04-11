@@ -37,9 +37,9 @@ case "$1" in
       #  ----------------------------------------------------------------------
       # clear
       # echo  "ROS2 Removing old shit ... "
-      # rm -r ${PWD%}/ros2/build
-      # rm -r ${PWD%}/ros2/log
-      # rm -r ${PWD%}/ros2/install
+      # rm -r ${PWD%}/ros2/install || true
+      # rm -r ${PWD%}/ros2/build || true
+      # rm -r ${PWD%}/ros2/log || true
       # sleep 2 && clear 
 
       #  ----------------------------------------------------------------------
