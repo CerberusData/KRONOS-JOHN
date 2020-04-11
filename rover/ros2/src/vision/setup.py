@@ -15,7 +15,7 @@ setup(
         ('share/' + package_name, ['package.xml'])
     ],
     keywords="Ai, Computer Vision, OpenCV",
-    url="put link here",
+    url="https://www.kiwibot.com/",
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='JohnBetaCode',
@@ -25,7 +25,7 @@ setup(
     #  tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'video_mapping = vision.video_mapping:main'
+            'video_mapping = vision.node_video_mapping:main'
         ],
     },
 )
