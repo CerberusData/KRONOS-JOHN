@@ -4,6 +4,7 @@ rover/packages/*.tbz2
 rover/packages/*.deb
 ssh-keys/*.pub
 ssh-keys/id_balena
+rover/ros2/src/vision/vision/scripts/*.jpg
 rover/ros2/src/vision_opencv/
 rover/ros2/install/
 rover/ros2/build/

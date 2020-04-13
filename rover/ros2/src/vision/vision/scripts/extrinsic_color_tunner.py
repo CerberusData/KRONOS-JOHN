@@ -10,6 +10,8 @@ Code Information:
 """
 
 # =============================================================================
+import pathlib
+import glob
 import cv2
 import os
 
@@ -49,10 +51,14 @@ def hsv_tunner(img_src, hsv_i, hsv_s):
                 cv2.getTrackbarPos('HS', WIN_NAME), 
                 cv2.getTrackbarPos('SS', WIN_NAME), 
                 cv2.getTrackbarPos('VS', WIN_NAME)))
-        cv2.imshow(WIN_NAME, img_scr_hsv); cv2.waitKey(100)
+        cv2.imshow(WIN_NAME, img_scr_hsv); 
+        key = cv2.waitKey(100)
+        if key==113 or key==81: # (Q) If press q then quit
+            exit()
 
 def main():
 
+    # get current vision pattern variables
     HI = os.getenv("VISION_CALIBRATION_PATTERN_HI", 0)
     SI = os.getenv("VISION_CALIBRATION_PATTERN_SI", 0)   
     VI = os.getenv("VISION_CALIBRATION_PATTERN_VI", 0)   
@@ -61,9 +67,10 @@ def main():
     VS = os.getenv("VISION_CALIBRATION_PATTERN_VS", 255)   
     hsv_i = (HI, SI, VI); hsv_s = (HS, SS, VS)
 
-    img_src=cv2.imread("/home/kiwivision/Documents/kiwibot_apollo/ros/src/video_mapping/src/calibration/calibration_default.jpg")
-
-    hsv_tunner(img_src, hsv_i=hsv_i, hsv_s=hsv_s)
+    os.chdir(pathlib.Path(__file__).parent.absolute())
+    for file_ in glob.glob("*.jpg"):
+        img_src=cv2.imread(file_)
+        hsv_tunner(img_src, hsv_i=hsv_i, hsv_s=hsv_s)
 
 # =============================================================================
 if __name__ == '__main__':
