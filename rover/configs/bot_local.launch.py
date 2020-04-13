@@ -54,6 +54,20 @@ def generate_launch_description():
         output='screen')
         )
 
+    nodes.append(launch_ros.actions.Node(
+        node_executable='video_calibrator', 
+        node_name='video_calibrator',
+        package='vision', 
+        output='screen')
+        )
+
+    nodes.append(launch_ros.actions.Node(
+        node_executable='video_particle', 
+        node_name='video_particle',
+        package='vision', 
+        output='screen')
+        )
+
     for node in nodes:
         ld.add_action(node)
 
