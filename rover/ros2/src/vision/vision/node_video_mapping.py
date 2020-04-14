@@ -40,7 +40,9 @@ class MappingNode(Node):
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
         self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
             default=os.path.dirname(os.path.abspath(__file__))))
-        self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0)) 
+        self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0))
+        self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
+        self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
 
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
@@ -78,6 +80,9 @@ class MappingNode(Node):
                 for cam_label in self.cams_config.keys()
                 if cams_status[cam_label] or self._LOCAL_RUN}
                 
+        # ---------------------------------------------------------------------
+        # Subscribers
+
         # ---------------------------------------------------------------------
         # Timers
         self.cam_timers = {}
@@ -135,10 +140,31 @@ class MappingNode(Node):
 
     def cb_draw_local_gui(self):
 
+        imgs_dic = dict(map(lambda o: (o.cam_label, o.image.copy()), 
+                self.cameras_supervisor.camera_handlers.values()))
+        imgs_dic["S"] = self.img_stitch(imgs_dic)
         show_local_gui(
-            imgs_dic=dict(map(lambda o: (o.cam_label, o.image.copy()), 
-                self.cameras_supervisor.camera_handlers.values())), 
+            imgs_dic=imgs_dic, 
             win_name="LOCAL_VIDEO_STREAMING")
+        
+    def img_stitch(self, imgs_dic):
+
+        cam_keys = self.cameras_supervisor.camera_handlers.keys()
+        imgs = [
+            None if not "RR" in cam_keys else imgs_dic["RR"].copy(),
+            None if not "C" in cam_keys else imgs_dic["C"].copy(),
+            None if not "LL" in cam_keys else imgs_dic["LL"].copy()]
+        for idx, img in enumerate(imgs):
+            if img is not None:
+                if (img.shape[0]!=self._VIDEO_HEIGHT or 
+                    img.shape[1]!=self._VIDEO_WIDTH):
+                    imgs[idx] = cv2.resize(img, (self._VIDEO_WIDTH, self._VIDEO_HEIGHT), 
+                        int(cv2.INTER_NEAREST))
+
+        return self.stitcher.image_resize(
+            image= self.stitcher.stitch(images=imgs), 
+            width=self._VIDEO_WIDTH, 
+            height=self._VIDEO_HEIGHT)
 
 class streaming_optimizer(object):
 

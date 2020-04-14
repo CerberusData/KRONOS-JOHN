@@ -31,6 +31,8 @@ import math
 import cv2
 import os
 
+from vision.utils.vision_utils import printlog
+
 # =============================================================================
 class Stitcher():
 	
@@ -54,7 +56,7 @@ class Stitcher():
 
 		# General variables
 		self.pano_size = None # Size of panoramic - (type) = (width, height)
-		self.warp_flags = cv2.INTER_NEAREST # Scaling factor to process
+		self.warp_flags = int(cv2.INTER_NEAREST) # Scaling factor to process
 		self.Window_size = (640, 360) # Size to get segment of stitched video
 		self.stitch_mode = [0, 0, 0] # Definition of stitching mode [L, C, R]
 		self.vir_pan_val = 0 # Virtual pan value
@@ -177,7 +179,8 @@ class Stitcher():
 		if self.cachedHLC is None:
 
 			# Process variables
-			self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Stitcher calibration process started", log_type="info")
+			
+			printlog(msg="Stitcher calibration process started", msg_type="INFO")
 			save_file = True
 
 			# Size of first stitching
@@ -196,10 +199,12 @@ class Stitcher():
 			# if the match is None, then there aren't enough matched
 			# key-points to create a panorama
 			if MLC is None:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Matched no possible for pair center and left images", log_type="err")
+				printlog(msg="Matched no possible for pair center and left images", 
+					msg_type="ERROR")
 				return None
 			else:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Pair left and center images matched successfully", log_type="info")
+				printlog(msg="Pair left and center images matched successfully", 
+					msg_type="INFO")
 
 			# cache the homography matrix
 			self.cachedHLC = MLC[1]
@@ -311,10 +316,12 @@ class Stitcher():
 			# if the match is None, then there aren't enough matched
 			# key-points to create a panorama
 			if MCR is None:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Matched no possible for pair center and left video", log_type="err")
+				printlog(msg="Matched no possible for pair center and left video", 
+					msg_type="ERROR")
 				return None
 			else:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Pair center and left images matched successfully", log_type="info")
+				printlog(msg="Pair center and left images matched successfully", 
+					msg_type="INFO")
 
 			# cache the homography matrix
 			self.cachedHCR = MCR[1]
@@ -420,10 +427,12 @@ class Stitcher():
 			# if the match is None, then there aren't enough matched
 			# key-points to create a panorama
 			if MLCR is None:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Matched no possible for right + center + left stitching mode", log_type="err")
+				printlog(msg="Matched no possible for right + center + left stitching mode", 
+					msg_type="ERROR")
 				return result_CR
 			else:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Right + center + left stitching matched successfully", log_type="info")
+				printlog(msg="Right + center + left stitching matched successfully", 
+					msg_type="INFO")
 
 			# cache the homography matrix
 			self.cachedHLCR = MLCR[1]
@@ -506,8 +515,10 @@ class Stitcher():
 
 			_, self.in_limitsLCR, _ = get_extreme_contour_corners(self.corners)
 
-		self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] perspective transformation matrix calculated", log_type="info")
-		self.debugger(DEBUG_LEVEL_0, "[STITCHER][CALIBRATION] Stitching matcher calibrated successfully", log_type="info")
+		printlog(msg="perspective transformation matrix calculated", 
+			msg_type="INFO")
+		printlog(msg="Stitching matcher calibrated successfully", 
+			msg_type="INFO")
 
 		# --------------------------------------------------------------------
 		# Process with super mode
@@ -812,11 +823,12 @@ class Stitcher():
 
 			# Print some information 
 			if not quite:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] Stitcher configuration saved: {}".format(
-					os.path.join(abs_path)), log_type="info")
+				printlog(msg="Stitcher configuration saved: {}".format(
+					os.path.join(abs_path)), msg_type="INFO")
 
 		except Exception as e:
-			self.debugger(DEBUG_LEVEL_0, "[STITCHER]  something bad occurred saving stitcher configuration file: {}".format(e), log_type="err")
+			printlog(msg="something bad occurred saving stitcher configuration file: {}".format(e), 
+				msg_type="ERROR")
 			return 1
 
 		return 0		
@@ -839,7 +851,7 @@ class Stitcher():
 			self.vir_pan_val = config["vir_pan_val"]
 			self.cachedHCR_INV = config["cachedHCR_INV"]
 			self.Window_size = tuple(config["Window_size"])
-			self.warp_flags = config["warp_flags"]
+			self.warp_flags = int(config["warp_flags"])
 			self.y_offsetCR = config["y_offsetCR"]
 			self.warp_CR_size = tuple(config["warp_CR_size"])
 			self.out_limitsCR = config["out_limitsCR"]
@@ -906,8 +918,8 @@ class Stitcher():
 			self.version = config["version"]
 	
 			if not quiet:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] stitcher configuration loaded from: {}".format(
-					os.path.join(source_path)), log_type="info")
+				printlog(msg="stitcher configuration loaded", 
+					msg_type="INFO")
 
 		except Exception as e:
 
@@ -917,7 +929,7 @@ class Stitcher():
 			self.cachedHCR = None
 			self.cachedHCR_INV = None
 			self.Window_size = (640, 360)
-			self.warp_flags = cv2.INTER_NEAREST
+			self.warp_flags = int(cv2.INTER_NEAREST)
 			self.vir_pan_val = 0
 			self.y_offsetCR = None
 			self.warp_CR_size = None
@@ -985,8 +997,10 @@ class Stitcher():
 			self.CR_Cc = None
 			self.version = "X.X?"
 
-			self.debugger(DEBUG_LEVEL_0, "[STITCHER] loading stitcher: {}".format(e), log_type="err")
-			self.debugger(DEBUG_LEVEL_0, "[STITCHER] parameters established as None and empty arrays, please check configuration file", log_type="warn")
+			printlog(msg="loading stitcher: {}".format(e), 
+				msg_type="ERROR")
+			printlog(msg="parameters established as None and empty arrays, please check configuration file", 
+				msg_type="WARN")
 
 	def detectAndDescribe(self, image):
 
@@ -1181,7 +1195,8 @@ class Stitcher():
 				dl = (self.Window_size[1] - r*self.pano_size_LCR[1])*0.5
 				coord[1] = coord[1]*self.Window_size[1] 
 				if coord[1] <= dl or  coord[1] > self.Window_size[1] - dl:
-					self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - click out of boundaries", log_type="warn")
+					printlog(msg="LCR - click out of boundaries", 
+						msg_type="WARN")
 					return None, None, None
 				coord[1] -= dl
 				coord[1] = int(self.pano_size_LCR[1]*float(coord[1])/float(r*self.pano_size_LCR[1]))				
@@ -1210,7 +1225,8 @@ class Stitcher():
 						Coord_src = get_projection_point_dst(coords_src = (Coord_src[0], Coord_src[1], 1), M = self.cachedMLCR_INV)
 						Coord_src[1] -= self.source_L_corners[0][1]
 					if self.cachedMLCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Variable cachedMLCR_INV no defined", log_type="warn")
+						printlog(msg="LCR - Variable cachedMLCR_INV no defined", 
+							msg_type="WARN")
 					Coord_src = [int(Coord_src[0]), int(Coord_src[1])]
 					return Origin, Coord_src, Coord_stitch
 
@@ -1224,9 +1240,11 @@ class Stitcher():
 						Coord_src = get_projection_point_dst(coords_src = (Coord_src[0], Coord_src[1], 1), M = self.cachedHLCR_INV)
 						Coord_src[1] -= self.source_C_corners[0][1]
 					if self.cachedMLCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Variable cachedMLCR_INV no defined", log_type="warn")
+						printlog(msg="LCR - Variable cachedMLCR_INV no defined", 
+							msg_type="WARN")
 					if self.cachedHLCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Variable cachedHLCR_INV no defined", log_type="warn")
+						printlog(msg="LCR - Variable cachedHLCR_INV no defined", 
+							msg_type="WARN")
 					Coord_src = [int(Coord_src[0]), int(Coord_src[1])]
 					return Origin, Coord_src, Coord_stitch
 
@@ -1240,11 +1258,14 @@ class Stitcher():
 						Coord_src = get_projection_point_dst(coords_src = (Coord_src[0], Coord_src[1], 1), M = self.cachedHLCR_INV)
 						Coord_src = get_projection_point_dst(coords_src = (Coord_src[0], Coord_src[1], 1), M = self.cachedHCR_INV)
 					if self.cachedMLCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Variable cachedMLCR_INV no defined", log_type="warn")
+						printlog(msg="LCR - Variable cachedMLCR_INV no defined", 
+							msg_type="WARN")
 					if self.cachedHLCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Variable cachedHLCR_INV no defined", log_type="warn")
+						printlog(msg="LCR - Variable cachedHLCR_INV no defined", 
+							msg_type="WARN")
 					if self.cachedHCR_INV  is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Variable cachedHCR_INV no defined", log_type="warn")
+						printlog(msg="LCR - Variable cachedHCR_INV no defined", 
+							msg_type="WARN")
 					Coord_src = [int(Coord_src[0]), int(Coord_src[1])]
 					return Origin, Coord_src, Coord_stitch
 
@@ -1255,7 +1276,8 @@ class Stitcher():
 		elif (self.stitch_mode[0] == 1 and self.stitch_mode[1] == 1 and self.stitch_mode[2] == 0): 
 
 			if self.vir_pan_val > 0 or self.vir_pan_val < -100:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] Virtual pan exceeds ranges for LC mode", log_type="warn")
+				printlog(msg="Virtual pan exceeds ranges for LC mode", 
+					msg_type="WARN")
 				return None, None, None
 			x_offset = int((100 + self.vir_pan_val)*(self.pano_size_LC[0] - self.Window_size[0])/100.)    
 			coord[0]= (coord[0]*self.Window_size[0]) + x_offset
@@ -1272,7 +1294,8 @@ class Stitcher():
 						Coord_src = get_projection_point_dst(coords_src = (coord[0], coord[1], 1), M = self.cachedMLC_INV)
 						Coord_src[1] -= self.source_L_LC_corners[0][1]
 					if self.cachedMLC_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] Variable cachedMLC_INV no defined", log_type="warn")
+						printlog(msg="Variable cachedMLC_INV no defined", 
+							msg_type="WARN")
 					Coord_src = [int(Coord_src[0]), int(Coord_src[1])]
 					return Origin, Coord_src, Coord_stitch
 
@@ -1283,9 +1306,11 @@ class Stitcher():
 						Coord_src = get_projection_point_dst(coords_src = (coord[0], coord[1], 1), M = self.cachedMLC_INV)
 						Coord_src = get_projection_point_dst(coords_src = (Coord_src[0], Coord_src[1], 1),  M = self.cachedHLC_INV)
 					if self.cachedHLC_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] Variable cachedHLC_INV no defined", log_type="warn")
+						printlog(msg="Variable cachedHLC_INV no defined", 
+							msg_type="WARN")
 					if self.cachedMLC_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] Variable cachedMLC_INV no defined", log_type="warn")
+						printlog(msg="Variable cachedMLC_INV no defined", 
+							msg_type="WARN")
 					Coord_src = [int(Coord_src[0]), int(Coord_src[1])]
 					return Origin, Coord_src, Coord_stitch
 
@@ -1296,7 +1321,8 @@ class Stitcher():
 		elif (self.stitch_mode[0] == 0 and self.stitch_mode[1] == 1 and self.stitch_mode[2] == 1): 
 			
 			if self.vir_pan_val < 0 or self.vir_pan_val > 100:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] Virtual pan exceeds ranges for CR mode", log_type="warn")
+				printlog(msg="Virtual pan exceeds ranges for CR mode", 
+					msg_type="WARN")
 				return None, None, None
 			
 			x_offset = int((self.vir_pan_val*(int(self.pano_size_CR[0] - self.Window_size[0]))/100.))			
@@ -1313,7 +1339,8 @@ class Stitcher():
 						Coord_src = get_projection_point_dst((coord[0], coord[1], 1), self.cachedMCR_INV)
 						Coord_src[1] -= self.source_C_corners[0][1]
 					if self.cachedMCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Variable cachedMCR_INV no defined", log_type="warn")
+						printlog(msg="CR - Variable cachedMCR_INV no defined", 
+							msg_type="WARN")
 					Coord_src = [int(Coord_src[0]), int(Coord_src[1])]
 					return Origin, Coord_src, Coord_stitch
 
@@ -1324,9 +1351,11 @@ class Stitcher():
 						Coord_src = get_projection_point_dst((coord[0], coord[1], 1), self.cachedMCR_INV)
 						Coord_src = get_projection_point_dst((Coord_src[0], Coord_src[1], 1), self.cachedHCR_INV)
 					if self.cachedMCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Variable cachedMCR_INV no defined", log_type="warn")
+						printlog(msg="CR - Variable cachedMCR_INV no defined", 
+							msg_type="WARN")
 					if self.cachedHCR_INV is None: 
-						self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Variable cachedHCR_INV no defined", log_type="warn")
+						printlog(msg="CR - Variable cachedHCR_INV no defined", 
+							msg_type="WARN")
 					Coord_src = [int(Coord_src[0]), int(Coord_src[1])]
 					return Origin, Coord_src, Coord_stitch
 
@@ -1349,10 +1378,12 @@ class Stitcher():
 		self.LCR_CtnL = self.LCR_CtnC = self.LCR_CtnR = None
 
 		# Print information
-		self.debugger(DEBUG_LEVEL_0, "[STITCHER] Re-calculation surface projection contour in stitching space", log_type="info")
+		printlog(msg="Re-calculation surface projection contour in stitching space", 
+			msg_type="INFO")
 
 		if cams_params is None:
-			self.debugger(DEBUG_LEVEL_0, "[STITCHER] No camera parameters specified, contours projection no possible", log_type="warn")
+			printlog(msg="No camera parameters specified, contours projection no possible", 
+				msg_type="WARN")
 			return
 		else:
 			self.PP_CntL = cams_params["LL"]["waypoint_area"] if cams_params["LL"] is not None else None
@@ -1360,11 +1391,14 @@ class Stitcher():
 			self.PP_CntC = cams_params["C"]["waypoint_area"] if cams_params["C"] is not None else None
 			
 			if self.PP_CntL is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] Parameters for left camera no defined", log_type="warn")
+				printlog(msg="Parameters for left camera no defined", 
+					msg_type="WARN")
 			if self.PP_CntC is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] Parameters for Center camera no defined", log_type="warn")
+				printlog(msg="Parameters for Center camera no defined", 
+					msg_type="WARN")
 			if self.PP_CntR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] Parameters for Right camera no defined", log_type="warn")
+				printlog(msg="Parameters for Right camera no defined", 
+					msg_type="WARN")
 	
 			# -----------------------------------------------------------------
 			# For Left and Center = LC
@@ -1389,23 +1423,31 @@ class Stitcher():
 
 			# Print any error
 			if self.y_offsetLC is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - No y_offsetLC variable defined", log_type="err")
+				printlog(msg="CR - No y_offsetLC variable defined", 
+					msg_type="ERROR")
 			if self.cachedHLC is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - No cachedHLC variable defined", log_type="err")
+				printlog(msg="CR - No cachedHLC variable defined", 
+					msg_type="ERROR")
 			if self.cachedMLC is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - No cachedMLC variable defined", log_type="err")
+				printlog(msg="CR - No cachedMLC variable defined",
+					msg_type="ERROR")
 			if self.PP_CntL is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LC - Parameters for left camera no defined", log_type="err")
+				printlog(msg="LC - Parameters for left camera no defined", 
+					msg_type="ERROR")
 			if self.PP_CntC is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LC - Parameters for Center camera no defined", log_type="err")
+				printlog(msg="LC - Parameters for Center camera no defined", 
+					msg_type="ERROR")
 
 			# Report process information
 			if not self.LC_CtnC is None and not self.LC_CtnL is None:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LC - Projections in stitching space calculated", log_type="info")
+				printlog(msg="LC - Projections in stitching space calculated", 
+					msg_type="INFO")
 			elif not self.LC_CtnC is None or not self.LC_CtnL is None:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LC - Projections in stitching space partially calculated", log_type="warn")
+				printlog(msg="LC - Projections in stitching space partially calculated", 
+					msg_type="WARN")
 			else:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LC - Projections in stitching space no calculated", log_type="err")
+				printlog(msg="LC - Projections in stitching space no calculated", 
+					msg_type="ERROR")
 
 			# -----------------------------------------------------------------
 			# For Center and Right = CR
@@ -1430,23 +1472,31 @@ class Stitcher():
 
 			# Print any error
 			if self.cachedHCR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - No cachedHCR variable defined", log_type="err")
+				printlog(msg="CR - No cachedHCR variable defined", 
+					msg_type="ERROR")
 			if self.cachedMCR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - No cachedMCR variable defined", log_type="err")
+				printlog(msg="CR - No cachedMCR variable defined", 
+					msg_type="ERROR")
 			if self.y_offsetCR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - No y_offsetCR variable defined", log_type="err")
+				printlog(msg="CR - No y_offsetCR variable defined", 
+					msg_type="ERROR")
 			if self.PP_CntC is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Parameters for Center camera no defined", log_type="err")
+				printlog(msg="CR - Parameters for Center camera no defined",
+					msg_type="ERROR")
 			if self.PP_CntR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Parameters for Right camera no defined", log_type="err")
+				printlog(msg="CR - Parameters for Right camera no defined", 
+					msg_type="ERROR")
 				
 			# Report process information
 			if self.CR_CtnC is not None and self.CR_CtnR is not None:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Projections in stitching space calculated", log_type="info")
+				printlog(msg="CR - Projections in stitching space calculated", 
+					msg_type="INFO")
 			elif self.CR_CtnC is not None or self.CR_CtnR is not None:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Projections in stitching space partially calculated", log_type="warn")
+				printlog(msg="CR - Projections in stitching space partially calculated", 
+					msg_type="WARN")
 			else:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] CR - Projections in stitching space no calculated", log_type="err")
+				printlog(msg="CR - Projections in stitching space no calculated", 
+					msg_type="ERROR")
 
 			# -----------------------------------------------------------------
 			# For Left and Center and Right = LCR
@@ -1490,25 +1540,25 @@ class Stitcher():
 
 			# Print any error
 			if self.cachedHLCR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - No cachedHLCR variable defined", log_type="err")
+				printlog(msg="LCR - No cachedHLCR variable defined", msg_type="ERROR")
 			if self.cachedHCR  is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - No cachedHCR variable defined", log_type="err")
+				printlog(msg="LCR - No cachedHCR variable defined", msg_type="ERROR")
 			if self.cachedMLCR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - No cachedMLCR variable defined", log_type="err")
+				printlog(msg="LCR - No cachedMLCR variable defined", msg_type="ERROR")
 			if self.PP_CntL is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Parameters for Left camera no defined", log_type="err")
+				printlog(msg="LCR - Parameters for Left camera no defined", msg_type="ERROR")
 			if self.PP_CntC is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Parameters for Center camera no defined", log_type="err")
+				printlog(msg="LCR - Parameters for Center camera no defined", msg_type="ERROR")
 			if self.PP_CntR is None: 
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Parameters for Right camera no defined", log_type="err")
+				printlog(msg="LCR - Parameters for Right camera no defined", msg_type="ERROR")
 
 			# Report process information
 			if self.LCR_CtnL is not None and self.LCR_CtnC is not None and self.LCR_CtnR is not None :
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Projections in stitching space calculated", log_type="info")
+				printlog(msg="LCR - Projections in stitching space calculated", msg_type="INFO")
 			elif self.LCR_CtnL is not None or self.LCR_CtnC is not None or self.LCR_CtnR is not None :
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Projections in stitching space partially calculated", log_type="warn")
+				printlog(msg="LCR - Projections in stitching space partially calculated", msg_type="WARN")
 			else:
-				self.debugger(DEBUG_LEVEL_0, "[STITCHER] LCR - Projections in stitching space no calculated", log_type="err")
+				printlog(msg="LCR - Projections in stitching space no calculated", msg_type="ERROR")
 
 		# ---------------------------------------------------------------------
 		# print("\tNew projections in stitching space saved\n")
@@ -1541,7 +1591,7 @@ class Stitcher():
 			rect_y1 = 0; rect_y2 = pano_size[0]
 
 			if pan_value > 100 or pan_value < -100:
-				img_dts = image_resize(image = img_src, width  = self.Window_size[0], height = self.Window_size[1], inter  = self.warp_flags)
+				img_dts = self.image_resize(image = img_src, width  = self.Window_size[0], height = self.Window_size[1], inter  = self.warp_flags)
 				cv2.rectangle(img_src, (0, 0), (pano_size[1], pano_size[0]), (0, 255, 0), 2)
 			else:
 				img_dts = img_src[rect_y1: rect_y2, rect_x1: rect_x2]
@@ -1563,7 +1613,7 @@ class Stitcher():
 			rect_y1 = 0; rect_y2 = pano_size[0]
 
 			if pan_value > 0 or pan_value < -100:
-				img_dts = image_resize(image = img_src, width  = self.Window_size[0], height = self.Window_size[1], inter  = self.warp_flags)
+				img_dts = self.image_resize(image = img_src, width  = self.Window_size[0], height = self.Window_size[1], inter  = self.warp_flags)
 			else:
 				img_dts = img_src[rect_y1: rect_y2, rect_x1: rect_x2]
 
@@ -1583,7 +1633,7 @@ class Stitcher():
 			rect_y1 = 0; rect_y2 = pano_size[0]
 
 			if pan_value < 0 or pan_value > 100:
-				img_dts = image_resize(image = img_src, width  = self.Window_size[0], height = self.Window_size[1], inter  = self.warp_flags)
+				img_dts = self.image_resize(image = img_src, width  = self.Window_size[0], height = self.Window_size[1], inter  = self.warp_flags)
 			else:
 				img_dts = img_src[rect_y1: rect_y2, rect_x1: rect_x2]
 
@@ -1592,6 +1642,45 @@ class Stitcher():
 
 		# If no condition return input
 		return img_src
+
+	def image_resize(self, image, width=None, height=None, inter=cv2.INTER_AREA):
+
+		# initialize the dimensions of the image to be resized and
+		# grab the image size
+		dim = None
+		(h, w) = image.shape[:2]
+
+		# if both the width and height are None, then return the
+		# original image
+		if width is None and height is None:
+			return image
+
+		# check to see if the width is None
+		if width is None:
+			# calculate the ratio of the height and construct the
+			# dimensions
+			r = height / float(h)
+			dim = (int(w * r), height)
+
+		# otherwise, the height is None
+		else:
+			# calculate the ratio of the width and construct the
+			# dimensions
+			r = width / float(w)
+			dim = (width, int(h * r))
+
+		# resize the image
+		resized = cv2.resize(image, dim, interpolation = inter)
+
+		# resize the image
+		if width is not None and height is not None: 
+			background = np.zeros((height, width, 3), np.uint8)
+			y_pos = int((height*0.5)-(resized.shape[0]*0.5))
+			background[y_pos: y_pos + resized.shape[0], 0:resized.shape[1]] = resized
+			return background
+			
+		# return the resized image
+		return resized
 
 # =============================================================================
 def get_projection_point_dst(coords_src, M):
@@ -1719,54 +1808,6 @@ def get_opencv_major_version(lib=None):
 
     # return the major version number
     return int(lib.__version__.split(".")[0])
-
-def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
-
-    # initialize the dimensions of the image to be resized and
-    # grab the image size
-    dim = None
-    (h, w) = image.shape[:2]
-
-    # if both the width and height are None, then return the
-    # original image
-    if width is None and height is None:
-        return image
-
-    # check to see if the width is None
-    if width is None:
-        # calculate the ratio of the height and construct the
-        # dimensions
-        r = height / float(h)
-        dim = (int(w * r), height)
-
-    # otherwise, the height is None
-    else:
-        # calculate the ratio of the width and construct the
-        # dimensions
-        r = width / float(w)
-        dim = (width, int(h * r))
-
-    # resize the image
-    resized = cv2.resize(image, dim, interpolation = inter)
-
-    # resize the image
-    if width is not None and height is not None: 
-    	background = np.zeros((height, width, 3), np.uint8)
-    	y_pos = int((height*0.5)-(resized.shape[0]*0.5))
-    	background[y_pos: y_pos + resized.shape[0], 0:resized.shape[1]] = resized
-    	return background
-		
-    # return the resized image
-    return resized
-
-# =============================================================================
-if __name__ == '__main__':
-
-	CONF_PATH = os.path.abspath(__file__ + "/../../../../../../configs")
-	FILE_NAME = "stitcher_config.npz"
-
-	img_stitcher = Stitcher(abs_path=os.path.join(
-		CONF_PATH, FILE_NAME), super_stitcher=False)
 
 # =============================================================================
 

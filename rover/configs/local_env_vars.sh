@@ -21,6 +21,31 @@ export VIDEO_WIDTH=640          # [int][pix] Cameras Video width
 export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
 
 # -----------------------------------------------------------------------------
+# Stitcher
+export STITCHER=1               # [int-bolean](1):Enable/(0):Disable - Video Stitching
+export STITCHER_SUPER_MODE=0    # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
+
+# -----------------------------------------------------------------------------
+# Extrinsic calibration - Mono-vision
+export VISION_CAL_DAYS_OUT=10           # [int][days] Number of days for a calibration out of date
+export VISION_CAL_DAYS_REMOVE=20        # [int][days] Number of days to remove a calibration file
+export VISION_CAL_UNWARPED_WIDTH=200    # [int][pix] width of unwarped image for monovision
+export VISION_CAL_UNWARPED_HEIGHT=360   # [int][pix] height of unwarped image for monovision
+export VISION_CALIBRATION_TRIES=3       # [int] Number of tries to calibrate a camera
+export VISION_CAL_PAT_HOZ=0.6223        # [float][m] Horizontal distance between lines in calibration pattern
+export VISION_CAL_PAT_VER=4.0           # [float][m] Vertical length of calibration pattern
+export VISION_CAL_PAT_TH_TOP=15         # [int][pix] Number of pixel to project pattern from vanishing point
+export VISION_CAL_PAT_TH_BOTTOM=15      # [int][pix] Number of pixel to project pattern from bottom side
+export VISION_CAL_PAT_ITE_TRIES=20      # [int] number of tries to change color values to find calibration pattern
+export VISION_CAL_PAT_HS=124    # [int][0-255] Hue channel superior value for color filtering in pattern search
+export VISION_CAL_PAT_SI=0      # [int][0-255] saturation channel inferior value for color filtering in pattern search
+export VISION_CAL_PAT_SS=255    # [int][0-255] saturation channel superior value for color filtering in pattern search
+export VISION_CAL_PAT_VI=115    # [int][0-255] value channel inferior value for color filtering in pattern search
+export VISION_CAL_PAT_VS=255    # [int][0-255] value channel superior value for color filtering in pattern search
+export VISION_CAL_PAT_HI=58     # [int][0-255] Hue channel inferior value for color filtering in pattern search
+export VISION_CAL_SHOW_TIME=5   # [int][sec] time to show calibration results on supervisors console
+
+# -----------------------------------------------------------------------------
 # ROS2 Logging 
 # https://docs.python.org/3/library/logging.html
 export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity}][{time}]: {message}" 
