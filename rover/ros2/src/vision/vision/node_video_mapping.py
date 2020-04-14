@@ -40,9 +40,14 @@ class MappingNode(Node):
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
         self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
             default=os.path.dirname(os.path.abspath(__file__))))
+
         self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0))
+
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
+
+        self._STITCHER = int(os.getenv(key="STITCHER", default=0))
+        self._STITCHER_SUP_MODE = int(os.getenv(key="STITCHER_SUP_MODE", default=0))
 
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
@@ -64,7 +69,7 @@ class MappingNode(Node):
         # Stitcher object
         self.stitcher = Stitcher(
             abs_path=os.path.join(self._CONF_PATH, "stitcher_config.npz"),
-            super_stitcher=False)
+            super_stitcher=self._STITCHER_SUP_MODE) if self._STITCHER else None
 
         # ---------------------------------------------------------------------
         # Services
@@ -142,7 +147,8 @@ class MappingNode(Node):
 
         imgs_dic = dict(map(lambda o: (o.cam_label, o.image.copy()), 
                 self.cameras_supervisor.camera_handlers.values()))
-        imgs_dic["S"] = self.img_stitch(imgs_dic)
+        if not self.stitcher is None: 
+            imgs_dic["S"] = self.img_stitch(imgs_dic) 
         show_local_gui(
             imgs_dic=imgs_dic, 
             win_name="LOCAL_VIDEO_STREAMING")

@@ -23,7 +23,7 @@ export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
 # -----------------------------------------------------------------------------
 # Stitcher
 export STITCHER=1               # [int-bolean](1):Enable/(0):Disable - Video Stitching
-export STITCHER_SUPER_MODE=0    # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
+export STITCHER_SUP_MODE=0      # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
 
 # -----------------------------------------------------------------------------
 # Extrinsic calibration - Mono-vision
