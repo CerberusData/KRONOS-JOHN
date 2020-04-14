@@ -24,6 +24,8 @@ find_package(rosidl_default_generators REQUIRED)
 # adding messages or services dependencies
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CamerasStatus.srv"
+  "srv/Intrinsic.srv"
+  "srv/Extrinsic.srv"
 )
 
 if(BUILD_TESTING)

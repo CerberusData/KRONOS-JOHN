@@ -16,10 +16,12 @@ export LOCAL_LAUNCH=1      # [int-bolean] Disable(1)/Enable(0) - Local launch mo
 export CONF_PATH="${PWD%}/configs"
 
 # -----------------------------------------------------------------------------
-# Video streaming variables
+# Video processing
+export VIDEO_WIDTH=640          # [int][pix] Cameras Video width
+export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
 
 # -----------------------------------------------------------------------------
-# ROS2 Logging variables 
+# ROS2 Logging 
 # https://docs.python.org/3/library/logging.html
 export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity}][{time}]: {message}" 
                                                 # If you would like more or less verbose formatting
@@ -29,7 +31,7 @@ export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   # By default, info and debug log
                                                 # You can force it using 
 
 # -----------------------------------------------------------------------------
-# Fredoom robotics enviroment variables
+# Fredoom robotics enviroment
 export FR_AGENT=0                   # [int-bolean] (1):Enable/(0):Disable freedom robotics agent 
 export FR_STREAMING_OPTIMIZER=1     # [int-bolean] (1):Enable/(0):Disable freedom video streaming optimizer
 export FR_STREAMING_FACTOR=0.4      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative

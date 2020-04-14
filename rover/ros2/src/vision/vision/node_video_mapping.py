@@ -20,17 +20,21 @@ from rclpy.logging import get_logger
 from vision.utils.cam_handler import read_cams_configuration
 from vision.utils.cam_handler import CamerasSupervisor
 from vision.utils.vision_utils import show_local_gui
+from vision.utils.vision_utils import matrix_from_flat
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 from usr_srv.srv import CamerasStatus
+from usr_srv.srv import Intrinsic
+
+from vision.stitcher.stitcher import Stitcher
 
 # =============================================================================
-class VideoPublishers(Node):
+class MappingNode(Node):
 
     def __init__(self):
-        super().__init__('VideoPublishers')
+        super().__init__('MappingNode')
 
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
@@ -54,6 +58,11 @@ class VideoPublishers(Node):
         cams_status = self.cameras_supervisor.get_cameras_status()
         self.img_bridge = CvBridge()
         self.img_optimizer = streaming_optimizer()
+
+        # Stitcher object
+        self.stitcher = Stitcher(
+            abs_path=os.path.join(self._CONF_PATH, "stitcher_config.npz"),
+            super_stitcher=False)
 
         # ---------------------------------------------------------------------
         # Services
@@ -87,6 +96,19 @@ class VideoPublishers(Node):
                 timer_period_sec=self.gui_rate, 
                 callback=self.cb_draw_local_gui)
 
+        # ----------------------------------------------------------------------
+        # Intrisic Calibration
+        self.srv_cli_intrinsic = self.create_client(
+            srv_type=Intrinsic, 
+            srv_name='calibrator/intrinsic_params')
+        while not self.srv_cli_intrinsic.wait_for_service(timeout_sec=2.0):
+            self.get_logger().error('service not available, waiting again...')
+        self.srv_intrinsic_req = Intrinsic.Request()
+
+    def send_request(self):
+        self.future = self.srv_cli_intrinsic.call_async(
+            self.srv_intrinsic_req)
+
     def cb_cams_status(self, request, response):
 
         response.cameras_status = ["{}:{}".format(cam_key, int(cam_status)
@@ -114,7 +136,7 @@ class VideoPublishers(Node):
     def cb_draw_local_gui(self):
 
         show_local_gui(
-            imgs_dic=dict(map(lambda o: (o.cam_label, o.image), 
+            imgs_dic=dict(map(lambda o: (o.cam_label, o.image.copy()), 
                 self.cameras_supervisor.camera_handlers.values())), 
             win_name="LOCAL_VIDEO_STREAMING")
 
@@ -173,7 +195,7 @@ class streaming_optimizer(object):
         Returns:
         """
         self._time_tick = time.time()
-    
+
 # =============================================================================
 def main(args=None):
 
@@ -182,13 +204,25 @@ def main(args=None):
 
     # Execute work and block until the context associated with the 
     # executor is shutdown.
-    video_publishers = VideoPublishers()
-    rclpy.spin(video_publishers)
+    mapping_node = MappingNode()
+    mapping_node.send_request()
+    
+    while rclpy.ok():
+        rclpy.spin_once(mapping_node)
+
+        if mapping_node.future.done():
+            try:
+                response = mapping_node.future.result()
+            except Exception as e:
+                mapping_node.get_logger().info(
+                    'Service call failed %r' % (e,))
+            # print(response, flush=True)
+
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-    minimal_publisher.destroy_node()
+    mapping_node.destroy_node()
     rclpy.shutdown()
 
 # =============================================================================

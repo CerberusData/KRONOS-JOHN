@@ -1,0 +1,3 @@
+string cam_label
+---
+string[] cameras_status
