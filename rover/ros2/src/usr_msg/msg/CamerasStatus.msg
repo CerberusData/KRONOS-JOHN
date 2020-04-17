@@ -1,0 +1,1 @@
+string[] cams_status

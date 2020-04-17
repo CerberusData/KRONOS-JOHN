@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(usr_srv)
+project(usr_msg)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -22,8 +22,11 @@ find_package(rosidl_default_generators REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 # adding messages or services dependencies
-# rosidl_generate_interfaces(${PROJECT_NAME}
-# )
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/CamerasStatus.msg"
+  "msg/Intrinsic.msg"
+  "msg/VisualMessage.msg"
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

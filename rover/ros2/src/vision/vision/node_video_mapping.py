@@ -16,6 +16,8 @@ import os
 import rclpy
 from rclpy.node import Node
 from rclpy.logging import get_logger
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 
 from vision.utils.cam_handler import read_cams_configuration
 from vision.utils.cam_handler import CamerasSupervisor
@@ -25,16 +27,21 @@ from vision.utils.vision_utils import matrix_from_flat
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
-from usr_srv.srv import CamerasStatus
-from usr_srv.srv import Intrinsic
-
 from vision.stitcher.stitcher import Stitcher
+
+from usr_msg.msg import CamerasStatus
+from usr_msg.msg import VisualMessage
 
 # =============================================================================
 class MappingNode(Node):
 
     def __init__(self):
+
+        # ---------------------------------------------------------------------
         super().__init__('MappingNode')
+
+        # Allow callbacks to be executed in parallel without restriction.
+        self.callback_group = ReentrantCallbackGroup()
 
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
@@ -49,6 +56,9 @@ class MappingNode(Node):
         self._STITCHER = int(os.getenv(key="STITCHER", default=0))
         self._STITCHER_SUP_MODE = int(os.getenv(key="STITCHER_SUP_MODE", default=0))
 
+        self._VISUAL_DEBUGGER = int(os.getenv(key="VISUAL_DEBUGGER", default=1))
+        self._VISUAL_DEBUGGER_TIME = int(os.getenv(key="VISUAL_DEBUGGER_TIME", default=5))
+        
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
         # the cameras
@@ -63,9 +73,9 @@ class MappingNode(Node):
         # Start cameras handler with configuration
         self.cameras_supervisor = CamerasSupervisor(cams_config=self.cams_config)
         cams_status = self.cameras_supervisor.get_cameras_status()
-        self.img_bridge = CvBridge()
         self.img_optimizer = streaming_optimizer()
-
+        self.img_bridge = CvBridge()
+        
         # Stitcher object
         self.stitcher = Stitcher(
             abs_path=os.path.join(self._CONF_PATH, "stitcher_config.npz"),
@@ -73,11 +83,11 @@ class MappingNode(Node):
 
         # ---------------------------------------------------------------------
         # Services
-        self.srv_cams_status = self.create_service(srv_type=CamerasStatus, 
-            srv_name="video_mapping/cams_status", callback=self.cb_cams_status)
         
         # ---------------------------------------------------------------------
         # Publishers
+
+        # Cameras streaming images
         self.cam_publishers = {}
         if self._FR_AGENT or self._LOCAL_RUN:
             self.cam_publishers = {cam_label:self.create_publisher(Image, 
@@ -85,48 +95,75 @@ class MappingNode(Node):
                 for cam_label in self.cams_config.keys()
                 if cams_status[cam_label] or self._LOCAL_RUN}
                 
-        # ---------------------------------------------------------------------
-        # Subscribers
+        # Cameras status
+        self.pb_cams_status = self.create_publisher(
+            CamerasStatus, 'video_streaming/cams_status', 5,
+            callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------
-        # Timers
+        # Publishers Timers
+
         self.cam_timers = {}
         self.cam_timers = {cam_label:self.create_timer(
             timer_period_sec=1./float(self.cams_config[cam_label]["FPS"]), 
-            callback=partial(self.cb_cam_img_pub, cam_label))
+            callback=partial(self.cb_cam_img_pub, cam_label),
+            callback_group=self.callback_group)
             for cam_label in self.cams_config.keys()
             if cams_status[cam_label] or self._LOCAL_RUN}
 
+        self.tm_pub_cams_status = self.create_timer(
+            1.0, self.cb_cams_status)
+
         # ---------------------------------------------------------------------  
         # Local gui
+
         if self._LOCAL_RUN:
             self.gui_rate = 1./float(max(list(map(lambda o: int(o.cam_config["FPS"]), 
                 self.cameras_supervisor.camera_handlers.values()))))
             self.gui_timer = self.create_timer(
                 timer_period_sec=self.gui_rate, 
-                callback=self.cb_draw_local_gui)
+                callback=self.cb_draw_local_gui,
+                callback_group=self.callback_group)
+            
+        # ---------------------------------------------------------------------  
+        # Subscribers
 
-        # ----------------------------------------------------------------------
-        # Intrisic Calibration
-        self.srv_cli_intrinsic = self.create_client(
-            srv_type=Intrinsic, 
-            srv_name='calibrator/intrinsic_params')
-        while not self.srv_cli_intrinsic.wait_for_service(timeout_sec=2.0):
-            self.get_logger().error('service not available, waiting again...')
-        self.srv_intrinsic_req = Intrinsic.Request()
+        # visual debugger
+        # TODO: move this to a usr interface class
+        if self._VISUAL_DEBUGGER:
+            self._sub_visual_debugger = self.create_subscription(
+                msg_type=VisualMessage, topic='video_streaming/visual_debugger', 
+                callback=self.cb_visual_debugger, qos_profile=5,
+                callback_group=self.callback_group)
+        # Message to show in console
+        self.visual_debugger_msg = "" 
+        # Type of message "info, err, warn"
+        self.visual_debugger_type = "INFO" 
+        # Timer with time to show message
+        self.visual_debugger_timer = self._VISUAL_DEBUGGER_TIME 
 
-    def send_request(self):
-        self.future = self.srv_cli_intrinsic.call_async(
-            self.srv_intrinsic_req)
+        # ---------------------------------------------------------------------  
 
-    def cb_cams_status(self, request, response):
+    def cb_visual_debugger(self, msg):
 
-        response.cameras_status = ["{}:{}".format(cam_key, int(cam_status)
-            ) for cam_key, cam_status in self.cameras_supervisor.get_cameras_status()]
-        return response
+        self.visual_debugger_msg = msg.data
+        self.visual_debugger_type = msg.type
+        time.sleep(self.visual_debugger_timer)
+        self.visual_debugger_msg = ""
+        self.visual_debugger_type = "INFO"
+
+    def cb_cams_status(self):
+
+        msg = CamerasStatus()
+        msg.cams_status =  [str("{}:{}".format(cam_key, int(cam_status))
+            ) for cam_key, cam_status in self.cameras_supervisor.get_cameras_status().items()]
+        self.pb_cams_status.publish(msg)
 
     def cb_cam_img_pub(self, cam_label):
-
+        """ Callback function to publish camera images
+        Args:
+        Returns:
+        """
         img = self.cameras_supervisor.camera_handlers[cam_label].image
         if img is not None:
             img = self.img_optimizer.optimize(
@@ -144,17 +181,32 @@ class MappingNode(Node):
                     cam_label, e))
 
     def cb_draw_local_gui(self):
+        """ Callback function to draw local user interface
+        Args:
+        Returns:
+        """
 
         imgs_dic = dict(map(lambda o: (o.cam_label, o.image.copy()), 
                 self.cameras_supervisor.camera_handlers.values()))
-        if not self.stitcher is None: 
+        if not self.stitcher is None and self._LOCAL_RUN: 
             imgs_dic["S"] = self.img_stitch(imgs_dic) 
+        if self.visual_debugger_msg:
+            imgs_dic["C"] = cv2.putText(imgs_dic["C"] , self.visual_debugger_msg, (10, 25),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 1)
         show_local_gui(
             imgs_dic=imgs_dic, 
             win_name="LOCAL_VIDEO_STREAMING")
-        
-    def img_stitch(self, imgs_dic):
 
+    def img_stitch(self, imgs_dic):
+        """ Stitch the cameras center, left and right
+        Args:
+            imgs_dic: `dict` 
+                keys: `string` video streaming camera labels
+                keys: `cv2.math` video streaming images
+        Returns:
+            _: `cv2.math` images stitched
+        """
+        
         cam_keys = self.cameras_supervisor.camera_handlers.keys()
         imgs = [
             None if not "RR" in cam_keys else imgs_dic["RR"].copy(),
@@ -200,15 +252,15 @@ class streaming_optimizer(object):
         if self.inactive_timer < self.IDLE_TIME + 1:
             self.inactive_timer = time.time() - self._time_tick
 
-        if cam_label is not None:  
-            hfc = 0.2 if img.shape[1] < 500 else 0.4
-            org = (int(img.shape[1]*hfc), int(img.shape[0]*0.90))      
-            img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
-                color=(0, 0, 0), thickness = 4, lineType = cv2.LINE_AA)
-            img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
-                color=(0, 255, 255), thickness = 1, lineType = cv2.LINE_AA)
+        # if cam_label is not None:  
+        #     hfc = 0.2 if img.shape[1] < 500 else 0.4
+        #     org = (int(img.shape[1]*hfc), int(img.shape[0]*0.90))      
+        #     img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
+        #         fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
+        #         color=(0, 0, 0), thickness = 4, lineType = cv2.LINE_AA)
+        #     img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
+        #         fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
+        #         color=(0, 255, 255), thickness = 1, lineType = cv2.LINE_AA)
 
         elif self.inactive_timer>=self.IDLE_TIME:
             img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
@@ -237,19 +289,14 @@ def main(args=None):
     # Execute work and block until the context associated with the 
     # executor is shutdown.
     mapping_node = MappingNode()
-    mapping_node.send_request()
-    
-    while rclpy.ok():
-        rclpy.spin_once(mapping_node)
 
-        if mapping_node.future.done():
-            try:
-                response = mapping_node.future.result()
-            except Exception as e:
-                mapping_node.get_logger().info(
-                    'Service call failed %r' % (e,))
-            # print(response, flush=True)
-
+    # Runs callbacks in a pool of threads.
+    executor = MultiThreadedExecutor()
+  
+    # Execute work and block until the context associated with the 
+    # executor is shutdown. Callbacks will be executed by the provided 
+    # executor.
+    rclpy.spin(mapping_node, executor)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically

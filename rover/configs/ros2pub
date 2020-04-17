@@ -1,0 +1,1 @@
+ros2 topic pub --once /video_streaming/cams_status std_msgs/msg/String '{data: "C"}'

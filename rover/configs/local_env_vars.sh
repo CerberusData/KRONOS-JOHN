@@ -19,10 +19,12 @@ export CONF_PATH="${PWD%}/configs"
 # Video processing
 export VIDEO_WIDTH=640          # [int][pix] Cameras Video width
 export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
+export VISUAL_DEBUGGER=1        # [int-bolean] (1):Enable/(0):Disable visual debugger messages 
+export VISUAL_DEBUGGER_TIME=10  # [int][sec] visual debugger message time
 
 # -----------------------------------------------------------------------------
 # Stitcher
-export STITCHER=1               # [int-bolean](1):Enable/(0):Disable - Video Stitching
+export STITCHER=0               # [int-bolean](1):Enable/(0):Disable - Video Stitching
 export STITCHER_SUP_MODE=0      # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
 
 # -----------------------------------------------------------------------------
@@ -31,7 +33,7 @@ export VISION_CAL_DAYS_OUT=10           # [int][days] Number of days for a calib
 export VISION_CAL_DAYS_REMOVE=20        # [int][days] Number of days to remove a calibration file
 export VISION_CAL_UNWARPED_WIDTH=200    # [int][pix] width of unwarped image for monovision
 export VISION_CAL_UNWARPED_HEIGHT=360   # [int][pix] height of unwarped image for monovision
-export VISION_CALIBRATION_TRIES=3       # [int] Number of tries to calibrate a camera
+export VISION_CAL_TRIES=3       # [int] Number of tries to calibrate a camera
 export VISION_CAL_PAT_HOZ=0.6223        # [float][m] Horizontal distance between lines in calibration pattern
 export VISION_CAL_PAT_VER=4.0           # [float][m] Vertical length of calibration pattern
 export VISION_CAL_PAT_TH_TOP=15         # [int][pix] Number of pixel to project pattern from vanishing point

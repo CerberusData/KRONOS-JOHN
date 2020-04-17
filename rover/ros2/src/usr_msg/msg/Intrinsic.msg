@@ -1,4 +1,3 @@
----
 int16 image_width
 int16 image_height
 float32[] camera_matrix

@@ -96,6 +96,17 @@ def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
     elif key!=-1: # No key command
         print("Command or key action no found: {}".format(key))
 
+def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), fontScale=0.7):
+
+    y_jump = 30
+    for idx, text in enumerate(tex_list):
+        cv2.putText(img=img, text=text, 
+            org = (orig[0], int(orig[1] + y_jump*idx)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+            fontScale=fontScale, color=(0, 0, 0), thickness=3, lineType=cv2.LINE_AA)
+        cv2.putText(img=img, text=text, 
+            org = (orig[0], int(orig[1] + y_jump*idx)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+            fontScale=fontScale, color=color, thickness=1, lineType=cv2.LINE_AA)
+
 # =============================================================================
 # MATH OPERATIONS - MATH OPERATIONS - MATH OPERATIONS - MATH OPERATIONS - MATH 
 def flat_matrix_for_service(numpy_array):

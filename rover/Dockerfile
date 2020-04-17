@@ -235,6 +235,7 @@ COPY configs/bot_local.launch.py /usr/src/app/configs/
 COPY configs/cams_conf.yaml /usr/src/app/configs/
 COPY configs/Intrinsic_640_360.yaml /usr/src/app/configs/
 COPY configs/Intrinsic_640_480.yaml /usr/src/app/configs/
+COPY configs/stitcher_config.npz /usr/src/app/configs/
 ENV CONF_PATH="/usr/src/app/configs/"
 
 # -----------------------------------------------------------------------------

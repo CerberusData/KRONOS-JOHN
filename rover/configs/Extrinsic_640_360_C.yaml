@@ -9,26 +9,12 @@ M:
   - -0.006896778651574491
   - 1.0
 dead_view: 0.7887323943661971
-image_size: !!python/tuple
-- 640
-- 360
-p1: !!python/tuple
-- 260
-- 160
-p2: !!python/tuple
-- 345
-- 160
-p3: !!python/tuple
-- 910
-- 345
-p4: !!python/tuple
-- -223
-- 345
+image_size: [640, 360]
+p1: [260, 160]
+p2: [345, 160]
+p3: [910, 345]
+p4: [223, 345]
 ppmx: 86.77486742728588
 ppmy: 35.5
-unwarped_size: !!python/tuple
-- 200
-- 360
-vp:
-- - 299.0
-- - 145.0
+unwarped_size: [200, 360]
+vp: [299, 145]
