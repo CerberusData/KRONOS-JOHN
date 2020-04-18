@@ -1,1 +1,1 @@
-ros2 topic pub --once /video_streaming/cams_status std_msgs/msg/String '{data: "C"}'
+ros2 topic pub --once /video_streaming/visual_debugger usr_msg/msg/VisualMessage '{data: "tumama", type": "INFO"}'

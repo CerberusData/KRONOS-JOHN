@@ -136,6 +136,7 @@ def matrix_from_flat(list_vector):
 
     rows = list_vector[0]
     cols = list_vector[1]
+    
     return np.array(list_vector[2:]).reshape(rows, cols)
 
 # =============================================================================
