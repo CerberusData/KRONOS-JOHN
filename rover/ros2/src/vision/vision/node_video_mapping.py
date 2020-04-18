@@ -32,10 +32,24 @@ from vision.stitcher.stitcher import Stitcher
 from usr_msg.msg import CamerasStatus
 from usr_msg.msg import VisualMessage
 
+from python_utils.pysubscribers import VisualDebugger
+
 # =============================================================================
-class MappingNode(Node):
+class MappingNode(Node, 
+    VisualDebugger):
 
     def __init__(self):
+        """ 
+            VisualDebugger:
+                Methods:
+                    cb_visual_debugger [None]: callback function for subsciptor
+                    draw_visual_debugger [cv2.math]: Draws the visual debugger message
+                Arguments:
+                    VISUAL_DEBUGGER_TIME [int]: Timer with time to show message
+                    visual_debugger_msg  [string]:Message to show in console
+                    visual_debugger_type [string]: Type of message "INFO, ERR, WARN"
+                   _sub_visual_debugger [subscriptor]: 
+        """
 
         # ---------------------------------------------------------------------
         super().__init__('MappingNode')
@@ -43,6 +57,8 @@ class MappingNode(Node):
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
 
+        VisualDebugger.__init__(self, parent_node=self)
+        
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
         self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
@@ -128,29 +144,7 @@ class MappingNode(Node):
         # ---------------------------------------------------------------------  
         # Subscribers
 
-        # visual debugger
-        # TODO: move this to a usr interface class
-        if self._VISUAL_DEBUGGER:
-            self._sub_visual_debugger = self.create_subscription(
-                msg_type=VisualMessage, topic='video_streaming/visual_debugger', 
-                callback=self.cb_visual_debugger, qos_profile=5,
-                callback_group=self.callback_group)
-        # Message to show in console
-        self.visual_debugger_msg = "" 
-        # Type of message "info, err, warn"
-        self.visual_debugger_type = "INFO" 
-        # Timer with time to show message
-        self.visual_debugger_timer = self._VISUAL_DEBUGGER_TIME 
-
         # ---------------------------------------------------------------------  
-
-    def cb_visual_debugger(self, msg):
-
-        self.visual_debugger_msg = msg.data
-        self.visual_debugger_type = msg.type
-        time.sleep(self.visual_debugger_timer)
-        self.visual_debugger_msg = ""
-        self.visual_debugger_type = "INFO"
 
     def cb_cams_status(self):
 
@@ -164,6 +158,7 @@ class MappingNode(Node):
         Args:
         Returns:
         """
+        
         img = self.cameras_supervisor.camera_handlers[cam_label].image
         if img is not None:
             img = self.img_optimizer.optimize(
@@ -190,9 +185,7 @@ class MappingNode(Node):
                 self.cameras_supervisor.camera_handlers.values()))
         if not self.stitcher is None and self._LOCAL_RUN: 
             imgs_dic["S"] = self.img_stitch(imgs_dic) 
-        if self.visual_debugger_msg:
-            imgs_dic["C"] = cv2.putText(imgs_dic["C"] , self.visual_debugger_msg, (10, 25),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 1)
+        self.draw_visual_debugger(img=imgs_dic["C"])
         show_local_gui(
             imgs_dic=imgs_dic, 
             win_name="LOCAL_VIDEO_STREAMING")
