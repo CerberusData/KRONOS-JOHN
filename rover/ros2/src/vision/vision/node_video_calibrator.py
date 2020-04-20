@@ -9,6 +9,7 @@ Code Information:
 
 # =============================================================================
 import rclpy
+import time
 import cv2
 import os
 
@@ -18,11 +19,16 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
 from vision.intrinsic.intrinsic_utils import read_intrinsic_params
+
 from vision.extrinsic.extrinsic_utils import read_extrinsic_params
+from vision.extrinsic.extrinsic_utils import find_projection
+
 from vision.utils.vision_utils import flat_matrix_for_service
+from vision.utils.vision_utils import printlog
 
 from usr_msg.msg import Intrinsic
 from usr_msg.msg import CamerasStatus
+from usr_msg.msg import VisualMessage
 from std_msgs.msg import String
 
 # =============================================================================
@@ -82,6 +88,8 @@ class CalibratorPublishers(Node):
         self.show_calibration_result = False # Enable/Disable calibration drawings
         self.calibration_image = None # Result image for calibrations
 
+        print(self._flag_image, flush=True)
+
         # ---------------------------------------------------------------------
         # Read intrinsic parameters from file
         self.load_intrinsic()
@@ -89,8 +97,8 @@ class CalibratorPublishers(Node):
         # ---------------------------------------------------------------------
         # Topics publishers
         self.pb_visual_debugger= self.create_publisher(
-            String, 'video_streaming/visual_debugger', 5)
-        self.visual_debugger_msg = String()
+            VisualMessage, 'video_streaming/visual_debugger', 5)
+        self.visual_debugger_msg = VisualMessage()
 
         # ---------------------------------------------------------------------
         # Topics Subscribers
@@ -112,10 +120,59 @@ class CalibratorPublishers(Node):
         Returns:
         """  
         
+        # ---------------------------------------------------------------------
         cam_label = msg.data
+        self.pub_log(msg="Calibrating camera {} ...".format(cam_label))    
+        self.calibrating_stat = True
 
-        self.visual_debugger_msg.data = "calibrating camera {}".format(cam_label)
-        self.pb_visual_debugger.publish(self.visual_debugger_msg)
+        # ---------------------------------------------------------------------
+        # Check if camera label exits
+        if cam_label not in self.extrinsic.keys():
+            printlog(msg="{} is not a camera label available in extrinsics {}".format(
+                cam_label, self.extrinsic.keys()), msg_type="ERROR")
+            return 
+
+        # If runing on local launch load a default picture to test calibration
+        if self._LOCAL_RUN:
+            print(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                "calibration_default.jpg"), flush=True) 
+            cam_img = cv2.imread(
+                os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                "calibration_default.jpg"), int(cv2.IMREAD_UNCHANGED))
+        else:
+            # TODO: Get image from topic, for now with simulation image
+            cam_img = None
+            
+        try:
+            # If exits continue calibration process
+            if self.intrinsic["camera_matrix"] is not None:
+                for i in range(self._VISION_CAL_TRIES):                    
+                    if self.calibrate_distances(
+                        img_src=cam_img, camera_label=cam_label): 
+                        break 
+                    printlog(msg="Retrying camera {} calibration # {}".format(
+                        cam_label, i+1), msg_type="WARN")
+                    time.sleep(1) # Wait t seconds to try again camera calibration
+                printlog(msg="Camera {} no calibrated".format(
+                        cam_label), msg_type="ERROR")
+            else:
+                printlog(msg="No intrinsic calibration to perform extrinsic", 
+                    msg_type="ERROR")
+
+        except OSError as err:
+            printlog(msg="OS error: {0}".format(err), msg_type="ERROR")
+        except ValueError:
+            printlog(msg="ValueError raised", msg_type="ERROR")
+        except Exception as e:
+            printlog(msg="Exception error: {}".format(e), 
+                msg_type="ERROR")
+        except:
+            printlog(msg="Unexpected error: {}".format(
+                sys.exc_info()[0]), msg_type="ERROR")
+            raise
+
+        # ---------------------------------------------------------------------
+        self.calibrating_stat = False
 
     def cb_intrinsic_params(self):
 
@@ -172,7 +229,107 @@ class CalibratorPublishers(Node):
             self.get_logger().info(
                 "Extrinsic configuration loaded for {} camera".format(cam_key))
             self.extrinsic[cam_key] = cam_extrinsic
-            
+
+    def pub_log(self, msg, msg_type="INFO", prompt=True):
+        
+        self.visual_debugger_msg.data = msg 
+        self.visual_debugger_msg.type = msg_type
+        self.pb_visual_debugger.publish(self.visual_debugger_msg)
+        if prompt:
+            printlog(msg=self.visual_debugger_msg.data, msg_type=msg_type)
+        
+    def calibrate_distances(self, img_src, camera_label):
+
+        # Perform extrinsic calibration 
+        ext_cal = find_projection(img_src=img_src.copy(), 
+            mtx=self.intrinsic["camera_matrix"], 
+            dist=self.intrinsic["distortion_coefficients"], 
+            PATTERN_THRESH_TOP=self._PATTERN_THRESH_TOP, 
+            PATTERN_THRESH_BOTTOM=self._PATTERN_THRESH_BOTTOM,
+            PATTERN_ITERATION_TRIES=self._PATTERN_ITERATION_TRIES,
+            HSVI=self._HSVI, HSVS=self._HSVS)
+        
+        return False        
+
+        if ext_cal is not None:
+            try: 
+                # Calculate rotation matrix from surface
+                M = get_rot_matrix(p1=ext_cal["p1"], p2=ext_cal["p2"], p3=ext_cal["p3"], 
+                    p4=ext_cal["p4"], UNWARPED_SIZE=self._UNWARPED_SIZE) 
+
+                # Calculate the pixel relation in 'X' and 'Y' from surface 
+                # projection and Rotation Matrix
+                surf_relation = return_pixel_relation(
+                    img_src=img_src.copy(), M=M, mtx=self.mtx, dist=self.dist, 
+                    p1=ext_cal["p1"], p2=ext_cal["p2"], p3=ext_cal["p3"], p4=ext_cal["p4"], 
+                    Left_Line=ext_cal["Left_Line"], Right_Line=ext_cal["Right_Line"], 
+                    Hy=ext_cal["Hy"], Dx_lines=self._PATTERN_HOZ,  Dy_lines=self._PATTERN_VER, 
+                    UNWARPED_SIZE=self._UNWARPED_SIZE, HSVI=self._HSVI, HSVS=self._HSVS,
+                    PATTERN_ITERATION_TRIES=self._PATTERN_ITERATION_TRIES)
+                if not surf_relation:
+                    raise RuntimeError("No pattern found correctly")
+                    return False
+
+                # Save mono vision camera measurement parameters in file
+                mono_file_name = 'Extrinsic_{}_{}_{}.yaml'.format(
+                    self._VIDEO_SIZE[0], self._VIDEO_SIZE[1], camera_label)
+                mono_abs_path = os.path.join(self.calibration_folder, mono_file_name)
+                mono_vision_params={
+                    "M": M.tolist(),
+                    "vp": ext_cal["vp"].tolist(), 
+                    "p1": ext_cal["p1"], 
+                    "p2": ext_cal["p2"], 
+                    "p3": ext_cal["p3"], 
+                    "p4": ext_cal["p4"], 
+                    "dead_view": surf_relation["dead_view_distance"],
+                    "ppmx": surf_relation["ppmx"], 
+                    "ppmy": surf_relation["ppmy"], 
+                    "unwarped_size": self._UNWARPED_SIZE,
+                    "image_size": self._VIDEO_SIZE
+                    }
+                self.save_params_and_test(mono_abs_path=mono_abs_path, 
+                    data=mono_vision_params)
+        
+                # Report successfully calibration
+                self.debugger_pilots_console("Calibracion para la camara {} exitosa!".format(camera_label))
+                self._calibrate_done_pub.publish(True)
+
+                # Set calibration image and show it to pilots console
+                mask_pro, mask_src = create_ruler_mask(flag_img=self._flag_image, 
+                    mono_params=mono_vision_params)
+                self.calibration_image = overlay_image(l_img=img_src.copy(), 
+                    s_img=mask_src, pos=(0, 0), transparency=1)
+                calibration_image = self.calibration_image.copy()
+
+                # overlay with rules in wrapped perspective
+                cal_img_pro = cv2.warpPerspective(src=self.calibration_image, 
+                    M=M, dsize=self._UNWARPED_SIZE)
+                ruler_projected_orig = overlay_image(l_img=cal_img_pro, 
+                    s_img=mask_pro, pos=(0, 0), transparency=1)
+                ruler_projected = cv2.resize(src=cv2.rotate(src=ruler_projected_orig, 
+                    rotateCode=cv2.ROTATE_90_CLOCKWISE), dsize=self._VIDEO_SIZE)
+
+                # Show calibration results
+                self.show_calibration_result = True
+                self.calibration_image = ruler_projected
+                time.sleep(self._SHOW_TIME)
+                self.calibration_image = calibration_image
+                time.sleep(self._SHOW_TIME)
+                self.show_calibration_result = False
+                return True
+
+            except Exception as e:
+                self.debugger_pilots_console(
+                    "No se pudo encontrar el patron de calibracion! ({})".format(e),
+                    log_type="err")
+                traceback.print_exc()
+                return False
+
+        else:
+            self.debugger_pilots_console("No se pudo encontrar el patron de calibracion!", 
+                log_type="err")
+            return False
+
 # =============================================================================
 def main(args=None):
 
@@ -190,7 +347,6 @@ def main(args=None):
     # executor is shutdown. Callbacks will be executed by the provided 
     # executor.
     rclpy.spin(calibrator_publishers, executor)
-
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
