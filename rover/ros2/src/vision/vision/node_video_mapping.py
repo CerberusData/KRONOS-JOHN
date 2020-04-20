@@ -65,6 +65,7 @@ class MappingNode(Node,
             default=os.path.dirname(os.path.abspath(__file__))))
 
         self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0))
+        self._FR_STREAMING_OPTIMIZER = int(os.getenv(key="FR_STREAMING_OPTIMIZER", default=0))
 
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
@@ -89,7 +90,7 @@ class MappingNode(Node,
         # Start cameras handler with configuration
         self.cameras_supervisor = CamerasSupervisor(cams_config=self.cams_config)
         cams_status = self.cameras_supervisor.get_cameras_status()
-        self.img_optimizer = streaming_optimizer()
+        self.img_optimizer = streaming_optimizer() 
         self.img_bridge = CvBridge()
         
         # Stitcher object
@@ -160,7 +161,7 @@ class MappingNode(Node,
         """
         
         img = self.cameras_supervisor.camera_handlers[cam_label].image
-        if img is not None:
+        if img is not None and self._FR_STREAMING_OPTIMIZER:
             img = self.img_optimizer.optimize(
                 img=img, cam_label=cam_label)
 
@@ -245,15 +246,15 @@ class streaming_optimizer(object):
         if self.inactive_timer < self.IDLE_TIME + 1:
             self.inactive_timer = time.time() - self._time_tick
 
-        # if cam_label is not None:  
-        #     hfc = 0.2 if img.shape[1] < 500 else 0.4
-        #     org = (int(img.shape[1]*hfc), int(img.shape[0]*0.90))      
-        #     img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
-        #         fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
-        #         color=(0, 0, 0), thickness = 4, lineType = cv2.LINE_AA)
-        #     img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
-        #         fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
-        #         color=(0, 255, 255), thickness = 1, lineType = cv2.LINE_AA)
+        if cam_label is not None:  
+            hfc = 0.2 if img.shape[1] < 500 else 0.4
+            org = (int(img.shape[1]*hfc), int(img.shape[0]*0.90))      
+            img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
+                color=(0, 0, 0), thickness = 4, lineType = cv2.LINE_AA)
+            img = cv2.putText(img=img, text="CAMERA_{}".format(cam_label), org = org, 
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.9, 
+                color=(0, 255, 255), thickness = 1, lineType = cv2.LINE_AA)
 
         elif self.inactive_timer>=self.IDLE_TIME:
             img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
