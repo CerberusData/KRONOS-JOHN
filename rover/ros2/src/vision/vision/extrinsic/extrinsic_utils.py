@@ -9,9 +9,13 @@ Code Information:
 # =============================================================================
 import numpy as np
 import yaml
+import math
+import cv2
 import os
 
 from vision.utils.vision_utils import printlog
+from vision.utils.vision_utils import dotline
+from vision.utils.vision_utils import line_intersection
 
 # =============================================================================
 def read_extrinsic_params(CONF_PATH, FILE_NAME):
@@ -34,7 +38,8 @@ def read_extrinsic_params(CONF_PATH, FILE_NAME):
     return data_loaded
 
 def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTOM, 
-    HSVI, HSVS, PATTERN_FILTER_KERNEL=1, PATTERN_ITERATION_TRIES=20):
+    HSVI, HSVS, PATTERN_FILTER_KERNEL=1, PATTERN_ITERATION_TRIES=20, 
+    LOCAL_CALIBRATION=False):
     """ Calculates a projection of a surface on floor from an images with a
         lines pattern 
     Args:
@@ -93,16 +98,24 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
             SI_T = HSVI["S"]-5*(iteration-10) ; SS_T = HSVS["S"]
             VI_T = VI_T                       ; VS_T = HSVS["V"]
 
-        img_scr_hsv = cv2.cvtColor(src=img_scr_blur, code=cv2.COLOR_BGR2HSV)
-        img_scr_hsv = cv2.inRange(src=img_scr_hsv, lowerb=(HI_T, SI_T, VI_T), upperb=(HS_T, SS_T, VS_T))
-        img_scr_hsv = cv2.dilate(src=img_scr_hsv, kernel=np.ones((3, 3), np.uint8), iterations=1)
+        img_scr_hsv = cv2.cvtColor(
+            src=img_scr_blur, 
+            code=int(cv2.COLOR_BGR2HSV))
+        img_scr_hsv = cv2.inRange(
+            src=img_scr_hsv, 
+            lowerb=(HI_T, SI_T, VI_T), 
+            upperb=(HS_T, SS_T, VS_T))
+        img_scr_hsv = cv2.dilate(
+            src=img_scr_hsv, 
+            kernel=np.ones((3, 3), np.uint8), 
+            iterations=1)
 
         # Contours detection and classification
         # https://docs.opencv.org/3.3.1/dd/d49/tutorial_py_contour_features.html
-        _, contours, _ = cv2.findContours(image=img_scr_hsv, 
-            mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
-        
-        img_scr_hsv_gui = cv2.cvtColor(src=img_scr_hsv, code=cv2.COLOR_GRAY2BGR) # Image to debug and test
+        contours, hierarchy = cv2.findContours(image=img_scr_hsv, 
+            mode=int(cv2.RETR_TREE), method=int(cv2.CHAIN_APPROX_SIMPLE))
+    
+        img_scr_hsv_gui = cv2.cvtColor(src=img_scr_hsv, code=int(cv2.COLOR_GRAY2BGR)) # Image to debug and test
         img_scr_hsv = np.zeros((IMG_SIZE[1], IMG_SIZE[0], 1), np.uint8) # Mask to draw valid  pattern contours 
 
         # Check first if a solid pattern was detected
@@ -146,7 +159,7 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
             if ((solidity > 0.12 and solidity < 0.25)):
                 solid_pattern = True
                 contours = [cnt]
-                printlog(msg="Complete partern found", msg_type="OKGREEN")
+                printlog(msg="Complete partern found", msg_type="INFO")
                 cv2.drawContours(image=img_scr_hsv, contours=[cnt], contourIdx=-1, 
                     color=(255, 255, 255), thickness=-1)
                 cv2.drawContours(image=img_scr_hsv_gui, contours=[cnt], contourIdx=-1, 
@@ -174,7 +187,8 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
                     contourIdx=-1, color=(0, 0, 255), thickness=-1)
         
         if not solid_pattern:
-            printlog(msg="No pattern found in iteration {}".format(iteration), msg_type="ERROR")
+            printlog(msg="No pattern found in iteration {}".format(iteration), 
+                msg_type="WARN")
         iteration += 1# Increment iteration
 
     if not solid_pattern:
@@ -219,7 +233,7 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
             except:
                 pass
     else:
-        print("[ERROR][EXTRINSIC_CALIBRATION]: No lines found in hough detection")
+        printlog(msg="No lines found in hough detection", msg_type="ERROR")
     if LOCAL_CALIBRATION: 
         cv2.imshow(LOCAL_WIN_NAME, img_scr_undistort)
         cv2.waitKey(1000)
@@ -229,16 +243,16 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
     except Exception as e:
         singular = (Lhs.shape[0] == Lhs.shape[1] and np.linalg.matrix_rank(Lhs) == Lhs.shape[0])
         if not singular:
-            print("[CRITICAL_ERROR][EXTRINSIC_CALIBRATION]: singular matrix in lines projections")
+            printlog(msg="singular matrix in lines projections", msg_type="ERROR")
         else:
-            print("[CRITICAL_ERROR][EXTRINSIC_CALIBRATION]: {}".format(e))
+            printlog(msg="{}".format(e), msg_type="ERROR")
         if LOCAL_CALIBRATION: 
             cv2.waitKey(1000)
             cv2.destroyWindow(LOCAL_WIN_NAME)
         return None
 
     # -------------------------------------------------------------------------
-    print("[INFO][EXTRINSIC_CALIBRATION]: Calculating projection")
+    printlog(msg="Calculating projection")
 
     # Calculate the floor reflected area points from aperture angle and 
     # thresholds from vanish point 
@@ -319,12 +333,13 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
         cv2.waitKey(1000)
 
     if not len(TLI) or not len(LLI) or not len(TRI) or not len(LRI):
-        print("[CRITICAL_ERROR][EXTRINSIC_CALIBRATION]: calibration has failed for lines intersections")
+        printlog(msg="calibration has failed for lines intersections", msg_type="ERROR")
         if LOCAL_CALIBRATION: 
             cv2.waitKey(1000)
             cv2.destroyWindow(LOCAL_WIN_NAME)
         return None
-    else: print("[INFO][EXTRINSIC_CALIBRATION]: Both calibration pattern's sides found")
+    else: 
+        printlog(msg="Both calibration pattern's sides found", msg_type="INFO")
 
     # Compute the average of superior and inferior intersections for left and 
     # right lines
@@ -353,7 +368,7 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
             new_TLI.append(TLI_aux)
 
     if not len(new_LRI) or not len(new_LLI) or not len(new_TRI) or not len(new_TLI):
-        print("[CRITICAL_ERROR][EXTRINSIC_CALIBRATION]: No intersections found in left or right line")  
+        printlog(msg="No intersections found in left or right line", msg_type="ERROR")
 
     if not len(new_LLI): new_LLI = LLI
     if not len(new_LRI): new_LRI = LRI
@@ -437,7 +452,7 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
         cv2.waitKey(1000)
 
     # Print results
-    print("[INFO][EXTRINSIC_CALIBRATION]: VP:({}, {}), P1:{}, P2:{}, P3:{}, P4:{}".format(
+    printlog(msg="VP:({}, {}), P1:{}, P2:{}, P3:{}, P4:{}".format(
         int(vp[0][0]), int(vp[1][0]), p1, p2, p3, p4))  
 
     extrinsic_calibration={"vp":vp, "p1":p1, "p2":p2, "p3":p3, "p4":p4, "Hy":Hy,
@@ -447,7 +462,457 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
     if LOCAL_CALIBRATION: 
         cv2.waitKey(1000)
         cv2.destroyWindow(LOCAL_WIN_NAME)
+
     return extrinsic_calibration
+
+def draw_surface_projection(img, vanishing_point, bottom, top, Bottom_R, 
+    Bottom_L, Top_R, Top_L, IMG_SIZE):
+    """ Draws a projection of a surface in the floor from a set of images with 
+        line pattern 
+    Args:
+        img: `cv2.math` image to be analyzed
+        vanishing_point: `tuple` coordinate point of the vanishing point
+        bottom: `int` bottom line projection 
+        top: `int` top line projection
+        Bottom_R: `int` bottom Right Polygon vertices's
+        Bottom_L: `int` bottom left Polygon vertices's
+        Top_R: `int` Top Right Polygon vertices's 
+        Top_L: `int` Top left Polygon vertices's
+        IMG_SIZE: `tuple` original video streaming size
+    Returns:
+        img_lines: `cv2.math` The function circle draws a simple or filled circle 
+            with a given center and radius.
+    """
+
+    # Take a copy of image input variable
+    img_lines= img.copy() 
+
+    # Draw the upper and lower boundaries in image (horizons)
+    cv2.line(img_lines, (0, bottom), (IMG_SIZE[0], bottom), [0, 0, 255], 2)
+    cv2.line(img_lines, (0, top)   , (IMG_SIZE[0], top)   , [0, 0, 255], 2)
+
+    # Draw the geometric projection
+    cv2.line(img_lines, (Top_L, top)      , (Top_R, top)      , [255, 0, 0], 2)
+    cv2.line(img_lines, (Top_R, top)      , (Bottom_R,bottom ), [255, 0, 0], 2)
+    cv2.line(img_lines, (Bottom_R,bottom ), (Bottom_L,bottom ), [255, 0, 0], 2)
+    cv2.line(img_lines, (Bottom_L,bottom ), (Top_L, top)      , [255, 0, 0], 2)
+
+    # Draw center lines
+    cv2.line(img_lines, (0, int(round(img_lines.shape[0]/2))), (img_lines.shape[1], int(round(img_lines.shape[0]/2))), [0, 255, 255], 1)
+    cv2.line(img_lines, (int(round(img_lines.shape[1]/2)), 0), (int(round(img_lines.shape[1]/2)), img_lines.shape[0]), [0, 255, 255], 1)
+
+    # Draw corners and points of interest of geometric projection
+    img_lines = cv2.circle(img_lines, (vanishing_point[0][0], vanishing_point[1][0]) , 5, (0, 255, 0), -1)
+    img_lines = cv2.circle(img_lines, (Bottom_L, bottom)    , 5, (255, 255, 0), -1)
+    img_lines = cv2.circle(img_lines, (Bottom_R, bottom)     , 5, (255, 255, 0), -1)
+    img_lines = cv2.circle(img_lines, (Top_L   ,top)        , 5, (255, 255, 0), -1)
+    img_lines = cv2.circle(img_lines, (Top_R   ,top)        , 5, (255, 255, 0), -1)
+
+    return img_lines
+
+def get_rot_matrix(p1, p2 , p3 , p4, UNWARPED_SIZE):
+    """     
+        Calculates rotation matrix from points
+    Args:
+        p1: `tuple` First point of Coordinates of quadrangle vertices in the source image
+        p2: `tuple` Second point of Coordinates of quadrangle vertices in the source image
+        p3: `tuple` Third point of Coordinates of quadrangle vertices in the source image
+        p4: `tuple` Fourth point of Coordinates of quadrangle vertices in the source image
+        UNWARPED_SIZE: `tuple` surface projection space size
+    Returns:
+        M: `numpy.darray` The matrix for a perspective transform
+    """
+
+    # Calculate rotation matrix from surface from original source image to projected four points surfaces
+    src_points = np.array([p1, p2, p3, p4], dtype=np.float32) 
+    dst_points = np.array([
+        [0, 0],                                 # p1
+        [UNWARPED_SIZE[0], 0],                  # p2
+        [UNWARPED_SIZE[0], UNWARPED_SIZE[1]],   # p3
+        [0, UNWARPED_SIZE[1]]],                 # p4
+        dtype=np.float32)
+    M = cv2.getPerspectiveTransform(src_points, dst_points)
+    
+    return M
+
+def pixel_relation(img_src, M, mtx, dist, p1, p2 , p3 , p4, Left_Line, 
+    Right_Line, Hy, Dx_lines, Dy_lines, UNWARPED_SIZE, HSVI, HSVS, 
+    PATTERN_ITERATION_TRIES=20, LOCAL_CALIBRATION=False):
+    """  Calculates the pixel relation in 'X' and 'Y' axis from surface 
+         projection space and Rotation Matrix and others
+    Args:
+        img_src: `cv2.mat` original image source
+        M: `cv2.math` rotation matrix from original image to surface
+                      projection space
+        mtx: `numpy.narray` camera's distortion matrix
+        dist: `numpy.narray` camera's distortion vector
+        p1: `tuple` point 1 of quadrangle vertices's Coordinates in source image
+        p2: `tuple` point 2 of quadrangle vertices's Coordinates in source image
+        p3: `tuple` point 3 of quadrangle vertices's Coordinates in source image
+        p4: `tuple` point 4 of quadrangle vertices's Coordinates in source image
+        Left_Line: `tuple` left line of surface projection space
+        Right_Line: `tuple` right line of surface projection space
+        Hy: `int` Y axis cordinate of horizontal line in projection pattern image
+        Dx_lines: `float` Distances between vertical lines in pattern
+        Dy_lines: `float` Distance to horizontal line in the pattern
+        UNWARPED_SIZE: `tuple` Surface projection space size
+        HSVI: `dictionary` HSV color space inferior threshold for color filtering
+        HSVS: `dictionary` HSV color space superior threshold for color filtering
+        PATTERN_ITERATION_TRIES: `int` number of iterations for hsv filtering
+    Returns:
+        extrinsic_relation: `dictionary`or`None`
+            ppmx: `float` pixel per meter relation in X axis [pix/m]
+            ppmy: `float` pixel per meter relation in Y axis [pix/m]
+            dead_view_distance: `float` robots dead view distance
+            img_result: `cv2.mat` image of surface projection space with information
+    """
+
+    printlog(msg="Calculating pixel relation parameters")
+    IMG_SIZE = (img_src.shape[1], img_src.shape[0])
+    LOCAL_WIN_NAME="extrinsic_calibration"
+
+    # -------------------------------------------------------------------------
+    # Get intersection of geometric projection lines 
+    inters_L1 = line_intersection(((0, 0), (0, IMG_SIZE[1])), 
+                                 ((p1[0], p1[1]), (p4[0], p4[1])))
+
+    inters_L2 = line_intersection(((0, 0), (0, IMG_SIZE[1])), 
+                                  ((p4[0], p4[1]), (p3[0], p3[1])))
+
+    inters_R1 = line_intersection(((IMG_SIZE[0], 0) ,
+                                   (IMG_SIZE[0], IMG_SIZE[1])), 
+                                  ((p2[0],p2[1]),(p3[0],p3[1])))
+
+    inters_R2 = line_intersection(((IMG_SIZE[0], 0),
+                                   (IMG_SIZE[0], IMG_SIZE[1])), 
+                                  ((p4[0], p4[1]), (p3[0], p3[1])))
+
+    # Get projection of intersection of geometric projection lines
+    inters_L1 = get_projection_point_dst(coords_src=(inters_L1[0], inters_L1[1], 1), M=M)
+    inters_L2 = get_projection_point_dst(coords_src=(inters_L2[0], inters_L2[1], 1), M=M)
+    inters_R1 = get_projection_point_dst(coords_src=(inters_R1[0], inters_R1[1], 1), M=M)
+    inters_R2 = get_projection_point_dst(coords_src=(inters_R2[0], inters_R2[1], 1), M=M)
+
+    # Calculate camera position with intersection between previous lines
+    cam_view_coord = line_intersection((inters_L1, inters_L2), 
+                                       (inters_R1, inters_R2))
+    cam_view_pix = abs(cam_view_coord[1]-UNWARPED_SIZE[1])
+
+    # -------------------------------------------------------------------------
+    # X axis pixels relation [pixels/m]
+    Left_Line_proj_P1 = get_projection_point_dst(coords_src=(Left_Line[0][0], Left_Line[0][1], 1), M=M)
+    Left_Line_proj_P2 = get_projection_point_dst(coords_src=(Left_Line[1][0], Left_Line[1][1], 1), M=M)
+    Left_Line_proj = (Left_Line_proj_P1, Left_Line_proj_P2)
+
+    Right_Line_proj_P1 = get_projection_point_dst(coords_src=(Right_Line[0][0], Right_Line[0][1], 1), M=M)
+    Right_Line_proj_P2 = get_projection_point_dst(coords_src=(Right_Line[1][0], Right_Line[1][1], 1), M=M)
+    Right_Line_proj = (Right_Line_proj_P1, Right_Line_proj_P2)
+
+    ppmx = abs(Right_Line_proj[0][0] - Left_Line_proj[0][0])/Dx_lines
+    if not ppmx: 
+        printlog(msg="No 'X' axis pixel relation found", msg_type="ERROR")
+        if LOCAL_CALIBRATION: 
+            cv2.waitKey(1000)
+            cv2.destroyWindow(LOCAL_WIN_NAME)
+        return None
+
+    # -------------------------------------------------------------------------
+    # Y axis pixels relation [pixels/m]
+
+    # Get perspective transformation
+    img_proj = cv2.warpPerspective(src=cv2.undistort(
+        src=img_src, cameraMatrix=mtx, distCoeffs=dist), 
+        M=M, dsize=(UNWARPED_SIZE[0], UNWARPED_SIZE[1]))
+    if LOCAL_CALIBRATION: cv2.imshow(LOCAL_WIN_NAME, img_proj); cv2.waitKey(500)
+
+    # Apply Gaussian filter to image
+    filt_kernel_size = 3
+    img_proj = cv2.GaussianBlur(src=img_proj, 
+        ksize=(filt_kernel_size, filt_kernel_size), sigmaX=0)
+    if LOCAL_CALIBRATION: cv2.imshow(LOCAL_WIN_NAME, img_proj); cv2.waitKey(500)
+
+    # Delete limits of no interest
+    img_proj_hsv = cv2.cvtColor(src=img_proj, code=cv2.COLOR_BGR2HSV) # Change color space to HSV
+    img_proj_hsv[0: UNWARPED_SIZE[1], 0:Left_Line_proj_P1[0] - 5, :] = 0
+    img_proj_hsv[0: UNWARPED_SIZE[1], Right_Line_proj_P2[0] + 5:UNWARPED_SIZE[0], :] = 0
+    img_proj_hsv[0: int(UNWARPED_SIZE[1]*0.5), 0:UNWARPED_SIZE[0], :] = 0
+    if LOCAL_CALIBRATION: cv2.imshow(LOCAL_WIN_NAME, img_proj_hsv); cv2.waitKey(500)
+
+    # Calculated horizons
+    H1 = Hy; H2 = 0; H3 = 0
+    if not Hy:
+        printlog(msg="Hy=0, No pattern's horizontal component found in projection calculation", 
+            msg_type="WARN")
+
+    iterations = 0; lines = None; ppmy=0
+    while not ppmy and iterations<PATTERN_ITERATION_TRIES and (not H2 or not H3):
+
+        # Apply color segmentation
+        if iterations <= int(PATTERN_ITERATION_TRIES*0.5):
+            img_proj_thresh = cv2.inRange(src=img_proj_hsv, 
+                lowerb=(HSVI["H"], HSVI["S"] - 2*iterations, HSVI["V"]- 15*iterations), 
+                upperb=(HSVS["H"], HSVS["S"], HSVS["V"]))
+        else:
+            img_proj_thresh = cv2.inRange(src=img_proj_hsv, 
+                lowerb=(HSVI["H"], HSVI["S"] - 5*iterations, 0), 
+                upperb=(HSVS["H"], HSVS["S"], HSVS["V"]))
+        
+        # Apply erosion to delete small particles
+        kernel = np.ones((3, 3),np.uint8)
+        img_proj_thresh = cv2.erode(src=img_proj_thresh, 
+            kernel=kernel, iterations = 1)
+
+        # Apply canny to find boundaries
+        img_scr_edges = cv2.Canny(img_proj_thresh, 0, 255)  # Get canny
+        
+        # ---------------------------------------------------------------------
+        # Find Y Axis relation with canny and hough lines
+        lines = cv2.HoughLinesP(image=img_scr_edges, rho=0.2, theta=np.pi/180., 
+            threshold=2, lines=50, minLineLength=5)
+
+        Hy_ave = []
+        if not isinstance(lines, type(None)):
+            for line in lines:
+                for x1, y1, x2, y2 in line:
+                    angle = math.atan2(y2 - y1, x2 - x1) * (180.0 / math.pi)
+                        # For horizontal lines
+                    if int(angle) < 60 and int(angle) > -60:
+                        # cv2.line(img_proj, (x1, y1), (x2, y2), (255, 179, 255), 2)
+                        Hy_ave.append(max(y1, y2))
+                        if LOCAL_CALIBRATION:
+                            cv2.line(img_proj, (x1, y1), (x2, y2), (0, 255, 255), 2)
+                    elif LOCAL_CALIBRATION:
+                        cv2.line(img_proj, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+        cv2.putText(img_proj, "x", (cam_view_coord[0], Hy), 
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2, cv2.LINE_AA)
+
+        Hy_print = 20
+        if Hy > 0:
+            cv2.putText(img_proj, "Hy:{}[pix]".format(Hy), (10, Hy_print), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1, cv2.LINE_AA)
+            Hy_print += 18
+
+        if len(Hy_ave):
+            new_Hy = int(max(Hy_ave))
+            cv2.putText(img_proj, "x", (cam_view_coord[0] + 10 , new_Hy), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2, cv2.LINE_AA)
+            H2 = new_Hy
+            if new_Hy > 0:
+                cv2.putText(img_proj, "Hy:{}[pix]".format(new_Hy), (10, Hy_print), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 255), 1, cv2.LINE_AA)
+                Hy_print += 18
+            if new_Hy > Hy:
+                Hy = new_Hy
+
+        # ---------------------------------------------------------------------
+        # Find Y Axis relation with white pixels in binary mask
+        xc = cam_view_coord[0]
+        idx = UNWARPED_SIZE[1]
+        while idx >= 0:
+            idx -= 1
+            if img_proj_thresh[idx - 1, xc] != 0:
+                break
+
+        if LOCAL_CALIBRATION:
+            cv2.putText(img_proj, "x", (cam_view_coord[0] -10 , idx), 
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2, cv2.LINE_AA)
+            if idx > 0:
+                cv2.putText(img_proj, "Hy:{}[pix]".format(idx), (10, Hy_print), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 0), 1, cv2.LINE_AA)
+
+        H3 = idx if idx>0 else 0
+        if idx > Hy: Hy = idx
+
+        if Hy > int(UNWARPED_SIZE[1]*0.1) and Hy < int(UNWARPED_SIZE[1]*0.9) and ( H2 or H3):
+            if Hy == H1 and (Hy > H2 or Hy > H3):
+                Hy = max(H2, H3)
+                if abs(H2 - H3) < 20:
+                    Hy = int(np.mean(np.array([H2, H3])))
+            # Calculate y axis pixel relation
+            ppmy = (UNWARPED_SIZE[1] + cam_view_pix - Hy) / Dy_lines
+            if LOCAL_CALIBRATION: cv2.imshow(LOCAL_WIN_NAME, img_proj); cv2.waitKey(500)
+            break
+
+        iterations += 1
+        printlog(msg="\n\tIteration {} - Warning: No relation found / H1 = {} / H2 = {} / H3 = {} ".format(
+            iterations, H1, H2, H3), msg_type="INFO")
+        if not H2: printlog(msg="\t\tH2 = 0 - No pattern's horizontal component found for hough lines", msg_type="INFO")
+        if not H3: printlog(msg="\t\tH3 = 0 - No pattern's horizontal component found by pixels", msg_type="INFO")
+        if LOCAL_CALIBRATION: cv2.imshow(LOCAL_WIN_NAME, img_proj); cv2.waitKey(500)
+
+    if not ppmy:
+        printlog(msg="Horizontal line in pattern no found, check light conditions and try again", msg_type="ERROR")
+        if LOCAL_CALIBRATION: 
+            cv2.waitKey(1000)
+            cv2.destroyWindow(LOCAL_WIN_NAME)
+        return None
+
+    # -------------------------------------------------------------------------
+    # Calculation of dead view distance
+    if ppmy: dead_view_distance = cam_view_pix/ppmy # bots No view area in meters [m]
+
+    # Print some information of pixel relations
+    printlog(msg="ppx:{}[pix/m], ppy:{}[pix/m], dead_view:{}[m], Hy:{}".format(
+        round(ppmx, 2), round(ppmy, 2), round(dead_view_distance, 2), int(Hy)), msg_type="INFO")
+
+    extrinsic_relation = {"ppmx": ppmx, "ppmy": ppmy, 
+        "dead_view_distance":dead_view_distance, "img_result": img_proj}
+
+    if LOCAL_CALIBRATION: 
+        cv2.waitKey(1000)
+        cv2.destroyWindow(LOCAL_WIN_NAME)
+    return extrinsic_relation
+
+def create_ruler_mask(flag_img, mono_params, fontScale=0.7):
+    """ creates mask of rulers for original and surface projection spaces to 
+        overlay later 
+    Args:
+        flag_img: `cv2.math` flag image to overlay 4m point
+        mono_params: `dictionary` with mono vision calibration parameters
+            vp: `tuple`  vanishing point coordinate in original image space
+            p1: `tuple` point 1 of quadrangle vertices's Coordinates in source image
+            p2: `tuple` point 2 of quadrangle vertices's Coordinates in source image
+            p3: `tuple` point 3 of quadrangle vertices's Coordinates in source image
+            p4: `tuple` point 4 of quadrangle vertices's Coordinates in source image
+            unwarped_size: `tuple` Surface projection space size
+            image_size: `tuple` original image/video size
+            ppmx: `float` pixel per meter relation in X axis [pix/m]
+            ppmy: `float` pixel per meter relation in Y axis [pix/m]
+            dead_view: `float` robots dead view distance
+            M: `numpy.darray` The matrix for a perspective transform
+    Returns:
+        Ruler_Mask: `cv2.math` Ruler mask for real world image
+        Inv_Ruler_Mask: `cv2.math` Ruler mask for real world surface projection
+    """
+
+    # Function variables
+    dead_distance = mono_params["dead_view"]
+    UNWARPED_SIZE = mono_params["unwarped_size"]
+    ORIGINAL_SIZE = mono_params["image_size"]
+    ppmy = mono_params["ppmy"]
+    p1 = mono_params["p1"]
+    p2 = mono_params["p2"]
+    p3 = mono_params["p3"]
+    p4 = mono_params["p4"]
+    M = mono_params["M"]
+    
+    # Create a mask with extra size to draw ruler
+    Ruler_Mask = np.zeros((UNWARPED_SIZE[1]+int(round(dead_distance*ppmy)), 
+        UNWARPED_SIZE[0], 4), np.uint8)
+
+    # Find robot's view cord M, SurfacesPoints
+    bot_cord = FindBotViewCord(image_size=ORIGINAL_SIZE, M=M, 
+        SurfacesPoints=(p1, p2, p3, p4))
+
+    # Draw center line according to X cord in ruler mask
+    cv2.line(img=Ruler_Mask, pt1=(bot_cord[0],0), pt2=(bot_cord[0], Ruler_Mask.shape[0]), 
+        color=(0,255,0,255), thickness=1)
+
+    # Max distance in rule given for pixel relation in Y axis
+    if ppmy: Max_distance = math.trunc(Ruler_Mask.shape[0]/ppmy)
+    else: return None, None
+    
+    # Draw tens in ruler mask
+    for i in range(0, Max_distance+1):
+        y_pos = int(round(i*ppmy))
+        cv2.line(img=Ruler_Mask, 
+            pt1=(bot_cord[0], Ruler_Mask.shape[0] - y_pos),
+            pt2=(int(round(bot_cord[0]+Ruler_Mask.shape[1]*0.10)), Ruler_Mask.shape[0] - y_pos),
+            color=(0,255,0,255), thickness=1)
+        cv2.putText(Ruler_Mask, str(i*100),
+            (int(round(bot_cord[0]+Ruler_Mask.shape[1]*0.12)),Ruler_Mask.shape[0] - int(round(y_pos+ppmy*0.02))),
+            cv2.FONT_HERSHEY_SIMPLEX, fontScale*0.5, (0, 0, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(Ruler_Mask,str(i*100),
+            (int(round(bot_cord[0]+Ruler_Mask.shape[1]*0.12)),Ruler_Mask.shape[0] - int(round(y_pos+ppmy*0.02))),
+            cv2.FONT_HERSHEY_SIMPLEX, fontScale*0.5, (255, 255, 255, 255), 1, cv2.LINE_AA)
+    
+    # Draw hundreds in ruler mask
+    for i in range(0, Max_distance*11):
+        y_pos = int(round(i*ppmy)/10)
+        cv2.line(img=Ruler_Mask,
+            pt1=(bot_cord[0], Ruler_Mask.shape[0] - y_pos),
+            pt2=(int(round(bot_cord[0]+Ruler_Mask.shape[1]*0.10))-10 , Ruler_Mask.shape[0] - y_pos),
+            color=(0,255,0,255), thickness=1)
+
+    # Draw hundreds of labels in ruler mask
+    for i in range(0, Max_distance+1):
+        y_pos = int(round((i+0.5)*ppmy))
+        cv2.line(img=Ruler_Mask,
+            pt1=(int(round(bot_cord[0]-Ruler_Mask.shape[1]*0.04)) , Ruler_Mask.shape[0] - y_pos),
+            pt2=(bot_cord[0], Ruler_Mask.shape[0] - y_pos),
+            color=(0,255,0, 255), thickness=1)
+        cv2.putText(Ruler_Mask,str(int(round((i+0.5)*100))),
+            (int(round(bot_cord[0]-Ruler_Mask.shape[1]*0.15)) , int(round(Ruler_Mask.shape[0] - int(round(y_pos+ppmy*0.07))))),
+            cv2.FONT_HERSHEY_SIMPLEX, fontScale*0.4, (0, 0, 0, 255),2,cv2.LINE_AA)
+        cv2.putText(Ruler_Mask,str(int(round((i+0.5)*100))),
+            (int(round(bot_cord[0]-Ruler_Mask.shape[1]*0.15)) , int(round(Ruler_Mask.shape[0] - int(round(y_pos+ppmy*0.07))))),
+            cv2.FONT_HERSHEY_SIMPLEX, fontScale*0.4, (200, 200, 200, 255),1,cv2.LINE_AA)
+
+    # Resize ruler mask
+    Ruler_Mask =  Ruler_Mask[ :UNWARPED_SIZE[1], :] 
+    
+    # Temporal resized ruler mask for surface projection
+    Temp_Ruler_Mask = cv2.resize(src=Ruler_Mask, 
+        dsize=(int(round(UNWARPED_SIZE[0]*2)), int(round(UNWARPED_SIZE[1]*2))), 
+        interpolation = cv2.INTER_AREA) 
+
+    # Create ruler mask for projected surface
+    Scale_Factor = 8
+    pts1 = np.float32([ [0,0],
+                        [Temp_Ruler_Mask.shape[1],0],
+                        [Temp_Ruler_Mask.shape[1],Temp_Ruler_Mask.shape[0]],
+                        [0,Temp_Ruler_Mask.shape[0]]])
+
+    p1_aux =  [x * Scale_Factor for x in p1]
+    p2_aux =  [x * Scale_Factor for x in p2]
+    p3_aux =  [x * Scale_Factor for x in p3]
+    p4_aux =  [x * Scale_Factor for x in p4]
+
+    pts2 = np.float32([p1_aux, p2_aux, p3_aux, p4_aux])
+    Temp_M = cv2.getPerspectiveTransform(src=pts1, dst=pts2)
+
+    Inv_Ruler_Mask = cv2.warpPerspective(src=Temp_Ruler_Mask, M=Temp_M, 
+        dsize=(ORIGINAL_SIZE[0]*Scale_Factor, ORIGINAL_SIZE[1]*Scale_Factor))
+    Inv_Ruler_Mask = cv2.resize(src=Inv_Ruler_Mask, 
+        dsize=ORIGINAL_SIZE, interpolation = cv2.INTER_AREA   ) 
+
+    persp_proc = 1-4/10.
+
+    y_pos = int(UNWARPED_SIZE[1]+int(round(dead_distance*ppmy)) - int(round(4*ppmy)))
+    x_pos = int(round(bot_cord[0]))
+    pos = get_projection_point_src(coords_dst=(x_pos, y_pos, 1), 
+        INVM=np.linalg.inv(M))
+    if flag_img is not None:
+        flag_img  = cv2.resize(src=flag_img, 
+            dsize=(int(flag_img.shape[1]*persp_proc), int(flag_img.shape[0]*persp_proc)), 
+            interpolation = cv2.INTER_AREA) 
+        Inv_Ruler_Mask = overlay_image(l_img=Inv_Ruler_Mask, s_img=flag_img, 
+            pos=(pos[0], pos[1]-flag_img.shape[0]), transparency=1)
+
+    return Ruler_Mask,  Inv_Ruler_Mask
+
+def get_projection_point_dst(coords_src, M):
+    """ 
+        this function returns the cords of a point in "X" and "Y" in a surface 
+        according to the Rotation Matrix surface and origin point in an original 
+        source image
+    Args:
+        coords_src: `tuple` cords in the original image
+        M: `numpy.narray` rotation matrix from geometric projection to original 
+    Returns:
+        _: return the projected point according with rotation matrix "M" and 
+        the original point 'coords_src'
+    """
+
+    # ------------------------------------------------------------
+    coords_dst=np.matmul(M, coords_src)
+    coords_dst=coords_dst/coords_dst[2]
+
+    # ------------------------------------------------------------
+    # return results
+    return (int(coords_dst[0]), int(coords_dst[1]))
+
 
 # =============================================================================
 if __name__ == '__main__':

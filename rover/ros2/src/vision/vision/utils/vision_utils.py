@@ -16,11 +16,13 @@ https://www.ximea.com/support/wiki/usb3/multiple_cameras_setup
 import numpy as np
 import datetime
 import inspect
+import math
 import cv2
 import os
 
 # =============================================================================
 # VISUAL - VISUAL - VISUAL - VISUAL - VISUAL - VISUAL - VISUAL - VISUAL - VISUA
+
 class bcolors:
     LOG = {
         "WARN": ['\033[33m', "WARN"],
@@ -39,7 +41,7 @@ class bcolors:
 def printlog(msg, msg_type="INFO", flush=True):
     org = os.path.splitext(os.path.basename(inspect.stack()[1][1]))[0].upper()
     caller = inspect.stack()[1][3].upper()
-    _str = "[{}][{}][{}]: {}".format(msg_type, org, caller, msg)
+    _str = "[{}][{}][{}]: {}".format(bcolors.LOG[msg_type][1], org, caller, msg)
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
     
 def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
@@ -107,8 +109,29 @@ def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), fontScale=0
             org = (orig[0], int(orig[1] + y_jump*idx)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
             fontScale=fontScale, color=color, thickness=1, lineType=cv2.LINE_AA)
 
+def dotline(src, p1, p2, color, thickness, Dl):
+    """  draws a doted line on input image
+    Args:
+        src: `cv2.mat` source image
+        p1: `tuple` line's first point 
+        p2: `tuple` line's second point 
+        color: `tuple` lines' color RGB [B, G, R] [int]
+        thickness: `int` lines' thickness
+        Dl: `int` distance in pixels between every point
+    Returns:
+        src: `cv2.mat` image with doted line drawn
+    """
+    # Get a number of intermediate points
+    segments = discrete_contour((p1, p2), Dl)
+
+    for segment in segments: # Draw doted line 
+        cv2.circle(src, segment, thickness, color, -1) 
+
+    return src
+
 # =============================================================================
-# MATH OPERATIONS - MATH OPERATIONS - MATH OPERATIONS - MATH OPERATIONS - MATH 
+# MATH/GEOMETRY OPERATIONS - MATH/GEOMETRY OPERATIONS - MATH/GEOMETRY OPERATION
+
 def flat_matrix_for_service(numpy_array):
     """ 
         Flat numpy matrix in vector
@@ -138,5 +161,82 @@ def matrix_from_flat(list_vector):
     cols = list_vector[1]
     
     return np.array(list_vector[2:]).reshape(rows, cols)
+
+def line_intersection(line1, line2):
+    """ 
+        returns the instersection coordinate between two lines
+    Args:
+        line1: `tuple` line 1 to calculate intersection coordinate
+        line2: `tuple` line 2 to calculate intersection coordinate
+        M: `numpy.narray` rotation matrix from geometric projection to original 
+    Returns:
+        _: `tuple` intersection cord between line 1 and line 2
+    """
+
+    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1]) 
+
+    def det(a, b):
+        return a[0] * b[1] - a[1] * b[0]
+
+    div = det(xdiff, ydiff)
+    if div == 0:
+       raise Exception('lines do not intersect')
+       return 0, 0
+
+    d = (det(*line1), det(*line2))
+    x = det(d, xdiff) / div
+    y = det(d, ydiff) / div
+
+    return int(round(x)), int(round(y))
+
+def discrete_contour(contour, Dl):
+    """  Takes contour points to get a number of intermediate points
+    Args:
+        contour: `List` contour or list of points to get intermediate points
+        Dl: `int` distance to get a point by segment
+    Returns:
+        new_contour: `List` new contour with intermediate points
+    """
+
+    # If contour has less of two points is not valid for operations
+    if len(contour) < 2:
+        print("[ERROR]: no valid segment")
+        return contour
+
+    # New contour variable
+    new_contour = []
+
+    # Iterate through all contour points
+    for idx, cordinate in enumerate(contour):
+
+        # Select next contour for operation
+        if not idx == len(contour)-1:
+            next_cordinate = contour[idx+1]
+        else:
+            next_cordinate = contour[0]
+
+        # Calculate length of segment
+        segment_lenth = math.sqrt((next_cordinate[0] - cordinate[0])**2 +\
+                        (next_cordinate[1] - cordinate[1])**2)
+        
+        divitions = segment_lenth/Dl # Number of new point for current segment
+        dy = next_cordinate[1] - cordinate[1] # Segment's height
+        dx = next_cordinate[0] - cordinate[0] # Segment's width
+        
+        if not divitions:
+            ddy = 0 # Dy value to sum in Y axis
+            ddx = 0 # Dx value to sum in X axis
+        else:
+            ddy = dy/divitions  # Dy value to sum in Y axis
+            ddx = dx/divitions  # Dx value to sum in X axis
+        
+        # get new intermediate points in segments
+        for idx in range(0, int(divitions)):
+            new_contour.append((int(cordinate[0] + (ddx*idx)), 
+                                int(cordinate[1] + (ddy*idx))))    
+
+    # Return new contour with intermediate points
+    return new_contour
 
 # =============================================================================

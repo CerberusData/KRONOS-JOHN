@@ -29,6 +29,9 @@ export STITCHER_SUP_MODE=0      # [int-bolean](1):Enable/(0):Disable - smooth tr
 
 # -----------------------------------------------------------------------------
 # Extrinsic calibration - Mono-vision
+export VISION_CAL_SHOW_LOCAL=0          # NOTE: Should be undefined in the robot
+                                        # [int-bolean] (1):Enable/(0):Disable show calibration when runing in local
+
 export VISION_CAL_DAYS_OUT=10           # [int][days] Number of days for a calibration out of date
 export VISION_CAL_DAYS_REMOVE=20        # [int][days] Number of days to remove a calibration file
 export VISION_CAL_UNWARPED_WIDTH=200    # [int][pix] width of unwarped image for monovision

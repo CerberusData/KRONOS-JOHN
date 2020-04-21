@@ -22,6 +22,8 @@ from vision.intrinsic.intrinsic_utils import read_intrinsic_params
 
 from vision.extrinsic.extrinsic_utils import read_extrinsic_params
 from vision.extrinsic.extrinsic_utils import find_projection
+from vision.extrinsic.extrinsic_utils import get_rot_matrix
+from vision.extrinsic.extrinsic_utils import pixel_relation
 
 from vision.utils.vision_utils import flat_matrix_for_service
 from vision.utils.vision_utils import printlog
@@ -61,20 +63,24 @@ class CalibratorPublishers(Node):
         self._VISION_CAL_PAT_VER = float(os.getenv(key="VISION_CAL_PAT_VER", default=1.0))
         self._VISION_CAL_PAT_HOZ = float(os.getenv(key="VISION_CAL_PAT_HOZ", default=1.0))
         self._VISION_CAL_PAT_TH_TOP = int(os.getenv(key="VISION_CAL_PAT_TH_TOP", default=15))
-        self._VISION_CAL_PAT_TH_BOTTOM = int(os.getenv(key="VISION_CAL_PAT_TH_BOTTOM", default=0))
-        self._VISION_CAL_SHOW_TIME = int(os.getenv(key="VISION_CAL_SHOW_TIME", default=0))
+        self._VISION_CAL_PAT_TH_BOTTOM = int(os.getenv(key="VISION_CAL_PAT_TH_BOTTOM", default=15))
+        self._VISION_CAL_SHOW_TIME = int(os.getenv(key="VISION_CAL_SHOW_TIME", default=5))
         self._VISION_CAL_TRIES = int(os.getenv(key="VISION_CAL_TRIES", default=20))
         self._VISION_CAL_PAT_ITE_TRIES = int(os.getenv(key="VISION_CAL_PAT_ITE_TRIES", default=20))
         self._VISION_CAL_DAYS_REMOVE = int(os.getenv(key="VISION_CAL_DAYS_REMOVE", default=20))
         self._VISION_CAL_DAYS_OUT = int(os.getenv(key="VISION_CAL_DAYS_OUT", default=20))
+        self._VISION_CAL_SHOW_LOCAL = int(os.getenv(key="VISION_CAL_SHOW_LOCAL", default=0))
         self._HSVI = {
             "H": int(os.getenv(key="VISION_CAL_PAT_HI", default=58)),
             "S": int(os.getenv(key="VISION_CAL_PAT_SI", default=0)),
             "V": int(os.getenv(key="VISION_CAL_PAT_VI", default=115))}
         self._HSVS = {
-            "H": int(os.getenv(key="VISION_CAL_PAT_HS", default=115)),
+            "H": int(os.getenv(key="VISION_CAL_PAT_HS", default=124)),
             "S": int(os.getenv(key="VISION_CAL_PAT_SS", default=255)),
             "V": int(os.getenv(key="VISION_CAL_PAT_VS", default=255))}
+        self._UNWARPED_SIZE = (
+            int(os.getenv(key="VISION_CAL_UNWARPED_WIDTH", default=200)),
+            int(os.getenv(key="VISION_CAL_UNWARPED_HEIGHT", default=360)))
 
         # ---------------------------------------------------------------------
         # Variables
@@ -83,12 +89,10 @@ class CalibratorPublishers(Node):
         self.extrinsic = {}
         self._flag_image = cv2.imread(
             os.path.join(os.path.dirname(os.path.realpath(__file__)), 
-            "figures/flag_4m.png"), cv2.IMREAD_UNCHANGED)
+            "extrinsic/figures/flag_4m.png"), cv2.IMREAD_UNCHANGED)
         self.calibrating_stat = False
         self.show_calibration_result = False # Enable/Disable calibration drawings
         self.calibration_image = None # Result image for calibrations
-
-        print(self._flag_image, flush=True)
 
         # ---------------------------------------------------------------------
         # Read intrinsic parameters from file
@@ -133,12 +137,11 @@ class CalibratorPublishers(Node):
             return 
 
         # If runing on local launch load a default picture to test calibration
-        if self._LOCAL_RUN:
-            print(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
-                "calibration_default.jpg"), flush=True) 
+        if self._LOCAL_RUN: 
             cam_img = cv2.imread(
                 os.path.join(os.path.dirname(os.path.realpath(__file__)), 
-                "calibration_default.jpg"), int(cv2.IMREAD_UNCHANGED))
+                "extrinsic/calibration_default.jpg"), 
+                int(cv2.IMREAD_UNCHANGED))
         else:
             # TODO: Get image from topic, for now with simulation image
             cam_img = None
@@ -153,8 +156,9 @@ class CalibratorPublishers(Node):
                     printlog(msg="Retrying camera {} calibration # {}".format(
                         cam_label, i+1), msg_type="WARN")
                     time.sleep(1) # Wait t seconds to try again camera calibration
-                printlog(msg="Camera {} no calibrated".format(
-                        cam_label), msg_type="ERROR")
+                    if i == self._VISION_CAL_TRIES - 1:
+                        printlog(msg="Camera {} no calibrated".format(
+                                cam_label), msg_type="ERROR")
             else:
                 printlog(msg="No intrinsic calibration to perform extrinsic", 
                     msg_type="ERROR")
@@ -171,7 +175,6 @@ class CalibratorPublishers(Node):
                 sys.exc_info()[0]), msg_type="ERROR")
             raise
 
-        # ---------------------------------------------------------------------
         self.calibrating_stat = False
 
     def cb_intrinsic_params(self):
@@ -244,13 +247,12 @@ class CalibratorPublishers(Node):
         ext_cal = find_projection(img_src=img_src.copy(), 
             mtx=self.intrinsic["camera_matrix"], 
             dist=self.intrinsic["distortion_coefficients"], 
-            PATTERN_THRESH_TOP=self._PATTERN_THRESH_TOP, 
-            PATTERN_THRESH_BOTTOM=self._PATTERN_THRESH_BOTTOM,
-            PATTERN_ITERATION_TRIES=self._PATTERN_ITERATION_TRIES,
-            HSVI=self._HSVI, HSVS=self._HSVS)
+            PATTERN_THRESH_TOP=self._VISION_CAL_PAT_TH_TOP, 
+            PATTERN_THRESH_BOTTOM=self._VISION_CAL_PAT_TH_BOTTOM,
+            PATTERN_ITERATION_TRIES=self._VISION_CAL_PAT_ITE_TRIES,
+            HSVI=self._HSVI, HSVS=self._HSVS,
+            LOCAL_CALIBRATION=self._LOCAL_RUN and self._VISION_CAL_SHOW_LOCAL)
         
-        return False        
-
         if ext_cal is not None:
             try: 
                 # Calculate rotation matrix from surface
@@ -259,22 +261,29 @@ class CalibratorPublishers(Node):
 
                 # Calculate the pixel relation in 'X' and 'Y' from surface 
                 # projection and Rotation Matrix
-                surf_relation = return_pixel_relation(
-                    img_src=img_src.copy(), M=M, mtx=self.mtx, dist=self.dist, 
+                surf_relation = pixel_relation(
+                    img_src=img_src.copy(), 
+                    M=M, 
+                    mtx=self.intrinsic["camera_matrix"], 
+                    dist=self.intrinsic["distortion_coefficients"], 
                     p1=ext_cal["p1"], p2=ext_cal["p2"], p3=ext_cal["p3"], p4=ext_cal["p4"], 
                     Left_Line=ext_cal["Left_Line"], Right_Line=ext_cal["Right_Line"], 
-                    Hy=ext_cal["Hy"], Dx_lines=self._PATTERN_HOZ,  Dy_lines=self._PATTERN_VER, 
-                    UNWARPED_SIZE=self._UNWARPED_SIZE, HSVI=self._HSVI, HSVS=self._HSVS,
-                    PATTERN_ITERATION_TRIES=self._PATTERN_ITERATION_TRIES)
+                    Hy=ext_cal["Hy"], 
+                    Dx_lines=self._VISION_CAL_PAT_HOZ,  
+                    Dy_lines=self._VISION_CAL_PAT_VER, 
+                    UNWARPED_SIZE=self._UNWARPED_SIZE, 
+                    HSVI=self._HSVI, HSVS=self._HSVS,
+                    PATTERN_ITERATION_TRIES=self._VISION_CAL_PAT_ITE_TRIES)
                 if not surf_relation:
                     raise RuntimeError("No pattern found correctly")
                     return False
 
                 # Save mono vision camera measurement parameters in file
-                mono_file_name = 'Extrinsic_{}_{}_{}.yaml'.format(
-                    self._VIDEO_SIZE[0], self._VIDEO_SIZE[1], camera_label)
-                mono_abs_path = os.path.join(self.calibration_folder, mono_file_name)
-                mono_vision_params={
+                extrinsic_file_name = 'Extrinsic_{}_{}_{}.yaml'.format(
+                    self._VIDEO_WIDTH, self._VIDEO_HEIGHT, camera_label)
+                extrinsic_abs_path = os.path.join(
+                    self._CONF_PATH, extrinsic_file_name)
+                extrinsic_vision_params={
                     "M": M.tolist(),
                     "vp": ext_cal["vp"].tolist(), 
                     "p1": ext_cal["p1"], 
@@ -287,12 +296,14 @@ class CalibratorPublishers(Node):
                     "unwarped_size": self._UNWARPED_SIZE,
                     "image_size": self._VIDEO_SIZE
                     }
+
+
                 self.save_params_and_test(mono_abs_path=mono_abs_path, 
                     data=mono_vision_params)
         
                 # Report successfully calibration
-                self.debugger_pilots_console("Calibracion para la camara {} exitosa!".format(camera_label))
-                self._calibrate_done_pub.publish(True)
+                printlog(msg="Calibracion para la camara {} exitosa!".format(
+                    camera_label), msg_type="OKGREEN")
 
                 # Set calibration image and show it to pilots console
                 mask_pro, mask_src = create_ruler_mask(flag_img=self._flag_image, 
@@ -310,24 +321,21 @@ class CalibratorPublishers(Node):
                     rotateCode=cv2.ROTATE_90_CLOCKWISE), dsize=self._VIDEO_SIZE)
 
                 # Show calibration results
-                self.show_calibration_result = True
-                self.calibration_image = ruler_projected
-                time.sleep(self._SHOW_TIME)
-                self.calibration_image = calibration_image
-                time.sleep(self._SHOW_TIME)
-                self.show_calibration_result = False
+                # self.show_calibration_result = True
+                # self.calibration_image = ruler_projected
+                # time.sleep(self._SHOW_TIME)
+                # self.calibration_image = calibration_image
+                # time.sleep(self._SHOW_TIME)
+                # self.show_calibration_result = False
                 return True
 
             except Exception as e:
-                self.debugger_pilots_console(
-                    "No se pudo encontrar el patron de calibracion! ({})".format(e),
-                    log_type="err")
-                traceback.print_exc()
+                printlog(msg="No se pudo encontrar el patron de calibracion! ({})".format(
+                    e), msg_type="ERROR")
                 return False
-
         else:
-            self.debugger_pilots_console("No se pudo encontrar el patron de calibracion!", 
-                log_type="err")
+            printlog(msg="No se pudo encontrar el patron de calibracion!".format(
+                e), msg_type="ERROR")
             return False
 
 # =============================================================================

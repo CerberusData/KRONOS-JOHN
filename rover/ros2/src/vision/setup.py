@@ -10,10 +10,17 @@ setup(
     #packages=[package_name],
     packages=find_packages(),
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml'])
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
     ],
+
+    package_data={
+        "vision": ["*.jpg"],
+        "vision": ["*.png"],
+        'vision': ["usr_interface/resources/*.png"],
+        'vision': ["extrinsic/figures/*.png"],
+    },
+
     keywords="Ai, Computer Vision, OpenCV",
     url="https://www.kiwibot.com/",
     install_requires=['setuptools'],
