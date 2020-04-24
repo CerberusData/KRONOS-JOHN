@@ -13,6 +13,10 @@ services:
 
     init: true
 
+    environment: 
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+
     volumes:
       - ../balena_cli_configs:/home/ada/.balena
       # - ./ssh-keys:/home/node/.ssh
@@ -24,9 +28,12 @@ services:
       # Forwards the local Docker socket to the container.
       - /var/run/docker.sock:/var/run/docker.sock
 
+      # Enable GUI environments
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
     # Uncomment the next four lines if you will use a ptrace-based debuggers like C++, Go, and Rust.
     cap_add:
-     - SYS_PTRACE
+      - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
 

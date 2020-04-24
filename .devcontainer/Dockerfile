@@ -76,20 +76,20 @@ RUN \
 # Accelerated_GStreamer_User_Guide.pdf?cYoROY2BkiZ8J2ngNzXuQ7y63YLmK6ua_gy3K
 # fRsgIIZkVSd4ZG31nlTlQ2zbwqlBze2rgRmJRkazxM7Eqdq17xRnRF309ua3GTFufz3sRx2Pnu
 # TGXknJ0pnYRpVUn0jlS_OGEK5my4Xj7Ma8L5kCowDsZ_6_UcqkuzDJ3VeWVuveH1npLs
-RUN \
-    apt-get update && \
-    apt-get install -y  \
-    gstreamer1.0-tools gstreamer1.0-alsa \
-    gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
-    gstreamer1.0-libav && \
-    apt-get install -y \
-    libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libgstreamer-plugins-good1.0-dev \
-    libgstreamer-plugins-bad1.0-dev \
-    xterm
-ENV DISPLAY=:0
+# RUN \
+#     apt-get update && \
+#     apt-get install -y  \
+#     gstreamer1.0-tools gstreamer1.0-alsa \
+#     gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+#     gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+#     gstreamer1.0-libav && \
+#     apt-get install -y \
+#     libgstreamer1.0-dev \
+#     libgstreamer-plugins-base1.0-dev \
+#     libgstreamer-plugins-good1.0-dev \
+#     libgstreamer-plugins-bad1.0-dev \
+#     xterm
+# ENV DISPLAY=:0
 
 # -----------------------------------------------------------------------------
 # Installing ros2
@@ -195,6 +195,11 @@ RUN  \
 RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
     export PATH="${PATH}:/home/ada/.local/bin"
 
+RUN sudo apt install -y libcanberra-gtk-module libcanberra-gtk3-module
+
+# -----------------------------------------------------------------------------
+# RUN apt-get update
+# RUN apt-get install -qqy x11-apps
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get
