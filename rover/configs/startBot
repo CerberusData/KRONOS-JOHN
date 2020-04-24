@@ -32,18 +32,20 @@ case "$1" in
           cd vision_opencv
           git checkout ros2
           cd .. && cd .. && cd ..
+          sleep 8 && clear 
       fi
 
       #  ----------------------------------------------------------------------
-      # clear
-      # echo  "ROS2 Removing old shit ... "
-      # rm -r ${PWD%}/ros2/install || true
-      # rm -r ${PWD%}/ros2/build || true
-      # rm -r ${PWD%}/ros2/log || true
-      # sleep 2 && clear 
+      clear
+      echo  "ROS2 Removing old shit ... "
+      rm -r ${PWD%}/ros2/install || true
+      rm -r ${PWD%}/ros2/build || true
+      rm -r ${PWD%}/ros2/log || true
+      sleep 2 && clear 
 
       #  ----------------------------------------------------------------------
       #  Build ROS2 packages
+      . /opt/ros/dashing/setup.bash
       clear && cd ${PWD%}/ros2    
       echo  "ROS2 Building new stuff ... "
       colcon build
@@ -51,9 +53,8 @@ case "$1" in
       sleep 2 && clear && cd ..
        
       #  ----------------------------------------------------------------------
-      #  Source ROS2
+      #  Source ROS2 and local enviroment variables
       echo  "ROS2 Sourcing ... "
-      source ~/ros2_dashing/ros2-linux/setup.bash
       source "${PWD%}/ros2/install/setup.bash"
       source "${PWD%}/configs/local_env_vars.sh"
 

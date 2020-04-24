@@ -3,7 +3,7 @@
 # JohnBetaCode (john@kiwibot.com)
 
 # -----------------------------------------------------------------------------
-FROM ubuntu:18.04
+FROM ubuntu:bionic
 
 # Or your actual UID, GID on Linux if not the default 1000
 ARG USERNAME=ada
@@ -21,13 +21,17 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     procps \
     curl \
     gnupg \
-    python \
+    python3 \
     build-essential \
     git \
     jq \
-    curl \
     sudo \
     vim \
+    tar \
+    bzip2 \
+    lbzip2 \ 
+    wget \ 
+    cmake \ 
     openssh-client && \
     # Install Docker CE CLI
     apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release && \
@@ -59,13 +63,40 @@ RUN npm install balena-cli -g --production --unsafe-perm && \
     curl -L https://raw.githubusercontent.com/balena-io/balena-cli/master/balena-completion.bash -o /etc/bash_completion.d/balena-completion.bash
 
 # -----------------------------------------------------------------------------
+# Install and upgrade pip3
 RUN \
-    apt-get update && \ 
-    apt-get -y install python3-pip 
+    apt-get update && \
+    apt-get -y install python3-pip && \
+    pip3 install -U pip testresources \
+    setuptools
+
+# -----------------------------------------------------------------------------
+# Installing GStreaming
+# https://developer.download.nvidia.com/embedded/L4T/r32_Release_v1.0/Docs/
+# Accelerated_GStreamer_User_Guide.pdf?cYoROY2BkiZ8J2ngNzXuQ7y63YLmK6ua_gy3K
+# fRsgIIZkVSd4ZG31nlTlQ2zbwqlBze2rgRmJRkazxM7Eqdq17xRnRF309ua3GTFufz3sRx2Pnu
+# TGXknJ0pnYRpVUn0jlS_OGEK5my4Xj7Ma8L5kCowDsZ_6_UcqkuzDJ3VeWVuveH1npLs
+RUN \
+    apt-get update && \
+    apt-get install -y  \
+    gstreamer1.0-tools gstreamer1.0-alsa \
+    gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav && \
+    apt-get install -y \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-good1.0-dev \
+    libgstreamer-plugins-bad1.0-dev \
+    xterm
+ENV DISPLAY=:0
 
 # -----------------------------------------------------------------------------
 # Installing ros2
 # https://index.ros.org/doc/ros2/Installation/Crystal/Linux-Install-Debians/
+ENV ROS_DISTRO=dashing
+
+# Editors and so on
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 RUN \ 
@@ -83,14 +114,14 @@ RUN \
     # ROS 2 command line tools use argcomplete to autocompletion
     python3-argcomplete
 
-# ROS 2
+# Rosedep
 RUN \ 
     pip3 install rosdep && \ 
     rosdep init && rosdep update
-    
+
 # Logging variables
 # https://index.ros.org/doc/ros2/Tutorials/Logging-and-logger-configuration/
-# If you would like more or less verbose formatting
+# # If you would like more or less verbose formatting
 ENV RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity}][{time}][{name}]: {message}"
 # If you would like to force enabling or disabling it
 # the output is colorized when it’s targeting a terminal. 
@@ -102,8 +133,8 @@ ENV RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1
 # -----------------------------------------------------------------------------
 # OpenCV Installation with contrib
 # https://linuxize.com/post/how-to-install-opencv-on-ubuntu-18-04/
-ENV OPENCV_VERSION=4.2.0
-ENV OPENCV_CONTRIB_VERSION=4.2.0
+ENV OPENCV_VERSION=3.3.0
+ENV OPENCV_CONTRIB_VERSION=3.3.0
 ENV OPENCV_LOG_LEVEL=ERROR
 RUN  \ 
     apt install -y \
@@ -121,11 +152,11 @@ RUN  \
     libjpeg-dev \
     libpng-dev \
     libtiff-dev \
-    gfortran  \
+    # gfortran  \
     openexr \
     libatlas-base-dev \
-    python3-dev \
-    python3-numpy \
+    # python3-dev \
+    # python3-numpy \
     libtbb2 \
     libtbb-dev \
     libdc1394-22-dev
@@ -151,6 +182,19 @@ RUN \
     make -j 4 && \
     make install && \
     rm -r ~/opencv_build
+
+# -----------------------------------------------------------------------------
+# for cv_bridge package
+RUN  \
+    apt-get install -y cmake \ 
+    libblkid-dev \
+    e2fslibs-dev \
+    libboost-all-dev \
+    libaudit-dev
+
+RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
+    export PATH="${PATH}:/home/ada/.local/bin"
+
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get
