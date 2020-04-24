@@ -16,6 +16,12 @@ export LOCAL_LAUNCH=1      # [int-bolean] Disable(1)/Enable(0) - Local launch mo
 export CONF_PATH="${PWD%}/configs"
 
 # -----------------------------------------------------------------------------
+# Nodes launching
+export NODE_VIDEO_MAPPING=1     # [int-bolean] (1):Enable/(0):Disable video mapping node launching
+export NODE_VIDEO_CALIBRATION=1 # [int-bolean] (1):Enable/(0):Disable video calibration node launching
+export NODE_VIDEO_PARTICLE=1    # [int-bolean] (1):Enable/(0):Disable video particle node launching
+
+# -----------------------------------------------------------------------------
 # Video processing
 export VIDEO_WIDTH=640          # [int][pix] Cameras Video width
 export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height

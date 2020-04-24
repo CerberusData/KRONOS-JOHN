@@ -47,26 +47,28 @@ def generate_launch_description():
 
     # Add here your ROS2 node actions and logics
     nodes = []
-    nodes.append(launch_ros.actions.Node(
-        node_executable='video_mapping', 
-        node_name='video_mapping',
-        package='vision', 
-        output='screen')
-        )
 
-    nodes.append(launch_ros.actions.Node(
-        node_executable='video_calibrator', 
-        node_name='video_calibrator',
-        package='vision', 
-        output='screen')
-        )
-
-    # nodes.append(launch_ros.actions.Node(
-    #     node_executable='video_particle', 
-    #     node_name='video_particle',
-    #     package='vision', 
-    #     output='screen')
-    #     )
+    if int(os.getenv(key="NODE_VIDEO_MAPPING", default=0)):
+        nodes.append(launch_ros.actions.Node(
+            node_executable='video_mapping', 
+            node_name='video_mapping',
+            package='vision', 
+            output='screen')
+            )
+    if int(os.getenv(key="NODE_VIDEO_CALIBRATION", default=0)):
+        nodes.append(launch_ros.actions.Node(
+            node_executable='video_calibrator', 
+            node_name='video_calibrator',
+            package='vision', 
+            output='screen')
+            )
+    if int(os.getenv(key="NODE_VIDEO_PARTICLE", default=0)):
+        nodes.append(launch_ros.actions.Node(
+            node_executable='video_particle', 
+            node_name='video_particle',
+            package='vision', 
+            output='screen')
+            )
 
     for node in nodes:
         ld.add_action(node)
