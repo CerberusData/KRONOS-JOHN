@@ -28,9 +28,9 @@ from vision.extrinsic.extrinsic_utils import pixel_relation
 from vision.utils.vision_utils import flat_matrix_for_service
 from vision.utils.vision_utils import printlog
 
-from usr_msg.msg import Intrinsic
-from usr_msg.msg import CamerasStatus
-from usr_msg.msg import VisualMessage
+from usr_msgs.msg import Intrinsic
+from usr_msgs.msg import CamerasStatus
+from usr_msgs.msg import VisualMessage
 from std_msgs.msg import String
 
 # =============================================================================

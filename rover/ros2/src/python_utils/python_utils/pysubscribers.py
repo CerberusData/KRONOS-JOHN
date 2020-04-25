@@ -16,7 +16,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from usr_msg.msg import VisualMessage
+from usr_msgs.msg import VisualMessage
 
 from vision.utils.vision_utils import print_text_list
 
