@@ -26,6 +26,7 @@ case "$1" in
       if [ -d "${PWD%}/ros2/src/vision_opencv" ] 
       then
           echo "cv_bridge already exits" 
+          sleep 2 && clear 
       else
           cd ${PWD%}/ros2/src
           git clone https://github.com/ros-perception/vision_opencv.git
@@ -36,12 +37,29 @@ case "$1" in
       fi
 
       #  ----------------------------------------------------------------------
-      # clear
-      # echo  "ROS2 Removing old shit ... "
-      # rm -r ${PWD%}/ros2/install || true
-      # rm -r ${PWD%}/ros2/build || true
-      # rm -r ${PWD%}/ros2/log || true
-      # sleep 2 && clear 
+      # Delete previous workspaces
+      echo $PWD
+      set
+      if [[ $ROS2_DEL_BUILD == 1 ]]
+      then
+            echo "asasas"
+      else
+            echo "xxxxxxxx"
+      fi
+      # if [-v $ROS2_DEL_BUILD ]; 
+      # then
+      #   echo "ROS2_DEL_BUILD is not set"
+      #   sleep 2 && clear 
+      # elif [ $ROS2_DEL_BUILD == "1" ]; then
+      #   clear
+      #   echo  "ROS2 Removing old shit ... "
+      #   rm -r ${PWD%}/ros2/install || true
+      #   rm -r ${PWD%}/ros2/build || true
+      #   rm -r ${PWD%}/ros2/log || true
+      #   sleep 2 && clear 
+      #   export ROS2_DEL_BUILD=0
+      # fi
+      sleep 20 && clear 
 
       #  ----------------------------------------------------------------------
       #  Build ROS2 packages

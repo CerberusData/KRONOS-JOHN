@@ -195,11 +195,13 @@ RUN  \
 RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
     export PATH="${PATH}:/home/ada/.local/bin"
 
-RUN sudo apt install -y libcanberra-gtk-module libcanberra-gtk3-module
+# http://wiki.ros.org/docker/Tutorials/GUI
+RUN  \
+    sudo apt install -y \
+    libcanberra-gtk-module \
+    libcanberra-gtk3-module
+ENV ROS2_DEL_BUILD=1
 
-# -----------------------------------------------------------------------------
-# RUN apt-get update
-# RUN apt-get install -qqy x11-apps
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get

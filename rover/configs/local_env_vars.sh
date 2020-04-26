@@ -13,7 +13,7 @@ export ROBOBOT_ID=666      # [int] Robot ID
                            # NOTE: Should be undefined in the robot
 export LOCAL_LAUNCH=1      # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
                            # NOTE: Should be zero in the robot
-export CONF_PATH="${PWD%}/configs"
+export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
 
 # -----------------------------------------------------------------------------
 # Nodes launching
