@@ -29,8 +29,8 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from vision.stitcher.stitcher import Stitcher
 
-from usr_msg.msg import CamerasStatus
-from usr_msg.msg import VisualMessage
+from usr_msgs.msg import CamerasStatus
+from usr_msgs.msg import VisualMessage
 
 from python_utils.pysubscribers import VisualDebugger
 
