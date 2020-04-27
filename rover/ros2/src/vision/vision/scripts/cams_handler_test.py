@@ -12,10 +12,11 @@ Code Information:
 import inspect
 import time
 import sys
+import cv2
 import os
 
 # uncomment if using python2 and ROS1 Kinetic
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+# sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe())))
@@ -25,8 +26,6 @@ from utils.cam_handler import read_cams_configuration
 from utils.cam_handler import CamerasSupervisor
 from utils.vision_utils import show_local_gui
 from utils.vision_utils import printlog
-
-import cv2
 
 # =============================================================================
 def main(args=None):
@@ -56,7 +55,7 @@ def main(args=None):
     while True:
         start = time.time()
 
-        images_dict = dict(map(lambda o: (o.cam_label, o.image), 
+        images_dict = dict(map(lambda o: (o.cam_label, o.image.copy()), 
                 cameras_supervisor.camera_handlers.values()))
         show_local_gui(images_dict)
 

@@ -87,16 +87,18 @@ def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
     elif set(imgs_dic.keys()) == set(["C"]):
         stream = imgs_dic["C"]
     else:
-        for key, value in imgs_dic.items():
-            cv2.imshow(key, value) 
+        # for key, value in imgs_dic.items():
+        #     cv2.imshow(key, value) 
+        cv2.imshow("C", imgs_dic["C"]) 
         key = cv2.waitKey(10) # Show video and capture key
+        if key==113 or key==81: # (Q) If press q then quit
+            exit()
         return
+
     cv2.imshow(win_name, stream) 
     key = cv2.waitKey(10) # Show video and capture key
     if key==113 or key==81: # (Q) If press q then quit
         exit()
-    elif key!=-1: # No key command
-        print("Command or key action no found: {}".format(key))
 
 def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), fontScale=0.7):
 

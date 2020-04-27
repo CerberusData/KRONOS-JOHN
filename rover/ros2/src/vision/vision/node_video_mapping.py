@@ -61,6 +61,7 @@ class MappingNode(Node,
         
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
+        self._LOCAL_GUI = int(os.getenv(key="LOCAL_GUI", default=0)) 
         self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
             default=os.path.dirname(os.path.abspath(__file__))))
 
@@ -187,9 +188,10 @@ class MappingNode(Node,
         if not self.stitcher is None and self._LOCAL_RUN: 
             imgs_dic["S"] = self.img_stitch(imgs_dic) 
         self.draw_visual_debugger(img=imgs_dic["C"])
-        show_local_gui(
-            imgs_dic=imgs_dic, 
-            win_name="LOCAL_VIDEO_STREAMING")
+        if self._LOCAL_GUI:
+            show_local_gui(
+                imgs_dic=imgs_dic, 
+                win_name="LOCAL_VIDEO_STREAMING")
 
     def img_stitch(self, imgs_dic):
         """ Stitch the cameras center, left and right
