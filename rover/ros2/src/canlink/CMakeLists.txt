@@ -20,7 +20,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(sensors_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(usr_msgs REQUIRED)
 find_package(utils REQUIRED)
@@ -65,11 +65,6 @@ install(TARGETS
   chassis_node
   cabin_node
   DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}/ 
 )
 
 ament_export_include_directories(include)
