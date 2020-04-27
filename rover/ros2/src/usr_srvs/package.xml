@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>usr_srv</name>
+  <name>usr_srvs</name>
   <version>0.0.1</version>
   <description>custom services for python nodes</description>
   <maintainer email="john.betancourt93@gmail.com">dev-john</maintainer>
