@@ -159,7 +159,8 @@ RUN  \
     # python3-numpy \
     libtbb2 \
     libtbb-dev \
-    libdc1394-22-dev
+    libdc1394-22-dev \
+    udev
 RUN \
     mkdir ~/opencv_build && \
     cd ~/opencv_build && \
