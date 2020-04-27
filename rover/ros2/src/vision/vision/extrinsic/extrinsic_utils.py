@@ -913,7 +913,6 @@ def get_projection_point_dst(coords_src, M):
     # return results
     return (int(coords_dst[0]), int(coords_dst[1]))
 
-
 # =============================================================================
 if __name__ == '__main__':
     

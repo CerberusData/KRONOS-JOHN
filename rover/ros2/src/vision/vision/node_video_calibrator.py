@@ -297,7 +297,6 @@ class CalibratorPublishers(Node):
                     "image_size": self._VIDEO_SIZE
                     }
 
-
                 self.save_params_and_test(mono_abs_path=mono_abs_path, 
                     data=mono_vision_params)
         

@@ -206,12 +206,6 @@ RUN \
     rm -r ~/opencv_build
 
 # -----------------------------------------------------------------------------
-# Install stuff of freedoom robotics
-# https://docs.freedomrobotics.ai/docs/install
-RUN \
-    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
-
-# -----------------------------------------------------------------------------
 # Add development, debugging utils/dependencies here
 RUN \
     apt-get update && \
@@ -247,6 +241,7 @@ COPY ros2/src/ dev_ws/src/
 # Download cv_bridge package
 WORKDIR /usr/src/app/dev_ws/src
 RUN  \
+    rm -r vision_opencv && \ 
     git clone https://github.com/ros-perception/vision_opencv.git && \ 
     cd vision_opencv && \ 
     git checkout ros2
@@ -264,6 +259,12 @@ RUN  \
     colcon build && \ 
     colcon test && \ 
     /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
+
+# -----------------------------------------------------------------------------
+# Install stuff of freedoom robotics
+# https://docs.freedomrobotics.ai/docs/install
+RUN \
+    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
 
 # -----------------------------------------------------------------------------
 # Start a udev service

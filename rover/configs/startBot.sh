@@ -38,13 +38,13 @@ case "$1" in
 
       #  ----------------------------------------------------------------------
       # Delete previous workspaces
-      echo  "ROS2 Removing old shit ... "
-      rm -r ${PWD%}/ros2/install || true
-      rm -r ${PWD%}/ros2/build || true
-      rm -r ${PWD%}/ros2/log || true
-      sleep 2 && clear 
-      export ROS2_DEL_BUILD=0
-      sleep 2 && clear 
+      # echo  "ROS2 Removing old shit ... "
+      # rm -r ${PWD%}/ros2/install || true
+      # rm -r ${PWD%}/ros2/build || true
+      # rm -r ${PWD%}/ros2/log || true
+      # sleep 2 && clear 
+      # export ROS2_DEL_BUILD=0
+      # sleep 2 && clear 
 
       #  ----------------------------------------------------------------------
       #  Build ROS2 packages
