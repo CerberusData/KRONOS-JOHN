@@ -31,7 +31,7 @@ add_library(${PROJECT_NAME}_lib
   lib/socket_can.cpp
 )
 
-add_executable(chassis_node 
+add_executable(canlink_chassis 
   src/can_chassis.cpp
   src/modules/battery.cpp
   src/modules/chassis.cpp
@@ -39,7 +39,7 @@ add_executable(chassis_node
   lib/socket_can.cpp
 )
 
-add_executable(cabin_node 
+add_executable(canlink_cabin 
   src/can_cabin.cpp
   src/modules/lock_system.cpp
   lib/socket_can.cpp
@@ -55,15 +55,15 @@ set(DEPENDENCIES
   utils
 )
 
-target_link_libraries(chassis_node utils::utils)
-ament_target_dependencies(chassis_node ${DEPENDENCIES})
+target_link_libraries(canlink_chassis utils::utils)
+ament_target_dependencies(canlink_chassis ${DEPENDENCIES})
 
-target_link_libraries(cabin_node utils::utils)
-ament_target_dependencies(cabin_node ${DEPENDENCIES})
+target_link_libraries(canlink_cabin utils::utils)
+ament_target_dependencies(canlink_cabin ${DEPENDENCIES})
 
 install(TARGETS
-  chassis_node
-  cabin_node
+  canlink_chassis
+  canlink_cabin
   DESTINATION lib/${PROJECT_NAME}
 )
 

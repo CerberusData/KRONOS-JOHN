@@ -56,8 +56,8 @@ class CANChassis : public rclcpp::Node
         std::string Mystr = "can0";
         const char *interface_name_ = Mystr.c_str();
 
-        rclcpp::TimerBase::SharedPtr pub_timer_; // RMV
-        void Pub_Cb_();  // RMV
+        //rclcpp::TimerBase::SharedPtr pub_timer_; // RMV
+        //void Pub_Cb_();  // RMV
 
 };
 #endif  /* End of CAN_CHASSIS_H_INCLUDED */ 

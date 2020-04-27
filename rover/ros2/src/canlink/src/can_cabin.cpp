@@ -30,15 +30,17 @@ CANCabin::CANCabin(const rclcpp::NodeOptions & options, CANDriver* can_driver)
     }
     read_thread_ = std::thread(&CANCabin::StartCANCabinRead, this);
     
-    pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&CANCabin::Pub_Cb_, this)); 
+    // pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&CANCabin::Pub_Cb_, this)); 
 }
 
+/*
 void CANCabin::Pub_Cb_()
 {
     // RCLCPP_WARN(this->get_logger(), "Timer Cabin! ");
     rclcpp::Time time = this->now();
     RCLCPP_INFO(this->get_logger(), "Timer Cabin! ");
 }
+*/
 
 void CANCabin::PublishCANCabinInfo(struct can_frame *frame)
 {
@@ -101,9 +103,9 @@ int main(int argc, char * argv[])
     RCLCPP_WARN(node_CANCabin->get_logger(), "Init Cabin! ");
 
     /* Spinning */
-    RCLCPP_WARN(node_CANCabin->get_logger(), "Init Spin");
+    // RCLCPP_WARN(node_CANCabin->get_logger(), "Init Spin");
     executor.spin();
-    RCLCPP_WARN(node_CANCabin->get_logger(), "End Spin");
+    // RCLCPP_WARN(node_CANCabin->get_logger(), "End Spin");
 
     rclcpp::shutdown();
     return 0;

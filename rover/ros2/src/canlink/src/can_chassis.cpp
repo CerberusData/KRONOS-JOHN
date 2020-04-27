@@ -47,9 +47,10 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
     /* Start a new thread to read continuously the CAN Socket data */
     read_thread_ = std::thread(&CANChassis::StartCANBusRead, this);  
 
-    pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&CANChassis::Pub_Cb_, this)); 
+    /* pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&CANChassis::Pub_Cb_, this)); */
 }
 
+/*
 void CANChassis::Pub_Cb_()
 {
     RCLCPP_WARN(this->get_logger(), "Timer Chassis! ");
@@ -58,6 +59,7 @@ void CANChassis::Pub_Cb_()
     chassis_->PublishChassisStatus(frame);
     chassis_->PublishTestReport(frame);
 }
+*/
 
 void CANChassis::PublishCANInfo(struct can_frame *frame)
 {
@@ -164,9 +166,9 @@ int main(int argc, char * argv[])
     RCLCPP_WARN(node_CANChassis->get_logger(), "Init Chassis! ");
 
     /* Spinning */
-    RCLCPP_WARN(node_CANChassis->get_logger(), "Init Spin! ");
+    //RCLCPP_WARN(node_CANChassis->get_logger(), "Init Spin! ");
     executor.spin();
-    RCLCPP_WARN(node_CANChassis->get_logger(), "End Spin! ");
+    //RCLCPP_WARN(node_CANChassis->get_logger(), "End Spin! ");
 
     rclcpp::shutdown();
     return 0;

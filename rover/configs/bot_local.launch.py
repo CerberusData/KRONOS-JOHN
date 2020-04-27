@@ -40,7 +40,7 @@ from launch import LaunchService
 
 from typing import cast
 
- # ============================================================================
+# ============================================================================
 class bcolors:
     LOG = {
         "WARN": ['\033[33m', "WARN"],
@@ -130,6 +130,24 @@ def generate_launch_description():
             "output": 'screen',
             "launch": int(os.getenv(
                 key="NODE_VIDEO_PARTICLE", 
+                default=1))
+        },
+        "NODE_CANLINK_CHASSIS": {
+            "node_executable": 'canlink_chassis',
+            "node_name": 'canlink_chassis',
+            "package": 'canlink',
+            "output": 'screen',
+            "launch": int(os.getenv(
+                key="NODE_CANLINK_CHASSIS", 
+                default=1))
+        },
+        "NODE_CANLINK_CABIN": {
+            "node_executable": 'canlink_cabin',
+            "node_name": 'canlink_cabin',
+            "package": 'canlink',
+            "output": 'screen',
+            "launch": int(os.getenv(
+                key="NODE_CANLINK_CABIN", 
                 default=1))
         }
     }
