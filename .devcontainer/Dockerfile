@@ -203,6 +203,12 @@ RUN  \
     libcanberra-gtk3-module
 ENV ROS2_DEL_BUILD=1
 
+# -----------------------------------------------------------------------------
+# Install stuff of freedoom roboticsp
+# https://docs.freedomrobotics.ai/docs/install
+USER ada 
+RUN \
+    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get

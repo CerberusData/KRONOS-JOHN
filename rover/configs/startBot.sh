@@ -27,7 +27,7 @@ case "$1" in
       #  ROS2 cv_bridge dependency
       if [ -d "${PWD%}/ros2/src/vision_opencv" ] 
       then
-          echo "cv_bridge already exits" 
+          echo "[INFO]: cv_bridge already exits" 
           sleep 2 && clear 
       else
           cd ${PWD%}/ros2/src
@@ -40,7 +40,7 @@ case "$1" in
 
       #  ----------------------------------------------------------------------
       # Delete previous workspaces
-      # echo  "ROS2 Removing old shit ... "
+      # echo  [WARN]: ROS2 Removing old shit ... "
       # rm -r ${PWD%}/ros2/install || true
       # rm -r ${PWD%}/ros2/build || true
       # rm -r ${PWD%}/ros2/log || true
@@ -52,27 +52,27 @@ case "$1" in
       #  Build ROS2 packages
       . /opt/ros/dashing/setup.bash
       clear && cd ${PWD%}/ros2    
-      echo  "ROS2 Building new stuff ... "
+      echo  "[INFO]: ROS2 Building new stuff ... "
       colcon build --symlink-install
-      echo  "ROS2 Build successful ... "
+      echo  "[INFO]: ROS2 Build successful ... "
       sleep 2 && clear && cd ..
        
       #  ----------------------------------------------------------------------
       #  Source ROS2 and local enviroment variables
-      echo  "ROS2 Sourcing ... "
+      echo  "[INFO]: ROS2 Sourcing ... "
       source "${PWD%}/ros2/install/setup.bash"
       source "${PWD%}/configs/local_env_vars.sh"
-
+      
       #  ----------------------------------------------------------------------
       #  ROS2 Launching
-      sleep 2 && clear
-      echo  "ROS2 launching ... "
+      # sleep 2 && clear
+      echo  "[INFO]: ROS2 launching ... "
       ros2 launch "${PWD%}/configs/bot_local.launch.py"
 
       #  ----------------------------------------------------------------------
     ;;
   stop)
-    echo "Stopping Robot"
+    echo "[WARN]: Stopping Robot"
     # kill application you want to stop
     for i in $( rosnode list ); do
       ros2 lifecycle set $i shutdown;

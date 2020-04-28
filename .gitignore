@@ -10,5 +10,6 @@ rover/ros2/install/
 rover/ros2/build/
 rover/ros2/log/
 rover/configs/nodes_local_launch.yaml
+rover/configs/keys/
 *.pyc
 .vscode
