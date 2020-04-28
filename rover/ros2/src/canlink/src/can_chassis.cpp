@@ -7,7 +7,7 @@
  
 #include "canlink/CANChassis.hpp"
  
-CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_driver)
+CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_driver, std::shared_ptr<Chassis> chassis)
 : Node("can_chassis", options)
 {
     RCLCPP_INFO(this->get_logger(), "CAN Chassis Initializer");
@@ -17,11 +17,11 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
     try
     {
         can_driver_ = can_driver;
+        chassis_ = chassis;
         
         /* Module instantiation */
-        battery_ = new Battery(options, can_driver_);
-        chassis_ = new Chassis(options, can_driver_);
-        lights_ = new Lights(options, can_driver_);
+        battery_ = std::make_shared<Battery>(options, can_driver_);
+        lights_ = std::make_shared<Lights>(options, can_driver_);
 
         /* Publishers */
         can_dvr_status_pub_ = this->create_publisher<std_msgs::msg::String>("/canlink/chassis/connection_status", 10);
@@ -30,9 +30,9 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
     catch (const std::system_error &error)
     {
         /* Module instantiation */
-        battery_ = new Battery(options, nullptr);
-        chassis_ = new Chassis(options, nullptr);
-        lights_ = new Lights(options, nullptr);
+        chassis_ = nullptr;
+        battery_ = std::make_shared<Battery>(options, nullptr);
+        lights_ = std::make_shared<Lights>(options, nullptr);
         
         /* Publishers */
         can_dvr_status_pub_ = this->create_publisher<std_msgs::msg::String>("/canlink/chassis/connection_status", 10);
@@ -139,12 +139,15 @@ void CANChassis::StartCANBusRead()
 int main(int argc, char * argv[])
 {
     /* 
+        - Nodes that are running subscribers or timmers must be added to the executor as
+          it is going to spin the node. This same node should be passed as an argument to
+          the constructor of the main object (Chassis) in order to avoid copying the node.
+
         - Nodes spinning:
           + CAN Chassis - Main module
           + Chassis - Submodule
         
-        Note: Ligths and battery are not spinned as we are calling their functions in
-              can_chassis and they are not executing any timmer or callback.
+        - Ligths and Battery are not spinned as we are calling their functions in can_chassis.
     */
 
     rclcpp::init(argc, argv);
@@ -157,18 +160,18 @@ int main(int argc, char * argv[])
     const char *interface_name_ = Mystr.c_str();    
     auto can_dvr_ = new CANDriver(interface_name_);
 
-    /* Filling executor */     
-    auto node_CANChassis = std::make_shared<CANChassis>(options, can_dvr_);  /* CAN Chassis */
-    executor.add_node(node_CANChassis);
-    auto node_chassis = std::make_shared<Chassis>(options, can_dvr_);  /* Chassis */
-    executor.add_node(node_chassis);
+    /* Nodes definition */ 
+    auto chassis = std::make_shared<Chassis>(options, can_dvr_);  /* Chassis */
+    auto CANChassis_node = std::make_shared<CANChassis>(options, can_dvr_, chassis);  /* Chassis CAN */
 
-    RCLCPP_WARN(node_CANChassis->get_logger(), "Init Chassis! ");
+    /* Filling executor */      
+    executor.add_node(CANChassis_node);
+    executor.add_node(chassis);
 
-    /* Spinning */
-    //RCLCPP_WARN(node_CANChassis->get_logger(), "Init Spin! ");
+    RCLCPP_WARN(CANChassis_node->get_logger(), "Init Chassis");
+
+    /* Executor spinning */
     executor.spin();
-    //RCLCPP_WARN(node_CANChassis->get_logger(), "End Spin! ");
 
     rclcpp::shutdown();
     return 0;

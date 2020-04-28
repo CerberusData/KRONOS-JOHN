@@ -7,7 +7,7 @@
  
 #include "canlink/CANCabin.hpp"
  
-CANCabin::CANCabin(const rclcpp::NodeOptions & options, CANDriver* can_driver)
+CANCabin::CANCabin(const rclcpp::NodeOptions & options, CANDriver* can_driver, std::shared_ptr<LockSystem> lock_system)
 : Node("can_cabin", options)
 {
     RCLCPP_INFO(this->get_logger(), "CAN Cabin Initializer");
@@ -17,12 +17,12 @@ CANCabin::CANCabin(const rclcpp::NodeOptions & options, CANDriver* can_driver)
         can_driver_ = can_driver;
 
         /* Module instantiation */
-        lock_system_ = new LockSystem(options, can_driver_);
+        lock_system_ = lock_system;
     }
     catch (const std::system_error &error)
     {
         /* Module instantiation */
-        lock_system_ = new LockSystem(options, nullptr);
+        lock_system_ = nullptr;
 
         char buff[100];
         snprintf(buff, sizeof(buff), "ERROR reading CAN device: %s", error.what());
@@ -85,6 +85,16 @@ void CANCabin::StartCANCabinRead()
 
 int main(int argc, char * argv[])
 {
+    /* 
+        - Nodes that are running subscribers or timmers must be added to the executor as
+          it is going to spin the node. This same node should be passed as an argument to
+          the constructor of the main object (Cabin) in order to avoid copying the node.
+
+        - Nodes spinning:
+          + CAN Cabin - Main module
+          + Lock System - Submodule
+    */
+    
     rclcpp::init(argc, argv);
     rclcpp::NodeOptions options;
     rclcpp::executors::SingleThreadedExecutor executor; 
@@ -94,19 +104,19 @@ int main(int argc, char * argv[])
     const char *interface_name_ = Mystr.c_str();    
     auto can_dvr_ = new CANDriver(interface_name_);
 
+    /* Nodes definition */ 
+    auto lock_system = std::make_shared<LockSystem>(options, can_dvr_);  /* Lock System */
+    auto CANCabin_node = std::make_shared<CANCabin>(options, can_dvr_, lock_system);  /* Cabin CAN */
+    
     /* Filling executor */     
-    auto node_CANCabin = std::make_shared<CANCabin>(options, can_dvr_);  // CAN Chassis
-    executor.add_node(node_CANCabin);
-    auto node_lock_system = std::make_shared<LockSystem>(options, can_dvr_);  // Chassis
-    executor.add_node(node_lock_system);
+    executor.add_node(CANCabin_node);
+    executor.add_node(lock_system);
 
-    RCLCPP_WARN(node_CANCabin->get_logger(), "Init Cabin! ");
+    RCLCPP_WARN(CANCabin_node->get_logger(), "Init Cabin");
 
-    /* Spinning */
-    // RCLCPP_WARN(node_CANCabin->get_logger(), "Init Spin");
+    /* Executor spinning */
     executor.spin();
-    // RCLCPP_WARN(node_CANCabin->get_logger(), "End Spin");
-
+    
     rclcpp::shutdown();
     return 0;
 }
