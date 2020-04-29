@@ -5,16 +5,16 @@ import struct as st
 import binascii
 
 from rclpy.node import Node
-from rclpy.logging import get_logger
-from rclpy.parameter import get_parameter
+# from rclpy.logging import get_logger
+# from rclpy.parameter import get_parameter
 
 from time import time
 from sensor_msgs.msg import Imu
 from sensor_msgs.msg import Temperature
 from sensor_msgs.msg import MagneticField
 
-from tf.transformations import quaternion_from_euler
-from dynamic_reconfigure.server import Server
+# from tf.transformations import quaternion_from_euler
+# from dynamic_reconfigure.server import Server
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import DiagnosticStatus
 from diagnostic_msgs.msg import KeyValue
@@ -86,19 +86,19 @@ class ImuNode(Node):
 
     def __init__(self):
 
-        super().__init__("ImuNode")
+        super().__init__("imu")
 
         # Publishers
-        self.pub_data_ = self.create_publisher(msg_type = Imu, topic = "imu/data", queue_size = 1)
-        self.pub_raw_ = self.create_publisher(msg_type = Imu, topic = "imu/raw", queue_size = 1)
-        self.pub_mag_ = self.create_publisher(msg_type = MagneticField, topic = "imu/mag", queue_size = 1)
-        self.pub_temp_ = self.create_publisher(msg_type = Temperature, topic = "imu/temp", queue_size = 1)
+        self.pub_data_ = self.create_publisher(Imu, 'imu/data', 1)
+        self.pub_raw_ = self.create_publisher(Imu, 'imu/raw', 1)
+        self.pub_mag_ = self.create_publisher(MagneticField, 'imu/mag', 1)
+        self.pub_temp_ = self.create_publisher(Temperature, 'imu/temp', 1)
 
-        # Get parameters
-        self.port = self.get_parameter("port").value 
-        self.frame_id_ = self.get_parameter("frame_id").value
-        self.frequency_ = self.get_parameter("frequency").value
-        self.opr_mode_ = self.get_parameter("operation_mode").value
+        # # Get parameters
+        # self.port = self.get_parameter("port").value 
+        # self.frame_id_ = self.get_parameter("frame_id").value
+        # self.frequency_ = self.get_parameter("frequency").value
+        # self.opr_mode_ = self.get_parameter("operation_mode").value
 
         # Data objects
         self.raw_msg = Imu()           # Raw data
@@ -112,48 +112,48 @@ class ImuNode(Node):
         self.mag_fact_ = 16.0
         self.gyr_fact_ = 900.0
 
-        # Open Serial Port
-        self.get_logger.info("Opening Serial Port:  %s", self.port)
-        try:
-            self.ser = serial.Serial(port = self.port, baudrate = 115200, timeout = 0.02)
-        except serial.serialutil.SerialException:
-            self.get_logger.error("IMU not found at port " + self.port + ". Check the port number")
-            sys.exit(0)
+        # # Open Serial Port
+        # self.get_logger.info("Opening Serial Port:  %s", self.port)
+        # try:
+        #     self.ser = serial.Serial(port = self.port, baudrate = 115200, timeout = 0.02)
+        # except serial.serialutil.SerialException:
+        #     self.get_logger.error("IMU not found at port " + self.port + ". Check the port number")
+        #     sys.exit(0)
 
-        # Check IMU ID
-        buf = self.read_from_dev(CHIP_ID, 1)
-        if (buf == 0) or (buf[0] != BNO055_ID):
-            sys.exit(0)
+        # # Check IMU ID
+        # buf = self.read_from_dev(CHIP_ID, 1)
+        # if (buf == 0) or (buf[0] != BNO055_ID):
+        #     sys.exit(0)
 
-        # IMU Setup
-        if not(self.write_to_dev(OPER_MODE, 1, OPER_MODE_CONFIG)):
-            self.get_logger.error("Unable to set IMU into configuration mode.")
+        # # IMU Setup
+        # if not(self.write_to_dev(OPER_MODE, 1, OPER_MODE_CONFIG)):
+        #     self.get_logger.error("Unable to set IMU into configuration mode.")
 
-        if not(self.write_to_dev(PWR_MODE, 1, PWR_MODE_NORMAL)):
-            self.get_logger.error("Unable to set IMU normal power mode.")
+        # if not(self.write_to_dev(PWR_MODE, 1, PWR_MODE_NORMAL)):
+        #     self.get_logger.error("Unable to set IMU normal power mode.")
 
-        if not(self.write_to_dev(PAGE_ID, 1, 0x00)):
-            self.get_logger.error("Unable to set IMU register page 0.")
+        # if not(self.write_to_dev(PAGE_ID, 1, 0x00)):
+        #     self.get_logger.error("Unable to set IMU register page 0.")
 
-        if not(self.write_to_dev(SYS_TRIGGER, 1, 0x00)):
-            self.get_logger.error("Unable to start IMU.")
+        # if not(self.write_to_dev(SYS_TRIGGER, 1, 0x00)):
+        #     self.get_logger.error("Unable to start IMU.")
 
-        if not(self.write_to_dev(UNIT_SEL, 1, 0x83)):
-            self.get_logger.error("Unable to set IMU units.")
+        # if not(self.write_to_dev(UNIT_SEL, 1, 0x83)):
+        #     self.get_logger.error("Unable to set IMU units.")
 
-        if not(self.write_to_dev(AXIS_MAP_CONFIG, 1, 0x24)):
-            self.get_logger.error("Unable to remap IMU axis.")
+        # if not(self.write_to_dev(AXIS_MAP_CONFIG, 1, 0x24)):
+        #     self.get_logger.error("Unable to remap IMU axis.")
 
-        if not(self.write_to_dev(AXIS_MAP_SIGN, 1, 0x06)):
-            self.get_logger.error("Unable to set IMU axis signs.")
+        # if not(self.write_to_dev(AXIS_MAP_SIGN, 1, 0x06)):
+        #     self.get_logger.error("Unable to set IMU axis signs.")
 
-        if not(self.write_to_dev(OPER_MODE, 1, OPER_MODE_NDOF))
-            self.get_logger.error("Unable to set IMU operation into operation mode.")
+        # if not(self.write_to_dev(OPER_MODE, 1, OPER_MODE_NDOF))
+        #     self.get_logger.error("Unable to set IMU operation into operation mode.")
         
-        self.get_logger.info("Bosch BNO055 IMU configuration completed.")
+        self.get_logger().info("Bosch BNO055 IMU configuration completed.")
         
         # Timers
-        self.pub_timer_ = self.create_timer(time_period_sec = 0.1, callback = self.cb_publish_imu)
+        self.pub_timer_ = self.create_timer(timer_period_sec = 0.1, callback = self.cb_publish_imu)
 
 
 
@@ -209,17 +209,6 @@ class ImuNode(Node):
             self.tmp_msg.temperature = buf[44]
 
             self.seq_ += 1
-
-
-    def cb_publish_imu(self):
-        self.update_imu_data()
-
-        self.get_logger.info("Publishing!")
-        # Publishing data
-        self.pub_data_.publish(self.imu_msg)    # Filtered data
-        self.pub_raw_.publish(self.raw_msg)     # Raw data
-        self.pub_mag_.publish(self.mag_msg)     # Magnetometer data
-        self.pub_temp_.publish(self.tmp_msg)    # Temperature data
     
     def read_from_dev(self, reg_addr, length):
         buf_out = bytearray()
@@ -262,6 +251,17 @@ class ImuNode(Node):
         
         return True
 
+    def cb_publish_imu(self):
+        # self.update_imu_data()
+
+        self.get_logger().info("Publishing!")
+        
+        # Publishing data
+        # self.pub_data_.publish(self.imu_msg)    # Filtered data
+        # self.pub_raw_.publish(self.raw_msg)     # Raw data
+        # self.pub_mag_.publish(self.mag_msg)     # Magnetometer data
+        # self.pub_temp_.publish(self.tmp_msg)    # Temperature data
+
 def main(args = None):
     rclpy.init(args = args)
 
@@ -269,7 +269,7 @@ def main(args = None):
     rclpy.spin(imu_node)
     
     # Closing Serial Port
-    imu_node.ser.close()
+    # imu_node.ser.close()
 
     imu_node.destoy_node()
     rclpy.shutdown()
