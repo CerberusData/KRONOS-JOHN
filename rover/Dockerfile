@@ -221,6 +221,12 @@ RUN \
 #     rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
+# Add Python dependencies in here
+RUN \
+    pip instal pyserial
+
+
+# -----------------------------------------------------------------------------
 # Copy configuration and other file
 COPY configs/freedom_robotics/ /usr/src/app/freedom_robotics/
 COPY balena_configs/balena_start.sh .
