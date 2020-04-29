@@ -13,9 +13,13 @@ import math
 import cv2
 import os
 
+from vision.utils.vision_utils import line_intersection
+from vision.utils.vision_utils import overlay_image
 from vision.utils.vision_utils import printlog
 from vision.utils.vision_utils import dotline
-from vision.utils.vision_utils import line_intersection
+from vision.utils.vision_utils import printlog
+
+cv2v_base = cv2.__version__.split(".")[0]
 
 # =============================================================================
 def read_extrinsic_params(CONF_PATH, FILE_NAME):
@@ -30,12 +34,18 @@ def read_extrinsic_params(CONF_PATH, FILE_NAME):
 
     abs_path = os.path.join(CONF_PATH, FILE_NAME)
     if os.path.isfile(abs_path):
-        with open(abs_path, 'r') as stream:
-            data_loaded = yaml.safe_load(stream)
-    else:
-        return None
 
-    return data_loaded
+        try: 
+            with open(abs_path, 'r') as stream:
+                extrinsic_cal = yaml.safe_load(stream)
+            return extrinsic_cal
+
+        except Exception as e:
+            printlog(msg="error while reading {}, {}".format(
+                abs_path, e), msg_type="ERROR")
+            return None
+
+    return None
 
 def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTOM, 
     HSVI, HSVS, PATTERN_FILTER_KERNEL=1, PATTERN_ITERATION_TRIES=20, 
@@ -112,9 +122,13 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
 
         # Contours detection and classification
         # https://docs.opencv.org/3.3.1/dd/d49/tutorial_py_contour_features.html
-        contours, hierarchy = cv2.findContours(image=img_scr_hsv, 
-            mode=int(cv2.RETR_TREE), method=int(cv2.CHAIN_APPROX_SIMPLE))
-    
+        if cv2v_base == "4":
+            contours, hierarchy = cv2.findContours(image=img_scr_hsv, 
+                mode=int(cv2.RETR_TREE), method=int(cv2.CHAIN_APPROX_SIMPLE))
+        else:
+            _, contours, _ = cv2.findContours(image=img_scr_hsv, 
+                mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
+
         img_scr_hsv_gui = cv2.cvtColor(src=img_scr_hsv, code=int(cv2.COLOR_GRAY2BGR)) # Image to debug and test
         img_scr_hsv = np.zeros((IMG_SIZE[1], IMG_SIZE[0], 1), np.uint8) # Mask to draw valid  pattern contours 
 
@@ -764,12 +778,12 @@ def pixel_relation(img_src, M, mtx, dist, p1, p2 , p3 , p4, Left_Line,
         cv2.destroyWindow(LOCAL_WIN_NAME)
     return extrinsic_relation
 
-def create_ruler_mask(flag_img, mono_params, fontScale=0.7):
+def create_ruler_mask(flag_img, extrinsic_params, fontScale=0.7):
     """ creates mask of rulers for original and surface projection spaces to 
         overlay later 
     Args:
         flag_img: `cv2.math` flag image to overlay 4m point
-        mono_params: `dictionary` with mono vision calibration parameters
+        extrinsic_params: `dictionary` with extrinsic calibration parameters
             vp: `tuple`  vanishing point coordinate in original image space
             p1: `tuple` point 1 of quadrangle vertices's Coordinates in source image
             p2: `tuple` point 2 of quadrangle vertices's Coordinates in source image
@@ -787,15 +801,15 @@ def create_ruler_mask(flag_img, mono_params, fontScale=0.7):
     """
 
     # Function variables
-    dead_distance = mono_params["dead_view"]
-    UNWARPED_SIZE = mono_params["unwarped_size"]
-    ORIGINAL_SIZE = mono_params["image_size"]
-    ppmy = mono_params["ppmy"]
-    p1 = mono_params["p1"]
-    p2 = mono_params["p2"]
-    p3 = mono_params["p3"]
-    p4 = mono_params["p4"]
-    M = mono_params["M"]
+    dead_distance = extrinsic_params["dead_view"]
+    UNWARPED_SIZE = tuple(extrinsic_params["unwarped_size"])
+    ORIGINAL_SIZE = tuple(extrinsic_params["image_size"])
+    ppmy = extrinsic_params["ppmy"]
+    p1 = tuple(extrinsic_params["p1"])
+    p2 = tuple(extrinsic_params["p2"])
+    p3 = tuple(extrinsic_params["p3"])
+    p4 = tuple(extrinsic_params["p4"])
+    M = extrinsic_params["M"]
     
     # Create a mask with extra size to draw ruler
     Ruler_Mask = np.zeros((UNWARPED_SIZE[1]+int(round(dead_distance*ppmy)), 
@@ -912,6 +926,72 @@ def get_projection_point_dst(coords_src, M):
     # ------------------------------------------------------------
     # return results
     return (int(coords_dst[0]), int(coords_dst[1]))
+
+def get_projection_point_src(coords_dst, INVM):
+    """ 
+        Get the cords of a point in 'X' and 'Y' from projected area to source 
+        area in original image
+    Args:
+        coords_src: `tuple` cords in the original image
+        INVM: `numpy.narray` inverse of rotation matrix from geometric projection to original 
+    Returns:
+        _: return the projected point according with rotation matrix 'M' and 
+            the original point 'coords_dst'  
+    """
+
+    # ------------------------------------------------------------
+    coords_src=np.matmul(INVM, coords_dst)
+    coords_src=coords_src/coords_src[2]
+
+    # ------------------------------------------------------------
+    # return results
+    return (int(coords_src[0]), int(coords_src[1]))
+
+def FindBotViewCord(image_size, M, SurfacesPoints, mtx=None, dist=None):
+    """ 
+        Calculates the bot's view cord in surface projection        
+    Args:
+        image_size: `tuple` original image size
+        M: `numpy.narray` rotation matrix from geometric projection to original image
+        SurfacesPoints: `tuple` Coordinates of quadrangle vertices in the source image
+    Returns:
+        x_dst: `tuple` bot's view x cordinate
+        y_dst: `tuple` bot's view y cordinate   
+    """
+
+    # Re - assign surface projection points
+    p1 = SurfacesPoints[0]
+    p2 = SurfacesPoints[1]
+    p3 = SurfacesPoints[2]
+    p4 = SurfacesPoints[3]
+
+    # Declare surface projection limit lines
+    top_Line = (p1, p2)
+    bottom_line = (p3, p4)
+    left_line = ((0, 0), (0, image_size[1]))
+    right_line = ((image_size[0], 0), (image_size[0], image_size[1]))
+
+    # Find intersections of surface projection lines
+    LSInterc = line_intersection(line1=top_Line, line2=left_line)
+    LIInterc = line_intersection(line1=bottom_line, line2=left_line)
+    RSInterc = line_intersection(line1=top_Line, line2=right_line)
+    RIInterc = line_intersection(line1=bottom_line, line2=right_line)
+
+    # Project intersections in surface projection space
+    LSInterc_dst = get_projection_point_dst((LSInterc[0], LSInterc[1], 1), M)
+    LIInterc_dst = get_projection_point_dst((LIInterc[0], LIInterc[1], 1), M)
+    RSInterc_dst = get_projection_point_dst((RSInterc[0], RSInterc[1], 1), M)
+    RIInterc_dst = get_projection_point_dst((RIInterc[0], RIInterc[1], 1), M)
+
+    # Find bot camera cords
+    x_dst, y_dst = line_intersection((LSInterc_dst, LIInterc_dst), 
+        (RSInterc_dst, RIInterc_dst))
+
+    if mtx is not None and dist is not None:
+        x_dst, y_dst = get_distor_point(
+            pt=(x_dst, y_dst), mtx=mtx, dist=dist)
+
+    return x_dst, y_dst
 
 # =============================================================================
 if __name__ == '__main__':

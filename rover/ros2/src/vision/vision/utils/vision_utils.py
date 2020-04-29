@@ -131,6 +131,66 @@ def dotline(src, p1, p2, color, thickness, Dl):
 
     return src
 
+def overlay_image(l_img, s_img, pos, transparency):
+    """ Overlay 's_img on' top of 'l_img' at the position specified by
+        pos and blend using 'alpha_mask' and 'transparency'.
+    Args:
+        l_img: `cv2.mat` inferior image to overlay superior image
+        s_img: `cv2.mat` superior image to overlay
+        pos: `tuple`  position to overlay superior image [pix, pix]
+        transparency: `float` transparency in overlayed image
+    Returns:
+        l_img: `cv2.mat` original image with s_img overlayed
+    """
+
+    # Get superior image dimensions
+    s_img_height, s_img_width, s_img_channels = s_img.shape
+
+    if s_img_channels == 3 and transparency != 1:
+        s_img = cv2.cvtColor(s_img, cv2.COLOR_BGR2BGRA)
+        s_img_channels = 4
+
+    # Take 3rd channel of 'img_overlay' image to get shapes
+    img_overlay= s_img[:, :, 0:4]
+
+    # cords assignation to overlay image 
+    x, y = pos
+
+    # Image ranges
+    y1, y2 = max(0, y), min(l_img.shape[0], y + img_overlay.shape[0])
+    x1, x2 = max(0, x), min(l_img.shape[1], x + img_overlay.shape[1])
+
+    # Overlay ranges
+    y1o, y2o = max(0, -y), min(img_overlay.shape[0], l_img.shape[0] - y)
+    x1o, x2o = max(0, -x), min(img_overlay.shape[1], l_img.shape[1] - x)
+
+    # Exit if nothing to do
+    if y1 >= y2 or x1 >= x2 or y1o >= y2o or x1o >= x2o:
+        return l_img
+
+    if s_img_channels == 4:
+        # Get alphas channel
+        alpha_mask = (s_img[:, :, 3] / 255.0) * transparency
+        alpha_s = alpha_mask[y1o:y2o, x1o:x2o]
+        alpha_l = (1.0 - alpha_s)
+
+        # Do the overlay with alpha channel
+        for c in range(0, l_img.shape[2]):
+            l_img[y1:y2, x1:x2, c] = (alpha_s * img_overlay[y1o:y2o, x1o:x2o, c] +
+                                    alpha_l * l_img[y1:y2, x1:x2, c])
+
+    elif s_img_channels < 4:
+        # Do the overlay with no alpha channel
+        if l_img.shape[2] == s_img.shape[2]:
+            l_img[y1:y2, x1:x2] = s_img[y1o:y2o, x1o:x2o]
+        else:
+            printlog(msg="Error: to overlay images should have the same color channels", 
+                msg_type="ERROR")
+            return l_img
+
+    # Return results
+    return l_img
+
 # =============================================================================
 # MATH/GEOMETRY OPERATIONS - MATH/GEOMETRY OPERATIONS - MATH/GEOMETRY OPERATION
 
@@ -203,7 +263,7 @@ def discrete_contour(contour, Dl):
 
     # If contour has less of two points is not valid for operations
     if len(contour) < 2:
-        print("[ERROR]: no valid segment")
+        printlog(msg="No valid segment", msg_type="ERROR")
         return contour
 
     # New contour variable

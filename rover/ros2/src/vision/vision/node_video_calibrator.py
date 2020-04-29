@@ -10,6 +10,7 @@ Code Information:
 # =============================================================================
 import rclpy
 import time
+import yaml
 import cv2
 import os
 
@@ -24,14 +25,19 @@ from vision.extrinsic.extrinsic_utils import read_extrinsic_params
 from vision.extrinsic.extrinsic_utils import find_projection
 from vision.extrinsic.extrinsic_utils import get_rot_matrix
 from vision.extrinsic.extrinsic_utils import pixel_relation
+from vision.extrinsic.extrinsic_utils import create_ruler_mask
 
 from vision.utils.vision_utils import flat_matrix_for_service
+from vision.utils.vision_utils import overlay_image
 from vision.utils.vision_utils import printlog
 
 from usr_msgs.msg import Intrinsic
 from usr_msgs.msg import CamerasStatus
 from usr_msgs.msg import VisualMessage
 from std_msgs.msg import String
+
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
 
 # =============================================================================
 class CalibratorPublishers(Node):
@@ -47,10 +53,12 @@ class CalibratorPublishers(Node):
         # ---------------------------------------------------------------------
         # Constant/global variables
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
+        self._LOCAL_GUI = int(os.getenv(key="LOCAL_GUI", default=0)) 
         self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
             default=os.path.dirname(os.path.abspath(__file__))))
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
+        self._VIDEO_SIZE = (self._VIDEO_WIDTH, self._VIDEO_HEIGHT)
         self._INT_FILE_NAME = "Intrinsic_{}_{}.yaml".format(
             self._VIDEO_WIDTH, 
             self._VIDEO_HEIGHT)
@@ -91,18 +99,21 @@ class CalibratorPublishers(Node):
             os.path.join(os.path.dirname(os.path.realpath(__file__)), 
             "extrinsic/figures/flag_4m.png"), cv2.IMREAD_UNCHANGED)
         self.calibrating_stat = False
-        self.show_calibration_result = False # Enable/Disable calibration drawings
         self.calibration_image = None # Result image for calibrations
 
         # ---------------------------------------------------------------------
         # Read intrinsic parameters from file
         self.load_intrinsic()
-        
+
         # ---------------------------------------------------------------------
         # Topics publishers
-        self.pb_visual_debugger= self.create_publisher(
+        self.pb_visual_debugger = self.create_publisher(
             VisualMessage, 'video_streaming/visual_debugger', 5)
         self.visual_debugger_msg = VisualMessage()
+
+        self.img_bridge = CvBridge()
+        self.pb_calibrator_result = self.create_publisher(
+            Image, 'video_calibrator/extrinsic_result', 2)
 
         # ---------------------------------------------------------------------
         # Topics Subscribers
@@ -145,7 +156,7 @@ class CalibratorPublishers(Node):
         else:
             # TODO: Get image from topic, for now with simulation image
             cam_img = None
-            
+
         try:
             # If exits continue calibration process
             if self.intrinsic["camera_matrix"] is not None:
@@ -216,19 +227,27 @@ class CalibratorPublishers(Node):
     def load_extrinsic(self):
 
         for cam_key, cam_status in self._cams_status.items():
+            
+            self.extrinsic[cam_key] = None
+
             if not cam_status and not self._LOCAL_RUN:
                 self.get_logger().warning(
-                    "{} camera no response, no extrinsic configuration loaded".format(cam_key))
+                    "{} camera no response, no extrinsic configuration loaded".format(
+                        cam_key))
                 continue
+
             cam_extrinsic = read_extrinsic_params(
                     CONF_PATH=self._CONF_PATH, 
                     FILE_NAME="Extrinsic_{}_{}_{}.yaml".format(
                         self._VIDEO_WIDTH, self._VIDEO_HEIGHT, cam_key))
+            
             if cam_extrinsic is None:
                 self.get_logger().warning(
-                    "No extrinsic configuration file for {} camera".format(cam_key))
+                    "No extrinsic configuration file for {} camera".format(
+                        cam_key))
                 self.extrinsic[cam_key] = None
                 continue
+            
             self.get_logger().info(
                 "Extrinsic configuration loaded for {} camera".format(cam_key))
             self.extrinsic[cam_key] = cam_extrinsic
@@ -252,7 +271,7 @@ class CalibratorPublishers(Node):
             PATTERN_ITERATION_TRIES=self._VISION_CAL_PAT_ITE_TRIES,
             HSVI=self._HSVI, HSVS=self._HSVS,
             LOCAL_CALIBRATION=self._LOCAL_RUN and self._VISION_CAL_SHOW_LOCAL)
-        
+
         if ext_cal is not None:
             try: 
                 # Calculate rotation matrix from surface
@@ -286,27 +305,23 @@ class CalibratorPublishers(Node):
                 extrinsic_vision_params={
                     "M": M.tolist(),
                     "vp": ext_cal["vp"].tolist(), 
-                    "p1": ext_cal["p1"], 
-                    "p2": ext_cal["p2"], 
-                    "p3": ext_cal["p3"], 
-                    "p4": ext_cal["p4"], 
+                    "p1": list(ext_cal["p1"]), 
+                    "p2": list(ext_cal["p2"]), 
+                    "p3": list(ext_cal["p3"]), 
+                    "p4": list(ext_cal["p4"]), 
                     "dead_view": surf_relation["dead_view_distance"],
-                    "ppmx": surf_relation["ppmx"], 
+                    "ppmx": surf_relation["ppmx"],
                     "ppmy": surf_relation["ppmy"], 
-                    "unwarped_size": self._UNWARPED_SIZE,
-                    "image_size": self._VIDEO_SIZE
+                    "unwarped_size": list(self._UNWARPED_SIZE),
+                    "image_size": list(self._VIDEO_SIZE)
                     }
 
-                self.save_params_and_test(mono_abs_path=mono_abs_path, 
-                    data=mono_vision_params)
+                self.save_extrinsic(file_path=extrinsic_abs_path, 
+                    data=extrinsic_vision_params)
         
-                # Report successfully calibration
-                printlog(msg="Calibracion para la camara {} exitosa!".format(
-                    camera_label), msg_type="OKGREEN")
-
                 # Set calibration image and show it to pilots console
                 mask_pro, mask_src = create_ruler_mask(flag_img=self._flag_image, 
-                    mono_params=mono_vision_params)
+                    extrinsic_params=extrinsic_vision_params)
                 self.calibration_image = overlay_image(l_img=img_src.copy(), 
                     s_img=mask_src, pos=(0, 0), transparency=1)
                 calibration_image = self.calibration_image.copy()
@@ -319,13 +334,36 @@ class CalibratorPublishers(Node):
                 ruler_projected = cv2.resize(src=cv2.rotate(src=ruler_projected_orig, 
                     rotateCode=cv2.ROTATE_90_CLOCKWISE), dsize=self._VIDEO_SIZE)
 
-                # Show calibration results
-                # self.show_calibration_result = True
-                # self.calibration_image = ruler_projected
-                # time.sleep(self._SHOW_TIME)
-                # self.calibration_image = calibration_image
-                # time.sleep(self._SHOW_TIME)
-                # self.show_calibration_result = False
+                if self._LOCAL_RUN:
+                    cv2.imwrite(os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)), "extrinsic",
+                        "extrinsic_cal_projection.jpg"), ruler_projected)
+                    cv2.imwrite(os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)), "extrinsic",
+                        "extrinsic_cal_source.jpg"), calibration_image)
+
+                # Send supervisor's image message to topic
+                try:
+                    img_ext_result = self.img_bridge.cv2_to_imgmsg(
+                        cvim=ruler_projected, encoding="bgr8")
+                    # img_msg.header.stamp = time.time()
+                    self.pb_calibrator_result.publish(img_ext_result)
+                   
+                    time.sleep(self._VISION_CAL_SHOW_TIME)
+
+                    img_ext_result = self.img_bridge.cv2_to_imgmsg(
+                        cvim=calibration_image, encoding="bgr8")
+                    # img_msg.header.stamp = time.time()
+                    self.pb_calibrator_result.publish(img_ext_result)
+
+                except CvBridgeError as e:
+                    self.get_logger().error(
+                        "publishing extrinsic result images through topic, {}".format(e))
+
+                # Report successfully calibration
+                printlog(msg="Calibracion para la camara {} exitosa!".format(
+                    camera_label), msg_type="OKGREEN")
+
                 return True
 
             except Exception as e:
@@ -336,6 +374,25 @@ class CalibratorPublishers(Node):
             printlog(msg="No se pudo encontrar el patron de calibracion!".format(
                 e), msg_type="ERROR")
             return False
+
+    def save_extrinsic(self, file_path, data):
+        """ Saves file with extrinsic calibration
+        Args:
+            file_path: `String` name to save mono vision parameters file
+            data: `Dictionary` with extrinsic calibration to save in file
+        Returns:
+        """
+
+        try: # Save the calibration data in file
+
+            with open(file_path, 'w') as outfile: 
+                yaml.dump(data, outfile, default_flow_style=False)
+            printlog(msg="Camera extrinsic calibration saved {}".format(
+                file_path), msg_type="INFO")
+
+        except IOError as e: # Report any error saving de data
+            printlog(msg="Problem saving camera extrinsic calibration: {}".format(e), 
+                msg_type="ERROR")
 
 # =============================================================================
 def main(args=None):

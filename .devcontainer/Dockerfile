@@ -14,6 +14,7 @@ ARG USER_GID=$USER_UID
 ENV DEBIAN_FRONTEND=noninteractive
 
 # -----------------------------------------------------------------------------
+RUN echo "update"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-utils \
     dialog \
@@ -152,11 +153,11 @@ RUN  \
     libjpeg-dev \
     libpng-dev \
     libtiff-dev \
-    # gfortran  \
+    gfortran  \
     openexr \
     libatlas-base-dev \
     # python3-dev \
-    # python3-numpy \
+    python3-numpy \
     libtbb2 \
     libtbb-dev \
     libdc1394-22-dev \
@@ -201,14 +202,13 @@ RUN  \
     sudo apt install -y \
     libcanberra-gtk-module \
     libcanberra-gtk3-module
-ENV ROS2_DEL_BUILD=1
 
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom roboticsp
 # https://docs.freedomrobotics.ai/docs/install
-USER ada 
-RUN \
-    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
+# USER ada 
+# RUN \
+#     curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get
