@@ -39,9 +39,20 @@ class bcolors:
     GRAY = "\033[90m"
     UNDERLINE = '\033[4m'
 def printlog(msg, msg_type="INFO", flush=True):
+    """     
+        Print log message tracking file and function caller 
+        Args:
+            msg: `string` message to print
+            msg_type: `string` message type
+            flush: `boolean` sure that any output is buffered and go to the 
+                destination.
+        Returns:
+    """
+
     org = os.path.splitext(os.path.basename(inspect.stack()[1][1]))[0].upper()
     caller = inspect.stack()[1][3].upper()
     _str = "[{}][{}][{}]: {}".format(bcolors.LOG[msg_type][1], org, caller, msg)
+
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
     
 def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
@@ -98,7 +109,7 @@ def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
     cv2.imshow(win_name, stream) 
     key = cv2.waitKey(10) # Show video and capture key
     if key==113 or key==81: # (Q) If press q then quit
-        exit()
+        exit() 
 
 def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), fontScale=0.7):
 
@@ -127,7 +138,8 @@ def dotline(src, p1, p2, color, thickness, Dl):
     segments = discrete_contour((p1, p2), Dl)
 
     for segment in segments: # Draw doted line 
-        cv2.circle(src, segment, thickness, color, -1) 
+        cv2.circle(img=src, center=segment, 
+            radius=thickness, color=color, thickness=-1) 
 
     return src
 

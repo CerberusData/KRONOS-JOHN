@@ -39,6 +39,7 @@ set(MSG_FILES
   # Vision
   "msg/vision/CamerasStatus.msg"
   "msg/vision/Intrinsic.msg"
+  "msg/vision/Extrinsic.msg"
   "msg/vision/VisualMessage.msg"
   # Web client
   "msg/web_client/Messages.msg"

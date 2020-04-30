@@ -11,6 +11,8 @@ import numpy as np
 import yaml
 import os
 
+from vision.utils.vision_utils import printlog
+
 # =============================================================================
 def read_intrinsic_params(CONF_PATH, FILE_NAME):
     """ 
@@ -22,23 +24,41 @@ def read_intrinsic_params(CONF_PATH, FILE_NAME):
             dictionary
     """
 
-    abs_path = os.path.join(CONF_PATH, FILE_NAME)
-    if os.path.isfile(abs_path):
-        with open(abs_path, 'r') as stream:
-            data_loaded = yaml.safe_load(stream)
-    else:
-        return None
-    for key in [
-        "camera_matrix", 
-        "distortion_coefficients",
-        "rectification_matrix",
-        "projection_matrix"]:
-        if key not in data_loaded:
+    try:
+        abs_path = os.path.join(CONF_PATH, FILE_NAME)
+        
+        if os.path.isfile(abs_path):
+            with open(abs_path, 'r') as stream:
+                data_loaded = yaml.safe_load(stream)
+        else:
             return None
-        data_loaded[key] = \
-            np.array(data_loaded[key]["data"]).reshape(
-                data_loaded[key]["rows"], 
-                data_loaded[key]["cols"])
+        
+        for key in [
+            "camera_matrix", 
+            "distortion_coefficients",
+            "rectification_matrix",
+            "projection_matrix"]:
+
+            if key not in data_loaded:
+                printlog(
+                    msg="Intrinsic file {}, invalid".format(
+                    FILE_NAME), msg_type="ERROR")
+                return None
+
+            data_loaded[key] = \
+                np.array(data_loaded[key]["data"]).reshape(
+                    data_loaded[key]["rows"], 
+                    data_loaded[key]["cols"])
+
+    except Exception as e:
+        printlog(
+            msg="loading instrinsic configuration file {}, {}".format(
+            FILE_NAME, e), msg_type="ERROR")
+        return None
+
+    printlog(msg="{} instrinsic configuration loaded".format(
+        FILE_NAME), msg_type="OKGREEN")
+
     return data_loaded
 
 # =============================================================================

@@ -22,6 +22,9 @@ from rclpy.executors import MultiThreadedExecutor
 from vision.utils.cam_handler import read_cams_configuration
 from vision.utils.cam_handler import CamerasSupervisor
 from vision.utils.vision_utils import show_local_gui
+
+from std_msgs.msg import String
+
 from vision.utils.vision_utils import matrix_from_flat
 
 from sensor_msgs.msg import Image
@@ -94,6 +97,7 @@ class MappingNode(Node,
         self.img_optimizer = streaming_optimizer() 
         self.img_bridge = CvBridge()
         
+        # ---------------------------------------------------------------------
         # Stitcher object
         self.stitcher = Stitcher(
             abs_path=os.path.join(self._CONF_PATH, "stitcher_config.npz"),
@@ -116,6 +120,15 @@ class MappingNode(Node,
         # Cameras status
         self.pb_cams_status = self.create_publisher(
             CamerasStatus, 'video_streaming/cams_status', 5,
+            callback_group=self.callback_group)
+
+        # Image to calibrate
+        self.pb_img_to_calibrate = self.create_publisher(
+            Image, 'video_calibrator/img_to_calibrate', 1,
+            callback_group=self.callback_group)
+        self.sub_calibration = self.create_subscription(
+            msg_type=String, topic='video_calibrator/calibrate', 
+            callback=self.cb_send_img_calibrate, qos_profile=5,
             callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------
@@ -145,7 +158,12 @@ class MappingNode(Node,
             
         # ---------------------------------------------------------------------  
         # Subscribers
-
+        self.calibrator_img = None
+        self.sub_calibrator_img_res = self.create_subscription(
+            msg_type=Image, topic='video_calibrator/extrinsic_img_result', 
+            callback=self.cb_cal_img_result, qos_profile=5, 
+            callback_group=self.callback_group)
+        
         # ---------------------------------------------------------------------  
 
     def cb_cams_status(self):
@@ -185,13 +203,58 @@ class MappingNode(Node,
 
         imgs_dic = dict(map(lambda o: (o.cam_label, o.image.copy()), 
                 self.cameras_supervisor.camera_handlers.values()))
+        
+        # Add stitcher result to dictionary of images
         if not self.stitcher is None and self._LOCAL_RUN: 
-            imgs_dic["S"] = self.img_stitch(imgs_dic) 
+            imgs_dic["S"] = self.img_stitch(imgs_dic)
+       
+        # Show calibration if semthing to show
+        if self.calibrator_img is not None:
+            img=imgs_dic["C"] = self.calibrator_img
+        
+        # Draw any visual debugger message if there's one
         self.draw_visual_debugger(img=imgs_dic["C"])
+        
         if self._LOCAL_GUI:
             show_local_gui(
                 imgs_dic=imgs_dic, 
                 win_name="LOCAL_VIDEO_STREAMING")
+
+    def cb_cal_img_result(self, msg):
+
+        try:
+            self.calibrator_img = self.img_bridge.imgmsg_to_cv2(
+                img_msg=msg, desired_encoding="bgr8")
+        except CvBridgeError as e:
+            printlog(msg="erro while getting data from video_calibrator/extrinsic_img_result, {}".format(
+                e), msg_type="ERROR")
+
+        time.sleep(int(os.getenv(
+            key="VISION_CAL_SHOW_TIME", default=5)))
+
+        self.calibrator_img = None
+
+    def cb_send_img_calibrate(self, msg):
+
+        cam_label = msg.data
+
+        if cam_label not in self.cameras_supervisor.camera_handlers.keys():
+            self.get_logger().error(
+                "error publishing image to calibrator, key {} no found".format(
+                    cam_label))
+            return
+
+        # Send supervisor's image message to calibrator
+        try:
+            img_msg = self.img_bridge.cv2_to_imgmsg(
+                cvim=self.cameras_supervisor.camera_handlers[cam_label].image, 
+                encoding="bgr8")
+            # img_msg.header.stamp = time.time()
+            self.pb_img_to_calibrate.publish(img_msg)
+
+        except CvBridgeError as e:
+            self.get_logger().error(
+                "publishing image to calibrator, {}".format(e))
 
     def img_stitch(self, imgs_dic):
         """ Stitch the cameras center, left and right
@@ -229,6 +292,7 @@ class streaming_optimizer(object):
         Args:
         Returns:
         """
+
         # Read local variables of video streaming configuration
         self.IDLE_TIME = int(os.environ.get("FR_STREAMING_IDLE_TIME", 120))
         self.STREAMING_FACTOR = float(os.getenv("FR_STREAMING_FACTOR", 0.4)) 
@@ -264,6 +328,7 @@ class streaming_optimizer(object):
         Args:
         Returns:
         """
+
         self._time_tick = time.time()
 
 # =============================================================================

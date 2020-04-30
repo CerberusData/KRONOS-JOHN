@@ -38,7 +38,6 @@ export VISION_CAL_DAYS_OUT=10           # [int][days] Number of days for a calib
 export VISION_CAL_DAYS_REMOVE=20        # [int][days] Number of days to remove a calibration file
 export VISION_CAL_UNWARPED_WIDTH=200    # [int][pix] width of unwarped image for monovision
 export VISION_CAL_UNWARPED_HEIGHT=360   # [int][pix] height of unwarped image for monovision
-export VISION_CAL_TRIES=5               # [int] Number of tries to calibrate a camera
 export VISION_CAL_PAT_HOZ=0.6223        # [float][m] Horizontal distance between lines in calibration pattern
 export VISION_CAL_PAT_VER=4.0           # [float][m] Vertical length of calibration pattern
 export VISION_CAL_PAT_TH_TOP=15         # [int][pix] Number of pixel to project pattern from vanishing point
