@@ -316,6 +316,13 @@ class CalibratorPublishers(Node):
             printlog(msg=self.visual_debugger_msg.data, msg_type=msg_type)
         
     def calibrate_distances(self, img_src, camera_label):
+        """
+            Print log message tracking file and function caller 
+        Args:
+            img_src: `cv2.math` image to calibrate
+            camera_label: `string` camera label
+        Returns:
+        """
 
         # Perform extrinsic calibration 
         ext_cal = find_projection(img_src=img_src.copy(), 
