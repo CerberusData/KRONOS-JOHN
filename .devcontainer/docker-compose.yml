@@ -34,8 +34,8 @@ services:
     # Add devices to be share in container
     devices: 
       - /dev/video0
-      # - /dev/video1
-      # - /dev/video2
+      - /dev/video1
+      - /dev/video2
       # - /dev/video3
       # - /dev/video4
       # - /dev/video5

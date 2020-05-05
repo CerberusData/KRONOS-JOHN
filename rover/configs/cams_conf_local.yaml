@@ -24,12 +24,12 @@
 # https://shimat.github.io/opencvsharp_docs/html/5e5a9f7a-b360-809c-b542-799b01ac1aa2.htm
 
 C:
-  PORT: "2.3"
+  PORT: "5.1.2"
   FPS: 15.
-  FLIP: -1
+  # FLIP: -1
   WIDTH: [3, 640]
   HEIGHT: [4, 360]
-  GAIN: [14, 0.0]
+  # GAIN: [14, 0.0]
   # HUE: [13, 0.5]
   # SATURATION: [12, 0.4375]
   # CONTRAST: [11, 0.5]
