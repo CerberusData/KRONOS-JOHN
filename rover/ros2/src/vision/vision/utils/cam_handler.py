@@ -105,7 +105,8 @@ def find_usb_ports(cameras):
     for cam in cameras:
         try:
         # List of physical ports used in /dev/video# (some devices maybe represent same thing)
-            path = subprocess.check_output("udevadm info --query=path --name=/dev/video" + str(cam), shell=True).decode('utf-8')
+            path = subprocess.check_output("udevadm info --query=path "
+                "--name=/dev/video" + str(cam), shell=True).decode('utf-8')
 
         except Exception as e:
             printlog(msg="----- ERROR READING VIDEO DEVICE ----- (Error: {})".format(
@@ -180,27 +181,31 @@ class CameraHandler(Thread):
 
         if self.cam_device_number is None:
             printlog("{}: not recognized".format(self.cam_label), msg_type="WARN")
-            self.set_error_image("{} {}".format(self.cam_label, "NO RECOGNIZED" if not self.disconnected else "DISCONNECTED"))
+            self.set_error_image("{} {}".format(self.cam_label, "NO "
+                "RECOGNIZED" if not self.disconnected else "DISCONNECTED"))
             self.video_handler = None
             return
 
         # Open camera port
         self.video_handler = cv2.VideoCapture(self.cam_device_path)
-        self.video_handler.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+        
 
         # opens successfully the camera
         if self.video_handler.isOpened(): 
 
             # Set desired size to camera handler
-            # Some OpenCV versions requirers assing the size twice -don't know why
+            # Some OpenCV versions requirers assing the size twice
+            self.set_properties()
             self.set_properties()
 
             try: # Grab frame from camera and assing properties                
                 self.grabbed, self.image = self.video_handler.read()
 
                 if self.grabbed:
-                    self.video_format = decode_fourcc(self.video_handler.get(cv2.CAP_PROP_FOURCC))
-                    printlog("(GOT VIDEO) {}: DEVICE:{} - SIZE:{}X{} - FPS:{}/{} - PROP_MODE:{} - EXPOSURE:{}".format(
+                    self.video_format = decode_fourcc(self.video_handler.get(
+                        cv2.CAP_PROP_FOURCC))
+                    printlog("(GOT VIDEO) {}: DEVICE:{} - SIZE:{}X{} - FPS:{}"
+                        "/{} - PROP_MODE:{} - EXPOSURE:{}".format(
                         self.cam_label, self.cam_device_number, 
                         int(self.video_handler.get(cv2.CAP_PROP_FRAME_WIDTH)),
                         int(self.video_handler.get(cv2.CAP_PROP_FRAME_HEIGHT)), 
@@ -218,28 +223,37 @@ class CameraHandler(Thread):
                             msg_type="OKGREEN")
 
                     # Print warning if desired fps are not supported
-                    if self.cam_config["FPS"]>float(self.video_handler.get(cv2.CAP_PROP_FPS)):
-                        printlog("{}: FRAME RATE AS {} NOT SUPPORTED, SETTED AS {}".format(
-                            self.cam_label, int(self.cam_config["FPS"]), int(self.video_handler.get(cv2.CAP_PROP_FPS))), 
+                    if self.cam_config["FPS"]>float(self.video_handler.get(
+                        cv2.CAP_PROP_FPS)):
+                        printlog("{}: FRAME RATE AS {} NOT SUPPORTED, SETTED "
+                            "AS {}".format(
+                            self.cam_label, 
+                            int(self.cam_config["FPS"]), 
+                            int(self.video_handler.get(cv2.CAP_PROP_FPS))), 
                             msg_type="WARN")
-                        self.cam_config["FPS"]=self.video_handler.get(cv2.CAP_PROP_FPS)
+                        self.cam_config["FPS"]=self.video_handler.get(
+                                cv2.CAP_PROP_FPS)
 
                 else:
-                    printlog("{}:{} did not capture first image, possibly not space left on device".format(
+                    printlog("{}:{} did not capture first image, possibly not "
+                        "space left on device".format(
                         self.cam_label, self.cam_device_number), msg_type="WARN")
-                    self.set_error_image("{} NO SPACE ON DEVICE".format(self.cam_label))
+                    self.set_error_image("{} NO SPACE ON DEVICE".format(
+                        self.cam_label))
 
             # If not possible open camera port print exception 
             except Exception as e:
-                printlog("Something error ocurred reading frames from camera {} (device {}) -> {}".format(
-                    self.cam_label, self.cam_device_number, e), msg_type="ERROR")
+                printlog("Something error ocurred reading frames from camera "
+                    "{} (device {}) -> {}".format(self.cam_label, 
+                    self.cam_device_number, e), msg_type="ERROR")
                 self.grabbed = False
                 self.set_error_image("{} READING ERROR".format(self.cam_label))
         else:
             if not self.disconnected:
                 printlog("{}: {} not recognized".format(
                     self.cam_label, self.cam_device_number), msg_type="WARN")
-            self.set_error_image("{} {}".format(self.cam_label, "NO RECOGNIZED" if not self.disconnected else "DISCONNECTED"))
+            self.set_error_image("{} {}".format(self.cam_label, "NO RECOGNIZED" 
+                if not self.disconnected else "DISCONNECTED"))
             self.video_handler = None
     
     def set_properties(self):
@@ -247,16 +261,31 @@ class CameraHandler(Thread):
         Args:
         Returns:
         """
+
+        # Open cameras in MJPG format requires less bandwithd 
+        self.video_handler.set(
+            cv2.CAP_PROP_FOURCC, 
+            cv2.VideoWriter_fourcc(*"MJPG"))
+
         for cam_prop_key in self.cam_config:
+
             if type(self.cam_config[cam_prop_key]) is list:
-                self.video_handler.set(self.cam_config[cam_prop_key][0], self.cam_config[cam_prop_key][1])
-                prop_val = self.video_handler.get(self.cam_config[cam_prop_key][0])
-                if prop_val!= self.cam_config[cam_prop_key][1]:
-                    if cam_prop_key=="FOURCC":
-                        printlog("{} - DEVICE:{} CAN NOT SET PIXEL FORMAT AS {}".format(
-                            self.cam_label, self.cam_device_number, decode_fourcc(
-                                self.cam_config[cam_prop_key][1])), msg_type="WARN")
-                    elif cam_prop_key!="WIDTH" and cam_prop_key!="HEIGHT":
+                self.video_handler.set(
+                    self.cam_config[cam_prop_key][0], 
+                    self.cam_config[cam_prop_key][1])
+
+                time.sleep(0.2)
+                # Check that parameters was setted
+                prop_val = self.video_handler.get(
+                    self.cam_config[cam_prop_key][0])
+                if prop_val != self.cam_config[cam_prop_key][1]:
+                    if cam_prop_key == "FOURCC":
+                        printlog("{} - DEVICE:{} CAN NOT SET PIXEL FORMAT AS"
+                            " {}".format(self.cam_label, self.cam_device_number, 
+                            decode_fourcc(
+                                self.cam_config[cam_prop_key][1])), 
+                                msg_type="WARN")
+                    elif cam_prop_key != "WIDTH" and cam_prop_key!="HEIGHT":
                         printlog("{} - DEVICE:{} CAN NOT SET {} AS {}".format(
                             self.cam_label, self.cam_device_number, cam_prop_key, 
                             self.cam_config[cam_prop_key][1]), msg_type="WARN")
@@ -267,9 +296,12 @@ class CameraHandler(Thread):
             error_msg: `string` error message to print on image
         Returns:
         """
-        self.image = np.zeros((self.video_height, self.video_width, 3), dtype=np.uint8)
-        font_size = 0.0015625*self.video_width + 0.3 #empirical formula so that: when w=6400 -> font=1.5 and w=1920 -> font=3.5
-        cv2.putText(self.image, error_msg, (self.video_width//8, self.video_height//2),
+        self.image = np.zeros(
+            (self.video_height, self.video_width, 3), dtype=np.uint8)
+        #empirical formula so that: when w=6400 -> font=1.5 and w=1920 -> font=3.5
+        font_size = 0.0015625*self.video_width + 0.3 
+        cv2.putText(self.image, error_msg, 
+            (self.video_width//8, self.video_height//2),
             cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 4)
 
     def __str__(self):
@@ -286,42 +318,48 @@ class CameraHandler(Thread):
     def run(self):
 
         tries_limit = 0 # NUmber of tries if a camera is disconnected
-        time_prev = 0.; time_wait=0.; time_elapsed=0. # Times to capture frame
-        desired_fps = float(self.cam_config["FPS"]); time_fps=float(1./desired_fps)
-        fps_cnt = 0; fps_tic=time.time() # FPS count variable
-        
+        time_fps= 1./float(self.cam_config["FPS"]) # Times to capture frame
+
         if self.video_handler is not None: # If camera was openned 
             while self.run_event.is_set(): # Start thread loop
-                
+
+                ttick = time.time(); 
+
                 if self.grabbed: # If camera got image capture new frame 
                     try: # Grab a frame
                         self.grabbed, image = self.video_handler.read()
                         if image is None: 
                             raise Exception(
-                                "video_handler did not catch image for {} camera".format(
-                                    self.cam_label))
+                                "video_handler did not catch image for {} "
+                                "camera".format(self.cam_label))
 
                         # Flip the image if option is enable
-                        if self.video_flip is not None:
+                        if self.video_flip:
                             image=cv2.flip(src=image, flipCode=-1)
 
                         # Resize image
                         self.image=image
-                        self.image=cv2.resize(image, (self.video_width, self.video_height), interpolation=cv2.INTER_LINEAR
-                                ) if image.shape[0]!=self.video_height or image.shape[1]!=self.video_width else image
+                        self.image=cv2.resize(image, (self.video_width, self.video_height), 
+                            interpolation=cv2.INTER_LINEAR) if (image.shape[0]!= self.video_height 
+                                or image.shape[1]!=self.video_width) else image
                             
                         if LOCAL_RUN: # DEBUG - DEBUG - DEBUG - DEBUG - DEBUG -
-                            cv2.putText(image, "{}:{}".format(self.cam_label, self.fps), 
-                                (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
-                            cv2.putText(image, "{}:{}".format(self.cam_label, self.fps), 
-                                (10, image.shape[0]-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
-                            cv2.putText(image, "{}:{}".format(self.cam_label, self.fps), 
-                                (image.shape[1]-90, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
-                            cv2.putText(image, "{}:{}".format(self.cam_label, self.fps), 
-                                (image.shape[1]-90, image.shape[0]-20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
+                            cv2.putText(image, "{}:{}".format(self.cam_label, 
+                                self.fps), (10, 40), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
+                            cv2.putText(image, "{}:{}".format(self.cam_label, 
+                                self.fps), (10, image.shape[0]-20), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
+                            cv2.putText(image, "{}:{}".format(self.cam_label, 
+                                self.fps), (image.shape[1]-90, 40), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
+                            cv2.putText(image, "{}:{}".format(self.cam_label, 
+                                self.fps), (image.shape[1]-90, image.shape[0]-20), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3, 3)
 
                     except Exception as e: # Error reading image
-                        self.set_error_image("{} ERROR WHILE READING".format(self.cam_label))
+                        self.set_error_image("{} ERROR WHILE READING".format(
+                            self.cam_label))
                         printlog("Camera: {} error while reading: {}".format(
                             self.cam_label, e), msg_type="ERROR")
                         self.disconnected = True
@@ -334,36 +372,29 @@ class CameraHandler(Thread):
                         self.video_handler = None
                         self.disconnected = True
                         self.fps = 0   
-
                 elif self.disconnected: # If camera was disconnected 
                     self.init_video_handler()
                     time.sleep(1) # wait as if a camera is disconnected
                     tries_limit+=1
                     self.set_error_image("RECONNECTING")
                     if tries_limit>self.video_idle: # in [seconds]
-                        printlog("Camera: {} has reached the limit of reconnecting trials".format(
+                        printlog("Camera: {} has reached the limit of "
+                            "reconnecting trials".format(
                             self.cam_label), msg_type="WARN")
                         self.set_error_image("{} LOST".format(self.cam_label))
                         self.fps = 0
                         self.set_error_image("LOST")
                         break
                         
+                # -------------------------------------------------------------
                 # wait as if a frame were read
-                time_elapsed = float(time.time() - time_prev)
-                time_wait = float(time_fps-time_elapsed)
+                ttock = time.time() - ttick                
+                twait = time_fps - ttock
 
                 # suspends execution of the current thread in seconds.
-                if time_wait>=0.0: 
-                    time.sleep(time_wait)
-                time_prev = time.time()
+                time.sleep(twait*0.5)
 
-                # Count FPS
-                fps_cnt = fps_cnt + 1
-                fps_elap = time.time() - fps_tic
-                if fps_elap > 1.0:
-                    self.fps = fps_cnt
-                    fps_tic = time.time()
-                    fps_cnt = 0
+                # -------------------------------------------------------------
 
             if self.video_handler is not None:
                 self.video_handler.release() # Release video variable
@@ -401,7 +432,8 @@ class CamerasSupervisorBase():
                 self.video_numbers, cams_config.keys()) )
 
         # Check cameras status
-        self.cameras_status = ["{}:{}".format(cam_key, int(self.camera_handlers[cam_key].grabbed)
+        self.cameras_status = ["{}:{}".format(
+            cam_key, int(self.camera_handlers[cam_key].grabbed)
             ) for cam_key in self.camera_handlers.keys()]
 
 class CamerasSupervisor(CamerasSupervisorBase):
