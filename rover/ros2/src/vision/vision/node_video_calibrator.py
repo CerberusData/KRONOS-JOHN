@@ -63,20 +63,31 @@ class CalibratorPublishers(Node):
             self._VIDEO_WIDTH, 
             self._VIDEO_HEIGHT)
 
-        self._VISION_CAL_UNWARPED_WIDTH = int(os.getenv(key="VISION_CAL_UNWARPED_WIDTH", default=200))
-        self._VISION_CAL_UNWARPED_HEIGHT = int(os.getenv(key="VISION_CAL_UNWARPED_HEIGHT", default=360))
+        self._VISION_CAL_UNWARPED_WIDTH = int(os.getenv(
+            key="VISION_CAL_UNWARPED_WIDTH", default=200))
+        self._VISION_CAL_UNWARPED_HEIGHT = int(os.getenv(
+            key="VISION_CAL_UNWARPED_HEIGHT", default=360))
         self._VISION_CAL_UNWARPED_SIZE = (
             self._VISION_CAL_UNWARPED_WIDTH, 
             self._VISION_CAL_UNWARPED_HEIGHT)
-        self._VISION_CAL_PAT_VER = float(os.getenv(key="VISION_CAL_PAT_VER", default=1.0))
-        self._VISION_CAL_PAT_HOZ = float(os.getenv(key="VISION_CAL_PAT_HOZ", default=1.0))
-        self._VISION_CAL_PAT_TH_TOP = int(os.getenv(key="VISION_CAL_PAT_TH_TOP", default=15))
-        self._VISION_CAL_PAT_TH_BOTTOM = int(os.getenv(key="VISION_CAL_PAT_TH_BOTTOM", default=15))
-        self._VISION_CAL_SHOW_TIME = int(os.getenv(key="VISION_CAL_SHOW_TIME", default=5))
-        self._VISION_CAL_PAT_ITE_TRIES = int(os.getenv(key="VISION_CAL_PAT_ITE_TRIES", default=20))
-        self._VISION_CAL_DAYS_REMOVE = int(os.getenv(key="VISION_CAL_DAYS_REMOVE", default=20))
-        self._VISION_CAL_DAYS_OUT = int(os.getenv(key="VISION_CAL_DAYS_OUT", default=20))
-        self._VISION_CAL_SHOW_LOCAL = int(os.getenv(key="VISION_CAL_SHOW_LOCAL", default=0))
+        self._VISION_CAL_PAT_VER = float(os.getenv(
+            key="VISION_CAL_PAT_VER", default=1.0))
+        self._VISION_CAL_PAT_HOZ = float(os.getenv(
+            key="VISION_CAL_PAT_HOZ", default=1.0))
+        self._VISION_CAL_PAT_TH_TOP = int(os.getenv(
+            key="VISION_CAL_PAT_TH_TOP", default=15))
+        self._VISION_CAL_PAT_TH_BOTTOM = int(os.getenv(
+            key="VISION_CAL_PAT_TH_BOTTOM", default=15))
+        self._VISION_CAL_SHOW_TIME = int(os.getenv(
+            key="VISION_CAL_SHOW_TIME", default=5))
+        self._VISION_CAL_PAT_ITE_TRIES = int(os.getenv(
+            key="VISION_CAL_PAT_ITE_TRIES", default=20))
+        self._VISION_CAL_DAYS_REMOVE = int(os.getenv(
+            key="VISION_CAL_DAYS_REMOVE", default=20))
+        self._VISION_CAL_DAYS_OUT = int(os.getenv(
+            key="VISION_CAL_DAYS_OUT", default=20))
+        self._VISION_CAL_SHOW_LOCAL = int(os.getenv(
+            key="VISION_CAL_SHOW_LOCAL", default=0))
         self._HSVI = {
             "H": int(os.getenv(key="VISION_CAL_PAT_HI", default=58)),
             "S": int(os.getenv(key="VISION_CAL_PAT_SI", default=0)),

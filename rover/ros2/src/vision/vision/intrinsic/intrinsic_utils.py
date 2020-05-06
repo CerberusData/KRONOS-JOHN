@@ -16,6 +16,13 @@ from vision.utils.vision_utils import printlog
 class IntrinsicClass():
 
     def __init__(self, FILE_NAME=None, FILE_PATH=None):
+        """ 
+            Class constructor
+        Args:
+            FILE_NAME: 'string' intrinsic file name
+            FILE_PATH: 'string' intrinsic file path
+        Returns:
+        """
 
         self.file_name = "Intrinsic_{}_{}.yaml".format(
             int(os.getenv(key="VIDEO_WIDTH", default=640)), 

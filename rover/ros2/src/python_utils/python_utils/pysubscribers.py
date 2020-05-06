@@ -124,15 +124,4 @@ class ExtrinsicSubscriber():
 
         printlog(msg="Extrincid parameters updated", msg_type="INFO")
 
-# class Intrinsic():
-
-#     def __init__(self, parent_node):
-
-#         # Subscribers
-#         self._sub_visual_debugger = parent_node.create_subscription(
-#             msg_type=VisualMessage, topic='video_streaming/visual_debugger', 
-#             callback=self.cb_visual_debugger, qos_profile=5,
-#             callback_group=parent_node.callback_group
-#             )
-
 # =============================================================================
