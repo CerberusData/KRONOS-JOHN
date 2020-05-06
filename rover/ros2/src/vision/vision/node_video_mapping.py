@@ -25,6 +25,7 @@ from vision.utils.vision_utils import show_local_gui
 
 from std_msgs.msg import String
 from std_msgs.msg import Bool
+# from std_msgs.msg import Time
 
 from vision.utils.vision_utils import matrix_from_flat
 
@@ -39,10 +40,12 @@ from usr_msgs.msg import VisualMessage
 from python_utils.pysubscribers import VisualDebuggerSubscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
 
+from rclpy.time import Time
+
 # =============================================================================
-class MappingNode(Node, 
-    VisualDebuggerSubscriber,
-    ExtrinsicSubscriber):
+class MappingNode(
+    Node, 
+    VisualDebuggerSubscriber):
 
     def __init__(self):
         """ 
@@ -66,7 +69,6 @@ class MappingNode(Node,
         self.callback_group = ReentrantCallbackGroup()
 
         VisualDebuggerSubscriber.__init__(self, parent_node=self)
-        ExtrinsicSubscriber.__init__(self, parent_node=self)
         
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
@@ -195,21 +197,26 @@ class MappingNode(Node,
         Returns:
         """
         
-        img = self.cameras_supervisor.camera_handlers[cam_label].image
-        if img is not None and self._FR_STREAMING_OPTIMIZER:
-            img = self.img_optimizer.optimize(
-                img=img, cam_label=cam_label)
+        # Send supervisor's image message to topic
+        try:
 
-            # Send supervisor's image message to topic
-            try:
-                img_msg = self.img_bridge.cv2_to_imgmsg(
-                    cvim=img, encoding="bgr8")
-                # img_msg.header.stamp = time.time()
-                self.cam_publishers[cam_label].publish(img_msg)
+            img = self.cameras_supervisor.camera_handlers[cam_label].image
+            if img is not None and self._FR_STREAMING_OPTIMIZER:
+                img = self.img_optimizer.optimize(
+                    img=img, cam_label=cam_label)
 
-            except CvBridgeError as e:
-                self.get_logger().error("publishing CAM{} image in topic, "
-                    "{}".format(cam_label, e))
+            img_msg = self.img_bridge.cv2_to_imgmsg(
+                cvim=img, encoding="bgr8")
+
+            t = str(self.get_clock().now().nanoseconds)
+            img_msg.header.stamp.sec = int(t[0:10])
+            img_msg.header.stamp.nanosec = int(t[10:])
+
+            self.cam_publishers[cam_label].publish(img_msg)
+
+        except CvBridgeError as e:
+            self.get_logger().error("publishing CAM{} image in topic, "
+                "{}".format(cam_label, e))
 
     def cb_draw_local_gui(self):
         """ Callback function to draw local user interface

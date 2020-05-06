@@ -1,6 +1,7 @@
 # Topic pub
 ros2 topic pub --once /video_streaming/visual_debugger usr_msgs/msg/vision/VisualMessage '{data: "message_text", type: "INFO"}'
 ros2 topic pub --once /video_calibrator/calibrate std_msgs/msg/String '{data: "C"}'
+ros2 topic pub --once /video_streaming/idle_timer_reset std_msgs/msg/Bool '{data: True}'
 
 # Kill a node
 ros2 lifecycle set <nodename> shutdown

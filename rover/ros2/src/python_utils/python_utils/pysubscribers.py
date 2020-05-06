@@ -103,6 +103,13 @@ class ExtrinsicSubscriber():
         self.extrinsic = ExtrinsicClass()
 
     def cb_extrinsic_params(self, msg):
+        """ Re-assing extrinsic calibration 
+        Args:
+            msg: `VisualMessage` message for visual debugger
+                data: `string` message content
+                type: `string` message type
+        Returns:
+        """
 
         try: 
             self.extrinsic.M = msg.projection_matrix
