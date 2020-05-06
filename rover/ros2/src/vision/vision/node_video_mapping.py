@@ -24,6 +24,7 @@ from vision.utils.cam_handler import CamerasSupervisor
 from vision.utils.vision_utils import show_local_gui
 
 from std_msgs.msg import String
+from std_msgs.msg import Bool
 
 from vision.utils.vision_utils import matrix_from_flat
 
@@ -48,11 +49,13 @@ class MappingNode(Node,
             VisualDebuggerSubscriber:
                 Methods:
                     cb_visual_debugger [None]: callback function for subsciptor
-                    draw_visual_debugger [cv2.math]: Draws the visual debugger message
+                    draw_visual_debugger [cv2.math]: Draws the visual debugger 
+                        message
                 Arguments:
                     VISUAL_DEBUGGER_TIME [int]: Timer with time to show message
                     visual_debugger_msg  [string]:Message to show in console
-                    visual_debugger_type [string]: Type of message "INFO, ERR, WARN"
+                    visual_debugger_type [string]: Type of message 
+                        "INFO, ERR, WARN"
                    _sub_visual_debugger [subscriptor]: 
         """
 
@@ -72,7 +75,8 @@ class MappingNode(Node,
             default=os.path.dirname(os.path.abspath(__file__))))
 
         self._FR_AGENT = int(os.getenv(key="FR_AGENT", default=0))
-        self._FR_STREAMING_OPTIMIZER = int(os.getenv(key="FR_STREAMING_OPTIMIZER", default=0))
+        self._FR_STREAMING_OPTIMIZER = int(os.getenv(
+            key="FR_STREAMING_OPTIMIZER", default=0))
 
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
@@ -167,10 +171,19 @@ class MappingNode(Node,
             callback=self.cb_cal_img_result, qos_profile=5, 
             callback_group=self.callback_group)
         
+        self.sub_idle_timer_reset = self.create_subscription(
+            msg_type=Bool, topic='video_streaming/idle_timer_reset', 
+            callback=self.img_optimizer.cb_actuator_action, qos_profile=5, 
+            callback_group=self.callback_group)
+
         # ---------------------------------------------------------------------  
 
     def cb_cams_status(self):
-
+        """ Callback function to publish cameras status
+        Args:
+        Returns:
+        """
+        
         msg = CamerasStatus()
         msg.cams_status =  [str("{}:{}".format(cam_key, int(cam_status))
             ) for cam_key, cam_status in self.cameras_supervisor.get_cameras_status().items()]
@@ -195,8 +208,8 @@ class MappingNode(Node,
                 self.cam_publishers[cam_label].publish(img_msg)
 
             except CvBridgeError as e:
-                self.get_logger().error("publishing CAM{} image in topic, {}".format(
-                    cam_label, e))
+                self.get_logger().error("publishing CAM{} image in topic, "
+                    "{}".format(cam_label, e))
 
     def cb_draw_local_gui(self):
         """ Callback function to draw local user interface
@@ -224,13 +237,18 @@ class MappingNode(Node,
                 win_name="LOCAL_VIDEO_STREAMING")
 
     def cb_cal_img_result(self, msg):
+        """ Callback function to assing image calibraion result and show it
+            on main supervisors image
+        Args:
+        Returns:
+        """
 
         try:
             self.calibrator_img = self.img_bridge.imgmsg_to_cv2(
                 img_msg=msg, desired_encoding="bgr8")
         except CvBridgeError as e:
-            printlog(msg="erro while getting data from video_calibrator/extrinsic_img_result, {}".format(
-                e), msg_type="ERROR")
+            printlog(msg="erro while getting data from video_calibrator/"
+                "extrinsic_img_result, {}".format(e), msg_type="ERROR")
 
         time.sleep(int(os.getenv(
             key="VISION_CAL_SHOW_TIME", default=5)))
@@ -315,7 +333,7 @@ class streaming_optimizer(object):
         if self.inactive_timer < self.IDLE_TIME + 1:
             self.inactive_timer = time.time() - self._time_tick
 
-        elif self.inactive_timer>=self.IDLE_TIME:
+        elif self.inactive_timer >= self.IDLE_TIME:
             img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
                 dsize=(int(img.shape[1] * self.STREAMING_IDLE_FACTOR), 
                        int(img.shape[0] * self.STREAMING_IDLE_FACTOR)))
