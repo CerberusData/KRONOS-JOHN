@@ -7,8 +7,5 @@ def generate_launch_description():
             package='bosch_imu',
             node_executable='imu_node',
             node_name='imu',
-            output='screen',
-            parameters=[
-                {'enabled_param1': 'true'}
-                ])
+            output='screen')
     ])

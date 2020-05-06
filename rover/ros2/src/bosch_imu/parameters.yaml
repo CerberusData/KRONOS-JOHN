@@ -1,3 +1,0 @@
-imu:
-    ros__parameters:
-        test_list: [1.0, 2.0]
