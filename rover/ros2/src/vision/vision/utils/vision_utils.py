@@ -112,7 +112,18 @@ def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
         exit() 
 
 def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), fontScale=0.7):
-
+    """
+        Print a text list on image in desending order
+        Args:
+            img: 'cv2.math' image to draw components
+            tex_list: 'list' list with text to print/draw
+            color: 'list' bgr opencv color of text
+            orig: 'tuple' origin to start draw components
+            fontScale: 'float' text font scale
+            y_jump: 'int' jump or space between lines
+        returns:
+    """
+    
     y_jump = 30
     for idx, text in enumerate(tex_list):
         cv2.putText(img=img, text=text, 
@@ -214,6 +225,8 @@ def flat_matrix_for_service(numpy_array):
     Returns:
         _: `list` vector of matrix flatten
     """
+    
+    numpy_array = np.array(numpy_array)
 
     rows = len(numpy_array)
     cols = len(numpy_array[0])

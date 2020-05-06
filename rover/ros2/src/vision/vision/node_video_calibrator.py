@@ -20,8 +20,7 @@ from rclpy.logging import get_logger
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
-from vision.intrinsic.intrinsic_utils import read_intrinsic_params
-
+from vision.intrinsic.intrinsic_utils import IntrinsicClass
 from vision.extrinsic.extrinsic_utils import read_extrinsic_params
 from vision.extrinsic.extrinsic_utils import find_projection
 from vision.extrinsic.extrinsic_utils import get_rot_matrix
@@ -32,9 +31,9 @@ from vision.utils.vision_utils import flat_matrix_for_service
 from vision.utils.vision_utils import overlay_image
 from vision.utils.vision_utils import printlog
 
-from usr_msgs.msg import Intrinsic
 from usr_msgs.msg import CamerasStatus
 from usr_msgs.msg import VisualMessage
+from usr_msgs.msg import Extrinsic
 from std_msgs.msg import String
 
 from sensor_msgs.msg import Image
@@ -103,18 +102,20 @@ class CalibratorPublishers(Node):
 
         # ---------------------------------------------------------------------
         # Read intrinsic parameters from file
-        self.intrinsic = None
-        self.load_intrinsic()
+        self.intrinsic = IntrinsicClass()
 
         # ---------------------------------------------------------------------
         # Topics publishers
-        self.visual_debugger_msg = VisualMessage()
+        self.pb_visual_debugger_msg = VisualMessage()
         self.pb_visual_debugger = self.create_publisher(
             VisualMessage, 'video_streaming/visual_debugger', 5)
-        
+
         self.img_bridge = CvBridge()
         self.pb_calibrator_result = self.create_publisher(
             Image, 'video_calibrator/extrinsic_img_result', 2)
+
+        self.pb_calibrator_extrinsic = self.create_publisher(
+            Extrinsic, 'video_calibrator/extrinsic_parameters', 2)
 
         # ---------------------------------------------------------------------
         # Topics Subscribers
@@ -187,23 +188,23 @@ class CalibratorPublishers(Node):
                 self.calibrating_stat = False
                 return False
 
-            if self.intrinsic is not None and not self._LOCAL_RUN:
+            if self.intrinsic.mtx is not None and not self._LOCAL_RUN:
 
                 # Resize image if size diferento to intrinsic calibration size
-                if (self.cam_img.shape[1] != self.intrinsic["image_width"] 
-                    and self.cam_img.shape[0] != self.intrinsic["image_height"]):
+                if (self.cam_img.shape[1] != self.intrinsic.image_width
+                    and self.cam_img.shape[0] != self.intrinsic.image_height):
                     self.cam_img = c2.resize(self.cam_img, 
-                        (self.intrinsic["image_width"], 
-                        self.intrinsic["image_height"]))
+                        (self.intrinsic.image_width, 
+                        self.intrinsic.image_height))
 
                 # Undistord image if intrinsic calibration
                 self.cam_img = cv2.remap(self.cam_img, 
-                    self.intrinsic["map1"], self.intrinsic["map2"],
+                    self.intrinsic.map1, self.intrinsic.map2,
                     cv2.INTER_LINEAR) 
             
         try:
             # If exits continue calibration process
-            if self.intrinsic is not None:
+            if self.intrinsic.mtx is not None:
                 self.calibrate_distances(
                     img_src=self.cam_img, 
                     camera_label=cam_label)
@@ -242,27 +243,31 @@ class CalibratorPublishers(Node):
             self.get_logger().info("Got cameras status")
             self.load_extrinsic()
 
-    def load_intrinsic(self):
-        """     
-            load intrinsic parameters from file
-            Args:
-            Returns:
-        """
+    def publish_extrinsic(self, cam_label, extrinsic_data):
 
-        self.intrinsic = read_intrinsic_params(
-            CONF_PATH=self._CONF_PATH, 
-            FILE_NAME=self._INT_FILE_NAME)
+        try: 
+            extrinsic_msg = Extrinsic()
+            
+            extrinsic_msg.cam_label = cam_label
+            extrinsic_msg.projection_matrix = flat_matrix_for_service(
+                numpy_array=extrinsic_data["M"])
+            extrinsic_msg.vp = extrinsic_data["vp"]
+            extrinsic_msg.p1 = extrinsic_data["p1"]
+            extrinsic_msg.p2 = extrinsic_data["p2"]
+            extrinsic_msg.p3 = extrinsic_data["p3"]
+            extrinsic_msg.p4 = extrinsic_data["p4"]
+            extrinsic_msg.dead_view = extrinsic_data["dead_view"]
+            extrinsic_msg.ppmx = extrinsic_data["ppmx"]
+            extrinsic_msg.ppmy = extrinsic_data["ppmy"]
+            extrinsic_msg.unwarped_size = extrinsic_data["unwarped_size"]
+            extrinsic_msg.image_size = extrinsic_data["image_size"]
 
-        if self.intrinsic is not None:
-            map1, map2 = cv2.initUndistortRectifyMap(
-                        cameraMatrix=self.intrinsic["camera_matrix"], 
-                        distCoeffs=self.intrinsic["distortion_coefficients"], 
-                        R=np.array([]), 
-                        newCameraMatrix=self.intrinsic["camera_matrix"], 
-                        size=(self._VIDEO_WIDTH, self._VIDEO_HEIGHT), 
-                        m1type=cv2.CV_8UC1)
-            self.intrinsic["map1"] = map1
-            self.intrinsic["map2"] = map2
+            self.pb_calibrator_extrinsic.publish(extrinsic_msg)
+        
+        except Exception as e:
+            printlog(msg="Error publishing extrinsic calibration"
+                "trought topic, {}".format(e), msg_type="ERROR")
+            return False
 
     def load_extrinsic(self):
         """     
@@ -308,12 +313,12 @@ class CalibratorPublishers(Node):
         Returns:
         """
 
-        self.visual_debugger_msg.data = msg 
-        self.visual_debugger_msg.type = msg_type
-        self.pb_visual_debugger.publish(self.visual_debugger_msg)
+        self.pb_visual_debugger_msg.data = msg 
+        self.pb_visual_debugger_msg.type = msg_type
+        self.pb_visual_debugger.publish(self.pb_visual_debugger_msg)
 
         if prompt:
-            printlog(msg=self.visual_debugger_msg.data, msg_type=msg_type)
+            printlog(msg=self.pb_visual_debugger_msg.data, msg_type=msg_type)
         
     def calibrate_distances(self, img_src, camera_label):
         """
@@ -326,8 +331,8 @@ class CalibratorPublishers(Node):
 
         # Perform extrinsic calibration 
         ext_cal = find_projection(img_src=img_src.copy(), 
-            mtx=self.intrinsic["camera_matrix"], 
-            dist=self.intrinsic["distortion_coefficients"], 
+            mtx=self.intrinsic.mtx, 
+            dist=self.intrinsic.distortion_coefficients, 
             PATTERN_THRESH_TOP=self._VISION_CAL_PAT_TH_TOP, 
             PATTERN_THRESH_BOTTOM=self._VISION_CAL_PAT_TH_BOTTOM,
             PATTERN_ITERATION_TRIES=self._VISION_CAL_PAT_ITE_TRIES,
@@ -345,8 +350,8 @@ class CalibratorPublishers(Node):
                 surf_relation = pixel_relation(
                     img_src=img_src.copy(), 
                     M=M, 
-                    mtx=self.intrinsic["camera_matrix"], 
-                    dist=self.intrinsic["distortion_coefficients"], 
+                    mtx=self.intrinsic.mtx, 
+                    dist=self.intrinsic.distortion_coefficients, 
                     p1=ext_cal["p1"], p2=ext_cal["p2"], p3=ext_cal["p3"], p4=ext_cal["p4"], 
                     Left_Line=ext_cal["Left_Line"], Right_Line=ext_cal["Right_Line"], 
                     Hy=ext_cal["Hy"], 
@@ -366,7 +371,8 @@ class CalibratorPublishers(Node):
                     self._CONF_PATH, extrinsic_file_name)
                 extrinsic_vision_params={
                     "M": M.tolist(),
-                    "vp": ext_cal["vp"].tolist(), 
+                    "vp": [int(ext_cal["vp"][0]), 
+                           int(ext_cal["vp"][1])], 
                     "p1": list(ext_cal["p1"]), 
                     "p2": list(ext_cal["p2"]), 
                     "p3": list(ext_cal["p3"]), 
@@ -423,6 +429,10 @@ class CalibratorPublishers(Node):
                 except CvBridgeError as e:
                     self.get_logger().error(
                         "publishing extrinsic result images through topic, {}".format(e))
+
+                # Publish extrinsic result trought topic
+                self.publish_extrinsic(cam_label=camera_label, 
+                    extrinsic_data=extrinsic_vision_params)
 
                 # Report successfully calibration
                 self.pub_log(msg="Calibracion para la camara {} exitosa!".format(

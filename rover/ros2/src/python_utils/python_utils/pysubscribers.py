@@ -17,12 +17,15 @@ from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from usr_msgs.msg import VisualMessage
+from usr_msgs.msg import Extrinsic
 
 from vision.utils.vision_utils import print_text_list
 from vision.utils.vision_utils import printlog
 
+from vision.extrinsic.extrinsic_utils import ExtrinsicClass
+
 # =============================================================================
-class VisualDebugger():
+class VisualDebuggerSubscriber():
 
     def __init__(self, parent_node):
 
@@ -86,11 +89,40 @@ class VisualDebugger():
             color=color, orig=(10, 50), 
             fontScale=0.7)
 
-# class Extrinsic():
+class ExtrinsicSubscriber():
 
-#     def __init__(self, parent_node):
+    def __init__(self, parent_node):
 
-#         pass
+        # Subscribers
+        self._sub_extrinsic_params = parent_node.create_subscription(
+            msg_type=Extrinsic, topic='video_calibrator/extrinsic_parameters', 
+            callback=self.cb_extrinsic_params, qos_profile=2,
+            callback_group=parent_node.callback_group
+            )
+
+        self.extrinsic = ExtrinsicClass()
+
+    def cb_extrinsic_params(self, msg):
+
+        try: 
+            self.extrinsic.M = msg.projection_matrix
+            self.extrinsic.p1 = msg.p1
+            self.extrinsic.p2 = msg.p2
+            self.extrinsic.p3 = msg.p3
+            self.extrinsic.p4 = msg.p4
+            self.extrinsic.vp = msg.vp
+            self.extrinsic.dead_view = msg.dead_view
+            self.extrinsic.ppmx = msg.ppmx
+            self.extrinsic.ppmy = msg.ppmy
+            self.extrinsic.warped_size = msg.unwarped_size
+            self.extrinsic.image_size = msg.image_size
+
+        except Exception as e:
+            printlog(msg="Error getting extrinsic calibration"
+                "from topic, {}".format(e), msg_type="ERROR")
+            return False
+
+        printlog(msg="Extrincid parameters updated", msg_type="INFO")
 
 # class Intrinsic():
 

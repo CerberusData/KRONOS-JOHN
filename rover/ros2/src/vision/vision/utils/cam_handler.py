@@ -105,8 +105,8 @@ def find_usb_ports(cameras):
     for cam in cameras:
         try:
         # List of physical ports used in /dev/video# (some devices maybe represent same thing)
-            path = subprocess.check_output("udevadm info --query=path "
-                "--name=/dev/video" + str(cam), shell=True).decode('utf-8')
+            path = subprocess.check_output("udevadm info --query=path --name=/dev/video" + str(cam), 
+                shell=True).decode('utf-8')
 
         except Exception as e:
             printlog(msg="----- ERROR READING VIDEO DEVICE ----- (Error: {})".format(

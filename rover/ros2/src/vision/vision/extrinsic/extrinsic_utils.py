@@ -14,12 +14,95 @@ import cv2
 import os
 
 from vision.utils.vision_utils import line_intersection
+from vision.utils.vision_utils import matrix_from_flat
 from vision.utils.vision_utils import overlay_image
 from vision.utils.vision_utils import printlog
 from vision.utils.vision_utils import dotline
 from vision.utils.vision_utils import printlog
 
 cv2v_base = cv2.__version__.split(".")[0]
+
+# =============================================================================
+class ExtrinsicClass():
+
+    def __init__(self):
+
+        # EXtrinsic parameters
+        self.__M = None # perspetive transformation matrix
+        self.__Minv = None # inverse of perspetive transformation matrix
+        self.__p1 = None # first point of perpective geometry in original image
+        self.__p2 = None # second point of perpective geometry in original image
+        self.__p3 = None # third point of perpective geometry in original image
+        self.__p4 = None # fourth point of perpective geometry in original image
+        self.__vp = None # Vanishing point in original image
+        self.dead_view = None # Dead view distance in meters
+        self.ppmx = None # pixel per meter in x axis
+        self.ppmy = None # pixel per meter in y axis 
+        self.__warped_size = None # Image warped space size
+        self.__image_size = None # Image size which extrinsic calibration was performed
+
+    @property
+    def M(self):
+        return self.__M
+    @M.setter
+    def M(self, warpM):
+        if isinstance(warpM, list):
+            self.__M = matrix_from_flat(list_vector= warpM)
+            self.__Minv = np.linalg.inv(warpM)
+        elif isinstance(warpM, type(np.array)):
+            self.__M = warpM
+            self.__Minv = np.linalg.inv(warpM)
+        else:
+            self.__M = None
+
+    @property
+    def p1(self):
+        return self.__p1
+    @p1.setter
+    def p1(self, p1):
+        self.__p1 = tuple(p1)
+        
+    @property
+    def p2(self):
+        return self.__p2
+    @p2.setter
+    def p2(self, p2):
+        self.__p2 = tuple(p2)
+
+    @property
+    def p3(self):
+        return self.__p3
+    @p3.setter
+    def p3(self, p3):
+        self.__p3 = tuple(p3)
+
+    @property
+    def p4(self):
+        return self.__p4
+    @p4.setter
+    def p4(self, p4):
+        self.__p4 = tuple(p4)
+
+    @property
+    def vp(self):
+        return self.__vp
+    @vp.setter
+    def vp(self, vp):
+        self.__vp = tuple(vp)
+
+    @property
+    def warped_size(self):
+        return self.__unwarped_size
+    @warped_size.setter
+    def warped_size(self, warped_size):
+        self.__warped_size = tuple(warped_size)
+
+    @property
+    def image_size(self):
+        return self.__image_size
+    @image_size.setter
+    def image_size(self, image_size):
+        self.__image_size = tuple(image_size)
 
 # =============================================================================
 def read_extrinsic_params(CONF_PATH, FILE_NAME):

@@ -35,15 +35,17 @@ from vision.stitcher.stitcher import Stitcher
 from usr_msgs.msg import CamerasStatus
 from usr_msgs.msg import VisualMessage
 
-from python_utils.pysubscribers import VisualDebugger
+from python_utils.pysubscribers import VisualDebuggerSubscriber
+from python_utils.pysubscribers import ExtrinsicSubscriber
 
 # =============================================================================
 class MappingNode(Node, 
-    VisualDebugger):
+    VisualDebuggerSubscriber,
+    ExtrinsicSubscriber):
 
     def __init__(self):
         """ 
-            VisualDebugger:
+            VisualDebuggerSubscriber:
                 Methods:
                     cb_visual_debugger [None]: callback function for subsciptor
                     draw_visual_debugger [cv2.math]: Draws the visual debugger message
@@ -60,7 +62,8 @@ class MappingNode(Node,
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
 
-        VisualDebugger.__init__(self, parent_node=self)
+        VisualDebuggerSubscriber.__init__(self, parent_node=self)
+        ExtrinsicSubscriber.__init__(self, parent_node=self)
         
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 

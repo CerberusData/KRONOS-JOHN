@@ -38,7 +38,6 @@ set(MSG_FILES
   "msg/mavros/State.msg"
   # Vision
   "msg/vision/CamerasStatus.msg"
-  "msg/vision/Intrinsic.msg"
   "msg/vision/Extrinsic.msg"
   "msg/vision/VisualMessage.msg"
   # Web client

@@ -1,5 +1,5 @@
+string cam_label
 float32[] projection_matrix
-int16 image_width
 int16[] vp
 int16[] p1
 int16[] p2
