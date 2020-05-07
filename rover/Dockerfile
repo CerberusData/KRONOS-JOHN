@@ -257,14 +257,14 @@ WORKDIR /usr/src/app/dev_ws
 RUN  \
     . /opt/ros/dashing/setup.sh && \ 
     colcon build && \ 
-    colcon test && \ 
+    # colcon test && \ 
     /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
 
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom robotics
 # https://docs.freedomrobotics.ai/docs/install
 RUN \
-    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
+    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
 
 # -----------------------------------------------------------------------------
 # Start a udev service

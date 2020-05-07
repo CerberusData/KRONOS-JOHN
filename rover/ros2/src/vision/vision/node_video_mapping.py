@@ -25,7 +25,6 @@ from vision.utils.vision_utils import show_local_gui
 
 from std_msgs.msg import String
 from std_msgs.msg import Bool
-# from std_msgs.msg import Time
 
 from vision.utils.vision_utils import matrix_from_flat
 
@@ -39,8 +38,6 @@ from usr_msgs.msg import VisualMessage
 
 from python_utils.pysubscribers import VisualDebuggerSubscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
-
-from rclpy.time import Time
 
 # =============================================================================
 class MappingNode(
@@ -122,7 +119,8 @@ class MappingNode(
         self.cam_publishers = {}
         if self._FR_AGENT or self._LOCAL_RUN:
             self.cam_publishers = {cam_label:self.create_publisher(Image, 
-                'streaming/cam_{}'.format(cam_label), 5) 
+                'streaming/cam_{}'.format(cam_label), 2, 
+                callback_group=self.callback_group) 
                 for cam_label in self.cams_config.keys()
                 if cams_status[cam_label] or self._LOCAL_RUN}
                 
@@ -145,9 +143,8 @@ class MappingNode(
 
         self.cam_timers = {}
         self.cam_timers = {cam_label:self.create_timer(
-            timer_period_sec=1./float(self.cams_config[cam_label]["FPS"]), 
-            callback=partial(self.cb_cam_img_pub, cam_label),
-            callback_group=self.callback_group)
+            timer_period_sec=0.1/self.cams_config[cam_label]["FPS"], 
+            callback=partial(self.cb_cam_img_pub, cam_label))
             for cam_label in self.cams_config.keys()
             if cams_status[cam_label] or self._LOCAL_RUN}
 
@@ -205,10 +202,9 @@ class MappingNode(
                 img = self.img_optimizer.optimize(
                     img=img, cam_label=cam_label)
 
+            t = str(self.get_clock().now().nanoseconds)
             img_msg = self.img_bridge.cv2_to_imgmsg(
                 cvim=img, encoding="bgr8")
-
-            t = str(self.get_clock().now().nanoseconds)
             img_msg.header.stamp.sec = int(t[0:10])
             img_msg.header.stamp.nanosec = int(t[10:])
 
