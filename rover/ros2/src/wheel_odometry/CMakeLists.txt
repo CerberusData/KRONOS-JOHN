@@ -19,22 +19,30 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(usr_msgs REQUIRED)
+find_package(utils REQUIRED)
 
 include_directories(include)
 
 set(DEPENDENCIES
   rclcpp
   std_msgs
+  nav_msgs
+  usr_msgs
+  utils
 )
 
-add_executable(wheel_odometry
+add_executable(odometry
   src/main.cpp
+  src/wheel_odometry.cpp
 )
 
-ament_target_dependencies(wheel_odometry ${DEPENDENCIES})
+target_link_libraries(odometry utils::utils)
+ament_target_dependencies(odometry ${DEPENDENCIES})
 
 install(TARGETS
-  wheel_odometry
+  odometry
   DESTINATION lib/${PROJECT_NAME}
 )
 

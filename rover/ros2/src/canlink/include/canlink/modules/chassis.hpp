@@ -79,16 +79,17 @@ using std::placeholders::_1;
 class Chassis : public rclcpp::Node
 {
     public:
-    Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver);
-    ~Chassis(){};
+        /* Constructor */
+        Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver);
+        ~Chassis(){};
 
-    void PublishChassisStatus(struct can_frame* frame);
-    void PublishMotorStatus(struct can_frame* frame);
-    void PublishTestReport(struct can_frame* frame);
-    void SetErrorStatus(struct can_frame* frame);
-    void SetMotorsCurrent(struct can_frame* frame);
-
-    bool GetConnected();
+        /* Public functions */
+        void PublishChassisStatus(struct can_frame* frame);
+        void PublishMotorStatus(struct can_frame* frame);
+        void PublishTestReport(struct can_frame* frame);
+        void SetErrorStatus(struct can_frame* frame);
+        void SetMotorsCurrent(struct can_frame* frame);
+        bool GetConnected();
 
     private:
         /* Publishers */

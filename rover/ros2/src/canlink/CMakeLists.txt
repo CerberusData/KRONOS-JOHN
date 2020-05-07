@@ -31,6 +31,16 @@ add_library(${PROJECT_NAME}_lib
   lib/socket_can.cpp
 )
 
+set(DEPENDENCIES
+  rclcpp
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+  nav_msgs
+  usr_msgs
+  utils
+)
+
 add_executable(canlink_chassis 
   src/can_chassis.cpp
   src/modules/battery.cpp
@@ -43,16 +53,6 @@ add_executable(canlink_cabin
   src/can_cabin.cpp
   src/modules/lock_system.cpp
   lib/socket_can.cpp
-)
-
-set(DEPENDENCIES
-  rclcpp
-  std_msgs
-  geometry_msgs
-  sensor_msgs
-  nav_msgs
-  usr_msgs
-  utils
 )
 
 target_link_libraries(canlink_chassis utils::utils)
