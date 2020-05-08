@@ -14,7 +14,6 @@ https://www.ximea.com/support/wiki/usb3/multiple_cameras_setup
 
 # =============================================================================
 import numpy as np
-import datetime
 import inspect
 import math
 import cv2
@@ -55,7 +54,7 @@ def printlog(msg, msg_type="INFO", flush=True):
 
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
     
-def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
+def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO"):
     """     
         Show a local video with the current cameras, deping on the configuration
         and the camera streamings given by imgs_dic the distribution of images 
@@ -67,12 +66,6 @@ def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
             show_time: `boolean` show local time on images
         Returns:
     """
-
-    if show_time:
-        current_time = datetime.datetime.now().strftime("%c")
-        for img in imgs_dic.values():
-            cv2.putText(img, str(current_time), (15, 25),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1)
 
     for img in imgs_dic.values(): # Draw images margins
         cv2.rectangle(img=img, pt1=(0, 0), pt2=(img.shape[1]-1, img.shape[0]-1), 
@@ -98,9 +91,8 @@ def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=True):
     elif set(imgs_dic.keys()) == set(["C"]):
         stream = imgs_dic["C"]
     else:
-        # for key, value in imgs_dic.items():
-        #     cv2.imshow(key, value) 
-        cv2.imshow("C", imgs_dic["C"]) 
+        for key, value in imgs_dic.items():
+            cv2.imshow(key, value)  
         key = cv2.waitKey(10) # Show video and capture key
         if key==113 or key==81: # (Q) If press q then quit
             exit()

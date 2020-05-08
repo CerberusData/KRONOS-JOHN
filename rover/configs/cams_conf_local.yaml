@@ -38,20 +38,20 @@ C:
   FOURCC: [6, 1196444237.]
   TOPIC: "streaming/cam_central"
 
-# LL:
-#   PORT: "2.4.3"
-#   FPS: 10.
-#   FLIP: -1
-#   WIDTH: [3, 320]
-#   HEIGHT: [4, 180]
-#   GAIN: [14, 0.0]
-# #   HUE: [13, 0.5]
-# #   SATURATION: [12, 0.4375]
-# #   CONTRAST: [11, 0.5]
-# #   BRIGHTNESS: [10, 0.5]
-# #   AUTO_EXPOSURE: [21, 0.75]
-# #   FOURCC: [6, 1196444237.]
-#   TOPIC: "streaming/cam_left"
+LL:
+  PORT: "2.4.3"
+  FPS: 10.
+  FLIP: -1
+  WIDTH: [3, 320]
+  HEIGHT: [4, 180]
+  GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+  TOPIC: "streaming/cam_left"
 
 # RR:
 #   PORT: "2.4.4"

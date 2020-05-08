@@ -18,8 +18,8 @@ source "${PWD%}/configs/keys/fr_keys.sh"
 if [ "$FR_AGENT" == "1" ]
 then 
     echo "[INFO]: Launching freedom agent"
-    python3 ${PWD%}/configs/freedom_robotics/inject_freedom.py
-    python3 ${PWD%}/configs/freedom_robotics/keep_alive_freedom.py
+    python3 ${PWD%}/configs/freedom_robotics/inject_freedom.py &
+    python3 ${PWD%}/configs/freedom_robotics/keep_alive_freedom.py 
 else
     echo "[WARN]: No fredoom robotics agent configured"
 fi

@@ -20,7 +20,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
 from vision.utils.cam_handler import read_cams_configuration
-from vision.utils.cam_handler import CamerasSupervisor
+from vision.utils.cam_handler import CamerasCaptures
 from vision.utils.vision_utils import show_local_gui
 
 from std_msgs.msg import String
@@ -98,8 +98,9 @@ class MappingNode(
             self.get_logger().info("cameras configuration loaded")
         
         # Start cameras handler with configuration
-        self.cameras_supervisor = CamerasSupervisor(cams_config=self.cams_config)
-        cams_status = self.cameras_supervisor.get_cameras_status()
+        self.cams_caps = CamerasCaptures(cams_config=self.cams_config)
+        cams_status = self.cams_caps.get_cameras_status()
+                
         self.img_optimizer = streaming_optimizer() 
         self.img_bridge = CvBridge()
         
@@ -119,61 +120,63 @@ class MappingNode(
         self.cam_publishers = {}
         if self._FR_AGENT or self._LOCAL_RUN:
             self.cam_publishers = {cam_label:self.create_publisher(Image, 
-                'streaming/cam_{}'.format(cam_label), 2, 
-                callback_group=self.callback_group) 
+                'streaming/cam_{}'.format(cam_label), 5) 
                 for cam_label in self.cams_config.keys()
                 if cams_status[cam_label] or self._LOCAL_RUN}
                 
-        # Cameras status
-        self.pb_cams_status = self.create_publisher(
-            CamerasStatus, 'video_streaming/cams_status', 5,
-            callback_group=self.callback_group)
+        # # Cameras status
+        # self.pb_cams_status = self.create_publisher(
+        #     CamerasStatus, 'video_streaming/cams_status', 5,
+        #     callback_group=self.callback_group)
 
         # Image to calibrate
-        self.pb_img_to_calibrate = self.create_publisher(
-            Image, 'video_calibrator/img_to_calibrate', 1,
-            callback_group=self.callback_group)
-        self.sub_calibration = self.create_subscription(
-            msg_type=String, topic='video_calibrator/calibrate', 
-            callback=self.cb_send_img_calibrate, qos_profile=5,
-            callback_group=self.callback_group)
+        # self.pb_img_to_calibrate = self.create_publisher(
+        #     Image, 'video_calibrator/img_to_calibrate', 1,
+        #     callback_group=self.callback_group)
+        # self.sub_calibration = self.create_subscription(
+        #     msg_type=String, topic='video_calibrator/calibrate', 
+        #     callback=self.cb_send_img_calibrate, qos_profile=5,
+        #     callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------
         # Publishers Timers
 
         self.cam_timers = {}
         self.cam_timers = {cam_label:self.create_timer(
-            timer_period_sec=0.1/self.cams_config[cam_label]["FPS"], 
-            callback=partial(self.cb_cam_img_pub, cam_label))
+            timer_period_sec=0.5/self.cams_config[cam_label]["FPS"], 
+            callback=partial(self.cb_cam_img_pub, cam_label),
+            callback_group=self.callback_group)
             for cam_label in self.cams_config.keys()
             if cams_status[cam_label] or self._LOCAL_RUN}
 
-        self.tm_pub_cams_status = self.create_timer(
-            1.0, self.cb_cams_status)
+        # self.tm_pub_cams_status = self.create_timer(
+        #     timer_period_sec=1.0, 
+        #     callback = self.cb_cams_status, 
+        #     callback_group=self.callback_group)
+
+        # ---------------------------------------------------------------------  
+        # Subscribers
+        # self.calibrator_img = None
+        # self.sub_calibrator_img_res = self.create_subscription(
+        #     msg_type=Image, topic='video_calibrator/extrinsic_img_result', 
+        #     callback=self.cb_cal_img_result, qos_profile=5, 
+        #     callback_group=self.callback_group)
+        
+        # self.sub_idle_timer_reset = self.create_subscription(
+        #     msg_type=Bool, topic='video_streaming/idle_timer_reset', 
+        #     callback=self.img_optimizer.cb_actuator_action, qos_profile=5, 
+        #     callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------  
         # Local gui
-
-        if self._LOCAL_RUN:
-            self.gui_rate = 1./float(max(list(map(lambda o: int(o.cam_config["FPS"]), 
-                self.cameras_supervisor.camera_handlers.values()))))
-            self.gui_timer = self.create_timer(
-                timer_period_sec=self.gui_rate, 
-                callback=self.cb_draw_local_gui,
-                callback_group=self.callback_group)
-            
-        # ---------------------------------------------------------------------  
-        # Subscribers
-        self.calibrator_img = None
-        self.sub_calibrator_img_res = self.create_subscription(
-            msg_type=Image, topic='video_calibrator/extrinsic_img_result', 
-            callback=self.cb_cal_img_result, qos_profile=5, 
-            callback_group=self.callback_group)
-        
-        self.sub_idle_timer_reset = self.create_subscription(
-            msg_type=Bool, topic='video_streaming/idle_timer_reset', 
-            callback=self.img_optimizer.cb_actuator_action, qos_profile=5, 
-            callback_group=self.callback_group)
+        # if self._LOCAL_RUN and self._LOCAL_GUI:
+        #     self.gui_rate = 1./float(max(list(map(
+        #         lambda o: int(o.cam_config["FPS"]), 
+        #         self.cams_caps.camera_handlers.values()))))
+        #     self.gui_timer = self.create_timer(
+        #         timer_period_sec=self.gui_rate, 
+        #         callback=self.cb_draw_local_gui,
+        #         callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------  
 
@@ -185,7 +188,7 @@ class MappingNode(
         
         msg = CamerasStatus()
         msg.cams_status =  [str("{}:{}".format(cam_key, int(cam_status))
-            ) for cam_key, cam_status in self.cameras_supervisor.get_cameras_status().items()]
+            ) for cam_key, cam_status in self.cams_caps.get_cameras_status().items()]
         self.pb_cams_status.publish(msg)
 
     def cb_cam_img_pub(self, cam_label):
@@ -193,12 +196,12 @@ class MappingNode(
         Args:
         Returns:
         """
-        
+
         # Send supervisor's image message to topic
         try:
 
-            img = self.cameras_supervisor.camera_handlers[cam_label].image
-            if img is not None and self._FR_STREAMING_OPTIMIZER:
+            img = self.cams_caps.camera_handlers[cam_label].get_image()
+            if self._FR_STREAMING_OPTIMIZER:
                 img = self.img_optimizer.optimize(
                     img=img, cam_label=cam_label)
 
@@ -221,7 +224,7 @@ class MappingNode(
         """
 
         imgs_dic = dict(map(lambda o: (o.cam_label, o.image.copy()), 
-                self.cameras_supervisor.camera_handlers.values()))
+                self.cams_caps.camera_handlers.values()))
         
         # Add stitcher result to dictionary of images
         if not self.stitcher is None and self._LOCAL_RUN: 
@@ -234,10 +237,9 @@ class MappingNode(
         # Draw any visual debugger message if there's one
         self.draw_visual_debugger(img=imgs_dic["C"])
         
-        if self._LOCAL_GUI:
-            show_local_gui(
-                imgs_dic=imgs_dic, 
-                win_name="LOCAL_VIDEO_STREAMING")
+        show_local_gui(
+            imgs_dic=imgs_dic, 
+            win_name="LOCAL_VIDEO_STREAMING")
 
     def cb_cal_img_result(self, msg):
         """ Callback function to assing image calibraion result and show it
