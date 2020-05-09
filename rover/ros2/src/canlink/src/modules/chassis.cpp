@@ -26,11 +26,16 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
         motors_dvr_status_.connected = true;
 
         /* Publishers */
-        motors_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::State>("/canlink/chassis/status", 10);
-        motors_out_pub_ = this->create_publisher<usr_msgs::msg::PWMOut>("/canlink/chassis/motors_out", 10);
-        motors_status_pub_ = this->create_publisher<usr_msgs::msg::Motors>("/canlink/chassis/motors_status", 10);
-        test_motors_pub_ = this->create_publisher<usr_msgs::msg::TestMotors>("/canlink/chassis/test_response", 10);
-        msg_pub_ = this->create_publisher<usr_msgs::msg::Messages>("/web_client/message", 512);
+        motors_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::State>(
+            "/canlink/chassis/status", 10);
+        motors_out_pub_ = this->create_publisher<usr_msgs::msg::PWMOut>(
+            "/canlink/chassis/motors_out", 10);
+        motors_status_pub_ = this->create_publisher<usr_msgs::msg::Motors>(
+            "/canlink/chassis/motors_status", 10);
+        test_motors_pub_ = this->create_publisher<usr_msgs::msg::TestMotors>(
+            "/canlink/chassis/test_response", 10);
+        msg_pub_ = this->create_publisher<usr_msgs::msg::Messages>(
+            "/web_client/message", 512);
 
         if(publish_currents_separately_)  /* Separate current Publishers */
         {
@@ -49,7 +54,7 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
 
         /* Subscribers */
         speed_control_out_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-            "/motion_control/speed_controller/output",  10, std::bind(&Chassis::ActuatorControlCb, this, _1));
+            "/motion_control/speed_controller/output", 10, std::bind(&Chassis::ActuatorControlCb, this, _1));
         speed_control_ref_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
             "/motion_control/speed_controller/reference", 10, std::bind(&Chassis::ActuatorReferenceCb, this, _1));
         chassis_config_sub_ = this->create_subscription<usr_msgs::msg::Configuration>(

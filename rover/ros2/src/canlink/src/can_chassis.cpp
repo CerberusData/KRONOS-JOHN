@@ -12,6 +12,10 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
 {
     RCLCPP_INFO(this->get_logger(), "CAN Chassis Initializer");
     can_dvr_status_msg_.data = "OK";
+
+    /* Publishers */
+    can_dvr_status_pub_ = this->create_publisher<std_msgs::msg::String>(
+        "/canlink/chassis/connection_status", 10);
     
     /* CAN Driver Instantiation - Open socket */
     try
@@ -23,8 +27,7 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
         battery_ = std::make_shared<Battery>(options, can_driver_);
         lights_ = std::make_shared<Lights>(options, can_driver_);
 
-        /* Publishers */
-        can_dvr_status_pub_ = this->create_publisher<std_msgs::msg::String>("/canlink/chassis/connection_status", 10);
+
     }
     /* Nullptr instantiation when CAN not found*/
     catch (const std::system_error &error)
@@ -34,9 +37,6 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
         battery_ = std::make_shared<Battery>(options, nullptr);
         lights_ = std::make_shared<Lights>(options, nullptr);
         
-        /* Publishers */
-        can_dvr_status_pub_ = this->create_publisher<std_msgs::msg::String>("/canlink/chassis/connection_status", 10);
-
         char buff[100];
         snprintf(buff, sizeof(buff), "ERROR reading CAN device: %s", error.what());
         std::string errorStr(buff);
