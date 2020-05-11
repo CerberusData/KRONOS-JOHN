@@ -24,10 +24,16 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
+/* ROS2 Services */
+#include "std_srvs/srv/set_bool.hpp"
+
 /* Custom Messages */
 #include "usr_msgs/msg/motors.hpp"
 
 using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
+
 
 class WheelOdometry : public rclcpp::Node
 {
@@ -44,13 +50,15 @@ class WheelOdometry : public rclcpp::Node
         /* Publishers */
         rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_pub_;
         rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_global_pub_;
-
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr radio_check_pub_;
 
         /* Subscribers */
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr movement_sub_;
         rclcpp::Subscription<usr_msgs::msg::Motors>::SharedPtr motor_status_sub_;
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+
+        /* Services */
+        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr restart_srv_;
 
         /* Timers */
         rclcpp::TimerBase::SharedPtr pub_timer_;
@@ -59,6 +67,9 @@ class WheelOdometry : public rclcpp::Node
         void MovementCb(const std_msgs::msg::Bool::SharedPtr msg);
         void MotorStatusCb(const usr_msgs::msg::Motors::SharedPtr msg);
         void ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg);
+        bool RestartCb(const std::shared_ptr<rmw_request_id_t> request_header,
+            const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+            std::shared_ptr<std_srvs::srv::SetBool::Response> response); 
 
         std::vector<double> motors_rpm_{0.0f, 0.0f, 0.0f, 0.0f};
         std::vector<double> motors_curr_{0.0f, 0.0f, 0.0f, 0.0f};

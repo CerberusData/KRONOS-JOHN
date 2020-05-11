@@ -18,6 +18,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(usr_msgs REQUIRED)
@@ -30,6 +31,7 @@ include_directories(include)
 
 set(DEPENDENCIES
   rclcpp
+  std_srvs
   std_msgs
   nav_msgs
   usr_msgs
