@@ -21,15 +21,17 @@ WheelOdometry::WheelOdometry(const rclcpp::NodeOptions & options)
         "/canlink/chassis/motors_status", 10, std::bind(&WheelOdometry::MovementCb, this, _1));
 
     /* Services */
-    restart_srv_ = this->create_service<std_srvs::srv::SetBool>("/wheel_odometry/restart", std::bind(&WheelOdometry::RestartCb, this, _1, _2, _3));
+    restart_srv_ = this->create_service<std_srvs::srv::SetBool>(
+        "/wheel_odometry/restart", std::bind(&WheelOdometry::RestartCb, this, _1, _2, _3));
 
     prev_time_ = this->now();
     pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&WheelOdometry::PubTimerCb, this));
 }
 
-bool WheelOdometry::RestartCb(const std::shared_ptr<rmw_request_id_t> request_header,
-                            const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
-                            std::shared_ptr<std_srvs::srv::SetBool::Response> response)
+bool WheelOdometry::RestartCb(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+    std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
     
     wheel_odom_msg_.pose.pose.position.x = 0.0f;

@@ -67,7 +67,8 @@ class WheelOdometry : public rclcpp::Node
         void MovementCb(const std_msgs::msg::Bool::SharedPtr msg);
         void MotorStatusCb(const usr_msgs::msg::Motors::SharedPtr msg);
         void ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg);
-        bool RestartCb(const std::shared_ptr<rmw_request_id_t> request_header,
+        bool RestartCb(
+            const std::shared_ptr<rmw_request_id_t> request_header,
             const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
             std::shared_ptr<std_srvs::srv::SetBool::Response> response); 
 
