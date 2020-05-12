@@ -33,15 +33,20 @@ class SpeedController : public rclcpp::Node
         SpeedController(rclcpp::NodeOptions & options);
         ~SpeedController(){};
 
+        /* Publis functions */
+        void Controller();
+        
     private:
+        /* Publishers */
+        rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr output_cmd_pub_;
+
         /* Subscribers */
-        rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr driving_cmd_fr_;
+        rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr driving_cmd_fr_sub_;
 
         /* Timers */
         rclcpp::TimerBase::SharedPtr pub_timer_;
 
         /* Member functions */
         void CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
-
 };
 #endif
