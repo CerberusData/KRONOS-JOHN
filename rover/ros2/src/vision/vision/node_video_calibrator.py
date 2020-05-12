@@ -123,7 +123,7 @@ class CalibratorPublishers(Node):
 
         self.img_bridge = CvBridge()
         self.pb_calibrator_result = self.create_publisher(
-            Image, 'video_calibrator/extrinsic_img_result', 2)
+            Image, 'video_calibrator/calibrate_img_result', 2)
 
         self.pb_calibrator_extrinsic = self.create_publisher(
             Extrinsic, 'video_calibrator/extrinsic_parameters', 2)
@@ -136,12 +136,12 @@ class CalibratorPublishers(Node):
             callback_group=self.callback_group)
 
         self.sub_calibration = self.create_subscription(
-            msg_type=String, topic='video_calibrator/calibrate', 
+            msg_type=String, topic='video_calibrator/calibrate_cam', 
             callback=self.cb_calibrate, qos_profile=5,
             callback_group=self.callback_group)
 
         self.sub_img_to_calibrate = self.create_subscription(
-            msg_type=Image, topic='video_calibrator/img_to_calibrate', 
+            msg_type=Image, topic='video_calibrator/calibrate_img', 
             callback=self.cb_img_to_calibrate, qos_profile=5,
             callback_group=self.callback_group)
 
@@ -158,7 +158,7 @@ class CalibratorPublishers(Node):
             self.cam_img = self.img_bridge.imgmsg_to_cv2(
                 img_msg=msg, desired_encoding="bgr8")
         except CvBridgeError as e:
-            printlog(msg="erro while getting data from video_calibrator/img_to_calibrate, {}".format(
+            printlog(msg="erro while getting data from video_calibrator/calibrate_img, {}".format(
                 e), msg_type="ERROR")
 
     def cb_calibrate(self, msg):
