@@ -8,11 +8,13 @@
 
 /* ROS2 Default */
 #include <rclcpp/rclcpp.hpp>
-#include <tf2/transform_datatypes.h>
-#include <tf2/convert.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+/* TF2 Transformations */
+#include "tf2/convert.h"
+#include "tf2/transform_datatypes.h"
+#include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 /* Custom libraries */
 #include "utils/console.hpp"
@@ -72,24 +74,24 @@ class WheelOdometry : public rclcpp::Node
             const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
             std::shared_ptr<std_srvs::srv::SetBool::Response> response); 
 
+        /* Member attributes */
         std::vector<double> motors_rpm_{0.0f, 0.0f, 0.0f, 0.0f};
         std::vector<double> motors_curr_{0.0f, 0.0f, 0.0f, 0.0f};
-
-        rclcpp::Time prev_time_;
-
         nav_msgs::msg::Odometry wheel_odom_msg_;
+        rclcpp::Time prev_time_;
         
-        /* Kiwibot parameters */
+        /* Environment variables */
         double wheel_rad_ = getEnv("CANLINK_CHASSIS_WHEEL_RADIUS", 0.074f) * 1.08f;
         double bot_track_ = getEnv("CANLINK_CHASSIS_ROBOT_TRACK", 0.392f); 
 
-        double imu_roll_ = 0.0f;
-        double imu_pitch_ = 0.0f;
-        double imu_yaw_ = 0.0f;
+        /* Variables */
         double imu_yaw_offset_ = 0.0f;
+        double imu_pitch_ = 0.0f;
         double imu_omega_ = 0.0f;
-        bool imu_state_ = false;
+        double imu_roll_ = 0.0f;
+        double imu_yaw_ = 0.0f;
         bool imu_published_ = false;
+        bool imu_state_ = false;
 };
 
 #endif

@@ -18,7 +18,7 @@ WheelOdometry::WheelOdometry(const rclcpp::NodeOptions & options)
     motor_status_sub_ = this->create_subscription<usr_msgs::msg::Motors>(
         "/canlink/chassis/motors_status", 10, std::bind(&WheelOdometry::MotorStatusCb, this, _1));
     movement_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-        "/canlink/chassis/motors_status", 10, std::bind(&WheelOdometry::MovementCb, this, _1));
+        "/imu/move_state", 10, std::bind(&WheelOdometry::MovementCb, this, _1));
 
     /* Services */
     restart_srv_ = this->create_service<std_srvs::srv::SetBool>(
@@ -33,7 +33,11 @@ bool WheelOdometry::RestartCb(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
-    
+    /* 
+        This service is in charge of restarting the odometry values and set the
+        IMU offset for the new movement.
+    */
+
     wheel_odom_msg_.pose.pose.position.x = 0.0f;
     wheel_odom_msg_.pose.pose.position.y = 0.0f;
     wheel_odom_msg_.pose.pose.position.z = 0.0f;
@@ -49,10 +53,9 @@ bool WheelOdometry::RestartCb(
     wheel_odom_msg_.pose.pose.orientation.y = quat[1];
     wheel_odom_msg_.pose.pose.orientation.z = quat[2];
     wheel_odom_msg_.pose.pose.orientation.w = quat[3];
-
-    
     wheel_odom_pub_->publish(wheel_odom_msg_);
 
+    /* Service response */
     response->success = true;
     response->message = "Odometry Restarted";
     
@@ -61,17 +64,36 @@ bool WheelOdometry::RestartCb(
 
 void WheelOdometry::MovementCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
+    /* 
+        Callback for the topic /imu/move_state. It represents if the Kiwibot is
+        moving or not based on the IMU data.
+    */
     imu_state_ = msg->data;
 }
 
 void WheelOdometry::MotorStatusCb(const usr_msgs::msg::Motors::SharedPtr msg)
 {
+    /*
+        Callbak for the topic canlink/chassis/motors_status. Custom message con-
+        taining the following elements:
+          - header
+          - rpm
+          - current
+          - error_status
+        
+        Located at usr_msgs/msg/canlink
+    */
     motors_rpm_ = msg->rpm;
     motors_curr_ = msg->current;
 }
 
 void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
+    /*
+        Callback for the topic /imu/data_bot. It updates a Quaternion to extract
+        the current eualer angles.
+    */
+
     tf2::Quaternion q(msg->orientation.x, 
                     msg->orientation.y,
                     msg->orientation.z, 
@@ -84,12 +106,19 @@ void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
 
     if (imu_published_ == false)
     {
+        /*
+            It checks if the IMU has published messages.
+        */
         imu_published_ = true;
     }
 }
 
 void WheelOdometry::CalculateOdometry()
 {
+    /*
+        Function to calculate the Wheel Odometry (Local and Global)
+    */
+
     /* Wheels linear velocities */
     float _FR_vel = (2.0 * PI * wheel_rad_ * motors_rpm_[0]) / 60.0f; 
     float _RR_vel = (2.0 * PI * wheel_rad_ * motors_rpm_[1]) / 60.0f; 
@@ -97,7 +126,7 @@ void WheelOdometry::CalculateOdometry()
     float _FL_vel = (2.0 * PI * wheel_rad_ * motors_rpm_[3]) / 60.0f; 
 
     /* Left and Right linear velocities */
-    float _R_vel = -(_FR_vel + _RR_vel) / 2.0f;     /* DOuble check these values */
+    float _R_vel = -(_FR_vel + _RR_vel) / 2.0f;  
     float _L_vel = (_FL_vel + _RL_vel) / 2.0f;
     float _X_vel = (_R_vel + _L_vel) / 2.0f;
     // float _Z_omg = (_R_vel - _L_vel) / bot_track_;
@@ -106,14 +135,14 @@ void WheelOdometry::CalculateOdometry()
     double dt = (curr_time - prev_time_).seconds();
     prev_time_ = this->now();
 
+    /* Filling a Quaternion with the current euler angles */
+    tf2::Quaternion quat;
+    quat.setRPY(imu_roll_, imu_pitch_, imu_yaw_ - imu_yaw_offset_);
+    
     wheel_odom_msg_.header.stamp = this->now();
     wheel_odom_msg_.header.frame_id = "odom";
     wheel_odom_msg_.child_frame_id = "base_link";
 
-
-    tf2::Quaternion quat;
-    quat.setRPY(imu_roll_, imu_pitch_, imu_yaw_ - imu_yaw_offset_);
-    
     /* Quaternion assignation */
     wheel_odom_msg_.pose.pose.orientation.x = quat[0];
     wheel_odom_msg_.pose.pose.orientation.y = quat[1];
@@ -133,7 +162,6 @@ void WheelOdometry::CalculateOdometry()
     wheel_odom_msg_.twist.twist.linear.x = _X_vel;
     wheel_odom_msg_.twist.twist.linear.y = 0.0f;
     wheel_odom_msg_.twist.twist.linear.z = 0.0f;
-
     wheel_odom_msg_.twist.twist.angular.x = 0.0f;
     wheel_odom_msg_.twist.twist.angular.y = 0.0f;
     wheel_odom_msg_.twist.twist.angular.z = imu_omega_;
@@ -178,11 +206,11 @@ void WheelOdometry::CalculateOdometry()
     {
         wheel_odom_pub_->publish(wheel_odom_msg_);
     } 
+    
     else
     {
         RCLCPP_ERROR(this->get_logger(), "IMU is not publishing to Wheel Odometry");
     }
-
 }
 
 void WheelOdometry::PubTimerCb()
