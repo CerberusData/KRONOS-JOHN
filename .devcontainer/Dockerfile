@@ -206,8 +206,7 @@ RUN  \
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom roboticsp
 # https://docs.freedomrobotics.ai/docs/install
-USER ada 
-RUN ls
+# USER ada 
 RUN \
     curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
 
