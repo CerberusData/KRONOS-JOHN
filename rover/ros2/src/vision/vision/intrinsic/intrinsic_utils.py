@@ -9,6 +9,7 @@ Code Information:
 # =============================================================================
 import numpy as np
 import yaml
+import cv2
 import os
 
 from vision.utils.vision_utils import printlog
@@ -39,6 +40,8 @@ class IntrinsicClass():
         self.projection_matrix = None
         self.map1 = None
         self.map2 = None
+
+        self.load()
 
     def load(self):
         """ 
@@ -89,15 +92,18 @@ class IntrinsicClass():
                         distCoeffs=self.distortion_coefficients, 
                         R=np.array([]), 
                         newCameraMatrix=self.mtx, 
-                        size=(self._VIDEO_WIDTH, self._VIDEO_HEIGHT), 
+                        size=(
+                            data["image_width"], 
+                            data["image_height"]), 
                         m1type=cv2.CV_8UC1)
             self.map1 = map1
             self.map2 = map2
 
             printlog(msg="{} instrinsic configuration loaded".format(
-                FILE_NAME), msg_type="OKGREEN")
+                self.file_name), msg_type="OKGREEN")
 
         except Exception as e:
+
             self.image_width = None
             self.image_height = None
             self.mtx = None
@@ -109,8 +115,8 @@ class IntrinsicClass():
             self.map2 = None
             
             printlog(
-                msg="Loading instrinsic configuration file {}, {}".format(
-                FILE_NAME, e), msg_type="ERROR")
+                msg="instrinsic file {} error, {}".format(
+                self.file_name, e), msg_type="ERROR")
 
 # =============================================================================
 if __name__ == '__main__':
