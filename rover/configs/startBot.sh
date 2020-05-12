@@ -66,7 +66,7 @@ case "$1" in
       #  ROS2 Launching
       # sleep 2 && clear
       echo  "[INFO]: ROS2 launching ... "
-      ros2 launch "${PWD%}/configs/bot_local.launch.py"
+      ros2 launch "${PWD%}/configs/bot.launch.py"
 
       #  ----------------------------------------------------------------------
     ;;

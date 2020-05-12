@@ -26,7 +26,7 @@
 C:
   PORT: "5.1.2"
   FPS: 15.
-  # FLIP: -1
+  FLIP: -1
   WIDTH: [3, 640]
   HEIGHT: [4, 360]
   # GAIN: [14, 0.0]
@@ -51,34 +51,34 @@ LL:
 #   BRIGHTNESS: [10, 0.5]
 #   AUTO_EXPOSURE: [21, 0.75]
 #   FOURCC: [6, 1196444237.]
-  TOPIC: "streaming/cam_left"
+  TOPIC: None
 
-# RR:
-#   PORT: "2.4.4"
-#   FPS: 10.
-#   FLIP: -1
-#   WIDTH: [3, 320]
-#   HEIGHT: [4, 180]
-#   GAIN: [14, 0.0]
-# #   HUE: [13, 0.5]
-# #   SATURATION: [12, 0.4375]
-# #   CONTRAST: [11, 0.5]
-# #   BRIGHTNESS: [10, 0.5]
-# #   AUTO_EXPOSURE: [21, 0.75]
-# #   FOURCC: [6, 1196444237.]
-#   TOPIC: "streaming/cam_right"
+RR:
+  PORT: "2.4.4"
+  FPS: 10.
+  FLIP: -1
+  WIDTH: [3, 320]
+  HEIGHT: [4, 180]
+  GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+  TOPIC: None
 
-# B:
-#   PORT: "2.4.2"
-#   FPS: 10.
-#   FLIP: -1
-#   WIDTH: [3, 320]
-#   HEIGHT: [4, 180]
-#   GAIN: [14, 0.0]
-# #   HUE: [13, 0.5]
-# #   SATURATION: [12, 0.4375]
-# #   CONTRAST: [11, 0.5]
-# #   BRIGHTNESS: [10, 0.5]
-# #   AUTO_EXPOSURE: [21, 0.75]
-# #   FOURCC: [6, 1196444237.]
-#   TOPIC: "streaming/cam_rear"
+B:
+  PORT: "2.4.2"
+  FPS: 10.
+  FLIP: -1
+  WIDTH: [3, 320]
+  HEIGHT: [4, 180]
+  GAIN: [14, 0.0]
+#   HUE: [13, 0.5]
+#   SATURATION: [12, 0.4375]
+#   CONTRAST: [11, 0.5]
+#   BRIGHTNESS: [10, 0.5]
+#   AUTO_EXPOSURE: [21, 0.75]
+#   FOURCC: [6, 1196444237.]
+  TOPIC: None
