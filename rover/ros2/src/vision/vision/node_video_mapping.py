@@ -27,6 +27,7 @@ from std_msgs.msg import String
 from std_msgs.msg import Bool
 
 from vision.utils.vision_utils import matrix_from_flat
+from vision.utils.vision_utils import printlog
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -39,16 +40,18 @@ from usr_msgs.msg import VisualMessage
 from python_utils.pysubscribers import VisualDebuggerSubscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
 
+from threading import Thread, Event
+
 # =============================================================================
 class MappingNode(
-    Node, 
+    Node, Thread,
     VisualDebuggerSubscriber):
 
     def __init__(self):
         """ 
             VisualDebuggerSubscriber:
                 Methods:
-                    cb_visual_debugger [None]: callback function for subsciptor
+                    cb_visual_debugger [None]: callback function for subscriptor
                     draw_visual_debugger [cv2.math]: Draws the visual debugger 
                         message
                 Arguments:
@@ -56,7 +59,7 @@ class MappingNode(
                     visual_debugger_msg  [string]:Message to show in console
                     visual_debugger_type [string]: Type of message 
                         "INFO, ERR, WARN"
-                   _sub_visual_debugger [subscriptor]: 
+                _sub_visual_debugger [subscriptor]: 
         """
 
         # ---------------------------------------------------------------------
@@ -66,6 +69,7 @@ class MappingNode(
         self.callback_group = ReentrantCallbackGroup()
 
         VisualDebuggerSubscriber.__init__(self, parent_node=self)
+        Thread.__init__(self)
         
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
@@ -80,11 +84,13 @@ class MappingNode(
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
 
-        self._STITCHER = int(os.getenv(key="STITCHER", default=0))
-        self._STITCHER_SUP_MODE = int(os.getenv(key="STITCHER_SUP_MODE", default=0))
+        self._STITCHER = int(os.getenv(
+            key="STITCHER", default=0))
+        self._STITCHER_SUP_MODE = int(os.getenv(
+            key="STITCHER_SUP_MODE", default=0))
 
-        self._VISUAL_DEBUGGER = int(os.getenv(key="VISUAL_DEBUGGER", default=1))
-        self._VISUAL_DEBUGGER_TIME = int(os.getenv(key="VISUAL_DEBUGGER_TIME", default=5))
+        self._VISUAL_DEBUGGER = int(os.getenv(
+            key="VISUAL_DEBUGGER", default=1))
         
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
@@ -99,16 +105,18 @@ class MappingNode(
         
         # Start cameras handler with configuration
         self.cams_caps = CamerasCaptures(cams_config=self.cams_config)
-        cams_status = self.cams_caps.get_cameras_status()
+        # print(cams_status = self.cams_caps.get_cameras_status())
                 
         self.img_optimizer = streaming_optimizer() 
         self.img_bridge = CvBridge()
         
         # ---------------------------------------------------------------------
         # Stitcher object
-        self.stitcher = Stitcher(
-            abs_path=os.path.join(self._CONF_PATH, "stitcher_config.npz"),
-            super_stitcher=self._STITCHER_SUP_MODE) if self._STITCHER else None
+        self.stitcher = None
+        if self._STITCHER:
+            self.stitcher = Stitcher(
+                abs_path=os.path.join(self._CONF_PATH, "stitcher_config.npz"),
+                super_stitcher=self._STITCHER_SUP_MODE) if self._STITCHER else None
 
         # ---------------------------------------------------------------------
         # Services
@@ -117,68 +125,49 @@ class MappingNode(
         # Publishers
 
         # Cameras streaming images
-        self.cam_publishers = {}
-        if self._FR_AGENT or self._LOCAL_RUN:
-            self.cam_publishers = {cam_label:self.create_publisher(Image, 
-                'streaming/cam_{}'.format(cam_label), 5) 
-                for cam_label in self.cams_config.keys()
-                if cams_status[cam_label] or self._LOCAL_RUN}
-                
-        # # Cameras status
-        # self.pb_cams_status = self.create_publisher(
-        #     CamerasStatus, 'video_streaming/cams_status', 5,
-        #     callback_group=self.callback_group)
+        self.pub_streaming = None
+        if self._FR_AGENT and "C" in self.cams_config.keys():
+            if self.cams_config["C"]["TOPIC"] != "None":
+                self.pub_streaming = self.create_publisher(
+                    Image, self.cams_config["C"]["TOPIC"], 1) 
+            else:
+                printlog(msg="No topic for video camera C streaming topic"
+                    ", no thread and topic will be created",
+                    msg_type="ERROR")
+
+        # Cameras status
+        self.pb_cams_status = self.create_publisher(
+            CamerasStatus, 'video_streaming/cams_status', 5,
+            callback_group=self.callback_group)
 
         # Image to calibrate
-        # self.pb_img_to_calibrate = self.create_publisher(
-        #     Image, 'video_calibrator/img_to_calibrate', 1,
-        #     callback_group=self.callback_group)
-        # self.sub_calibration = self.create_subscription(
-        #     msg_type=String, topic='video_calibrator/calibrate', 
-        #     callback=self.cb_send_img_calibrate, qos_profile=5,
-        #     callback_group=self.callback_group)
-
-        # ---------------------------------------------------------------------
-        # Publishers Timers
-
-        self.cam_timers = {}
-        self.cam_timers = {cam_label:self.create_timer(
-            timer_period_sec=0.5/self.cams_config[cam_label]["FPS"], 
-            callback=partial(self.cb_cam_img_pub, cam_label),
+        self.pb_img_to_calibrate = self.create_publisher(
+            Image, 'video_calibrator/calibrate_img', 5,
             callback_group=self.callback_group)
-            for cam_label in self.cams_config.keys()
-            if cams_status[cam_label] or self._LOCAL_RUN}
-
-        # self.tm_pub_cams_status = self.create_timer(
-        #     timer_period_sec=1.0, 
-        #     callback = self.cb_cams_status, 
-        #     callback_group=self.callback_group)
+        self.sub_calibration = self.create_subscription(
+            msg_type=String, topic='video_calibrator/calibrate_cam', 
+            callback=self.cb_send_img_calibrate, qos_profile=5,
+            callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------  
         # Subscribers
-        # self.calibrator_img = None
-        # self.sub_calibrator_img_res = self.create_subscription(
-        #     msg_type=Image, topic='video_calibrator/extrinsic_img_result', 
-        #     callback=self.cb_cal_img_result, qos_profile=5, 
-        #     callback_group=self.callback_group)
+        self.calibrator_img = None
+        self.sub_calibrator_img_res = self.create_subscription(
+            msg_type=Image, topic='video_calibrator/calibrate_img_result', 
+            callback=self.cb_cal_img_result, qos_profile=5, 
+            callback_group=self.callback_group)
         
-        # self.sub_idle_timer_reset = self.create_subscription(
-        #     msg_type=Bool, topic='video_streaming/idle_timer_reset', 
-        #     callback=self.img_optimizer.cb_actuator_action, qos_profile=5, 
-        #     callback_group=self.callback_group)
+        # ---------------------------------------------------------------------
+        self.tm_pub_cams_status = self.create_timer(
+            1.0, self.cb_cams_status)
 
         # ---------------------------------------------------------------------  
-        # Local gui
-        # if self._LOCAL_RUN and self._LOCAL_GUI:
-        #     self.gui_rate = 1./float(max(list(map(
-        #         lambda o: int(o.cam_config["FPS"]), 
-        #         self.cams_caps.camera_handlers.values()))))
-        #     self.gui_timer = self.create_timer(
-        #         timer_period_sec=self.gui_rate, 
-        #         callback=self.cb_draw_local_gui,
-        #         callback_group=self.callback_group)
-
-        # ---------------------------------------------------------------------  
+        # Thread variables
+        self.run_event = Event()
+        self.run_event.set()
+        self.tick = time.time()
+        # self.daemon = True
+        self.start()
 
     def cb_cams_status(self):
         """ Callback function to publish cameras status
@@ -190,56 +179,6 @@ class MappingNode(
         msg.cams_status =  [str("{}:{}".format(cam_key, int(cam_status))
             ) for cam_key, cam_status in self.cams_caps.get_cameras_status().items()]
         self.pb_cams_status.publish(msg)
-
-    def cb_cam_img_pub(self, cam_label):
-        """ Callback function to publish camera images
-        Args:
-        Returns:
-        """
-
-        # Send supervisor's image message to topic
-        try:
-
-            img = self.cams_caps.camera_handlers[cam_label].get_image()
-            if self._FR_STREAMING_OPTIMIZER:
-                img = self.img_optimizer.optimize(
-                    img=img, cam_label=cam_label)
-
-            t = str(self.get_clock().now().nanoseconds)
-            img_msg = self.img_bridge.cv2_to_imgmsg(
-                cvim=img, encoding="bgr8")
-            img_msg.header.stamp.sec = int(t[0:10])
-            img_msg.header.stamp.nanosec = int(t[10:])
-
-            self.cam_publishers[cam_label].publish(img_msg)
-
-        except CvBridgeError as e:
-            self.get_logger().error("publishing CAM{} image in topic, "
-                "{}".format(cam_label, e))
-
-    def cb_draw_local_gui(self):
-        """ Callback function to draw local user interface
-        Args:
-        Returns:
-        """
-
-        imgs_dic = dict(map(lambda o: (o.cam_label, o.image.copy()), 
-                self.cams_caps.camera_handlers.values()))
-        
-        # Add stitcher result to dictionary of images
-        if not self.stitcher is None and self._LOCAL_RUN: 
-            imgs_dic["S"] = self.img_stitch(imgs_dic)
-       
-        # Show calibration if semthing to show
-        if self.calibrator_img is not None:
-            img=imgs_dic["C"] = self.calibrator_img
-        
-        # Draw any visual debugger message if there's one
-        self.draw_visual_debugger(img=imgs_dic["C"])
-        
-        show_local_gui(
-            imgs_dic=imgs_dic, 
-            win_name="LOCAL_VIDEO_STREAMING")
 
     def cb_cal_img_result(self, msg):
         """ Callback function to assing image calibraion result and show it
@@ -253,7 +192,7 @@ class MappingNode(
                 img_msg=msg, desired_encoding="bgr8")
         except CvBridgeError as e:
             printlog(msg="erro while getting data from video_calibrator/"
-                "extrinsic_img_result, {}".format(e), msg_type="ERROR")
+                "calibrate_img_result, {}".format(e), msg_type="ERROR")
 
         time.sleep(int(os.getenv(
             key="VISION_CAL_SHOW_TIME", default=5)))
@@ -309,6 +248,64 @@ class MappingNode(
             width=self._VIDEO_WIDTH, 
             height=self._VIDEO_HEIGHT)
 
+    def run(self):
+        
+        while True:
+            self.tick = time.time()
+            try:
+                # read images from cameras
+                imgs_dic = dict(map(
+                    lambda o: (o.cam_label, o.get_image()), 
+                    self.cams_caps.camera_handlers.values()))
+
+                # Show calibration if something to show
+                if self.calibrator_img is not None:
+                    img = self.calibrator_img
+                else:
+                    img = imgs_dic["C"]
+                # TODO: integrate stitcher
+                # if self._STITCHER and "other_condition":
+                #   self.img_stitch(imgs_dic)
+
+                # Draw visual debugger message
+                if self._VISUAL_DEBUGGER:
+                    self.draw_visual_debugger(img=img)
+
+                # -------------------------------------------------------------
+                # Optimize image
+                if self._FR_STREAMING_OPTIMIZER:
+                    img = self.img_optimizer.optimize(img=img)
+
+                # -------------------------------------------------------------
+                # Show local graphic user interface
+                if self._LOCAL_RUN and self._LOCAL_GUI:
+                    show_local_gui(
+                        imgs_dic=imgs_dic, 
+                        win_name="LOCAL_VIDEO_STREAMING")
+
+                # -------------------------------------------------------------
+                # Publish image
+                if self.pub_streaming is not None:
+                    img_msg = self.img_bridge.cv2_to_imgmsg(
+                        cvim=img, encoding="bgr8")
+                    # t = str(self.get_clock().now().nanoseconds)
+                    # img_msg.header.stamp.sec = int(t[0:10])
+                    # img_msg.header.stamp.nanosec = int(t[10:])
+                    # img_msg.header.frame_id = t
+                    self.pub_streaming.publish(img_msg)
+                
+                # -------------------------------------------------------------
+                # Operate times for next frame iteration
+                tock = time.time() - self.tick
+                twait = 1./self.cams_config["C"]["FPS"] - tock
+                if twait <= 0.:
+                    continue
+                time.sleep(twait)
+                # print("fps:", 1./(time.time() - self.tick), flush=True)
+                
+            except Exception as e:
+                printlog(msg=e, msg_type="ERROR")
+
 class streaming_optimizer(object):
 
     def __init__(self):
@@ -327,7 +324,7 @@ class streaming_optimizer(object):
         self.inactive_timer = 0
         self._time_tick = time.time()
 
-    def optimize(self, img, cam_label=None):
+    def optimize(self, img):
         """     
             reduces the images quality to be sent.
         Args:

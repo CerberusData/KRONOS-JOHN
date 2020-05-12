@@ -336,10 +336,10 @@ class CameraHandler():
                 self.cap = None
                 return self.image
 
-        cv2.rectangle(self.image, (0, 0), (300, 50), (0, 0, 0), -1) 
-        current_time = datetime.datetime.now().strftime("%c")
-        cv2.putText(self.image, str(current_time), (15, 25),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1)
+        # cv2.rectangle(self.image, (0, 0), (300, 50), (0, 0, 0), -1) 
+        # current_time = datetime.datetime.now().strftime("%c")
+        # cv2.putText(self.image, str(current_time), (15, 25),
+        #     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1)
 
         return self.image
 

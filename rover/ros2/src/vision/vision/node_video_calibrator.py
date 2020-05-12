@@ -105,6 +105,7 @@ class CalibratorPublishers(Node):
         self._cams_status = None
         self.cam_img = None
         self.extrinsic = {}
+        
         self._flag_image = cv2.imread(
             os.path.join(os.path.dirname(os.path.realpath(__file__)), 
             "extrinsic/figures/flag_4m.png"), cv2.IMREAD_UNCHANGED)
