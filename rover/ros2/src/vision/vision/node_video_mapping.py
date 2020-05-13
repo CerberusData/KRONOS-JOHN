@@ -129,7 +129,7 @@ class MappingNode(
         if self._FR_AGENT and "C" in self.cams_config.keys():
             if self.cams_config["C"]["TOPIC"] != "None":
                 self.pub_streaming = self.create_publisher(
-                    Image, self.cams_config["C"]["TOPIC"], 1) 
+                    Image, self.cams_config["C"]["TOPIC"], 10) 
             else:
                 printlog(msg="No topic for video camera C streaming topic"
                     ", no thread and topic will be created",
@@ -288,10 +288,10 @@ class MappingNode(
                 if self.pub_streaming is not None:
                     img_msg = self.img_bridge.cv2_to_imgmsg(
                         cvim=img, encoding="bgr8")
-                    # t = str(self.get_clock().now().nanoseconds)
-                    # img_msg.header.stamp.sec = int(t[0:10])
-                    # img_msg.header.stamp.nanosec = int(t[10:])
-                    # img_msg.header.frame_id = t
+                    t = str(self.get_clock().now().nanoseconds)
+                    img_msg.header.stamp.sec = int(t[0:10])
+                    img_msg.header.stamp.nanosec = int(t[10:])
+                    img_msg.header.frame_id = t
                     self.pub_streaming.publish(img_msg)
                 
                 # -------------------------------------------------------------
@@ -301,7 +301,7 @@ class MappingNode(
                 if twait <= 0.:
                     continue
                 time.sleep(twait)
-                # print("fps:", 1./(time.time() - self.tick), flush=True)
+                print("fps:", 1./(time.time() - self.tick), flush=True)
                 
             except Exception as e:
                 printlog(msg=e, msg_type="ERROR")

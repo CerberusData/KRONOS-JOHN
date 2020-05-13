@@ -283,7 +283,7 @@ class CameraHandler():
         #empirical formula so that: when w=6400 -> font=1.5 and w=1920 -> font=3.5
         font_size = 0.0015625*self.video_width + 0.3 
         cv2.putText(self.image, error_msg, 
-            (self.video_width//8, self.video_height//2),
+            (int(self.video_width*0.15), int(self.video_height*0.5)),
             cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 4)
 
     def __str__(self):
@@ -318,7 +318,7 @@ class CameraHandler():
                         "camera".format(self.cam_label))
 
                 # Flip the image if option is enable
-                if self.video_flip:
+                if self.video_flip != 0:
                     cv2.flip(src=cap_image, flipCode=-1)
 
                 # Resize image
