@@ -33,6 +33,15 @@ void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedP
     output_cmd_pub_->publish(std::move(commands_msg));
 }
 
+float SpeedController::ThrottlePID(float vx_ref)
+{
+    if (vx_ref == 0.0f)
+    {
+        return 0.0f;
+    }
+
+}
+
 void SpeedController::Controller()
 {
     RCLCPP_INFO(this->get_logger(), "Controller function");

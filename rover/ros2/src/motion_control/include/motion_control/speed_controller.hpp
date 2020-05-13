@@ -35,7 +35,7 @@ class SpeedController : public rclcpp::Node
 
         /* Publis functions */
         void Controller();
-        
+
     private:
         /* Publishers */
         rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr output_cmd_pub_;
@@ -48,5 +48,9 @@ class SpeedController : public rclcpp::Node
 
         /* Member functions */
         void CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+        float ThrottlePID(float vx_ref);
+
+        /* Environment variables */
+        bool ctrl_throttle_enable_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL_ENABLE", true);
 };
 #endif
