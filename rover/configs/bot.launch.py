@@ -132,6 +132,15 @@ def generate_launch_description():
                 key="NODE_VIDEO_PARTICLE", 
                 default=0))
         },
+        "NODE_LOCAL_CONSOLE": {
+            "node_executable": 'local_console',
+            "node_name": 'local_console',
+            "package": 'vision',
+            "output": 'screen',
+            "launch": 
+                (int(os.getenv(key="NODE_LOCAL_CONSOLE", default=0) and
+                 int(os.getenv(key="LOCAL_GUI", default=0))
+        },
         "NODE_CANLINK_CHASSIS": {
             "node_executable": 'canlink_chassis',
             "node_name": 'canlink_chassis',
