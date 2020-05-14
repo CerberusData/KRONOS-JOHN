@@ -48,17 +48,17 @@ class GraphicInterface(
 
     def __init__(self, parent_node):
         """ 
-            VisualDebuggerSubscriber:
-                Methods:
-                    cb_visual_debugger [None]: callback function for subscriptor
-                    draw_visual_debugger [cv2.math]: Draws the visual debugger 
-                        message
-                Arguments:
-                    VISUAL_DEBUGGER_TIME [int]: Timer with time to show message
-                    visual_debugger_msg  [string]:Message to show in console
-                    visual_debugger_type [string]: Type of message 
-                        "INFO, ERR, WARN"
-                _sub_visual_debugger [subscriptor]: 
+            Object class constructor
+            Methods:
+                cb_visual_debugger [None]: callback function for subscriptor
+                draw_visual_debugger [cv2.math]: Draws the visual debugger 
+                    message
+            Arguments:
+                VISUAL_DEBUGGER_TIME [int]: Timer with time to show message
+                visual_debugger_msg  [string]:Message to show in console
+                visual_debugger_type [string]: Type of message 
+                    "INFO, ERR, WARN"
+            _sub_visual_debugger [subscriptor]: 
         """
 
         # ---------------------------------------------------------------------
@@ -71,7 +71,15 @@ class GraphicInterface(
         # ---------------------------------------------------------------------
 
     def draw_components(self, imgs_dict):
-        
+        """ 
+            Draw graphic and user components on image
+            Methods:
+                draw image components, graphic interface
+            Arguments:
+                imgs_dict: 'dict of cv2.math' dictionary with cameras 
+                    images 
+        """
+
         # ---------------------------------------------------------------------
         # OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS
         # self.draw_lateral_cams(imgs_dict)
@@ -100,19 +108,39 @@ class GraphicInterface(
             self.draw_visual_debugger(img=imgs_dict["P"])
 
     def draw_extrinsic(self):
+        """ 
+            Draw extrinsic calibration components
+            Methods:
+            Arguments:
+        """
         pass
 
     def draw_lateral_cams(self, imgs_dict):
+        """ 
+            Draw lateral cameras components on image
+            Methods:
+            Arguments:
+        """
         pass
 
     def draw_rear_camera(self):
+        """ 
+            Draw rear camera component on image
+            Methods:
+            Arguments:
+        """
         pass
 
     def draw_compass(self):
+        """ 
+            Draw compass component on image
+            Methods:
+            Arguments:
+        """
         pass
 
     def draw_visual_debugger(self, img):
-        """ Draws the visual debugger message
+        """ Draw the visual debugger message
         Args:
             img: `cv2.math` image to draw visual
                 debugger message
@@ -190,6 +218,11 @@ class MappingNode(
     GraphicInterface):
 
     def __init__(self):
+        """     
+            Object class constructor
+        Args:
+        Returns:
+        """
         
         # ---------------------------------------------------------------------
         super().__init__('MappingNode')
@@ -326,6 +359,11 @@ class MappingNode(
         self.calibrator_img = None
 
     def cb_send_img_calibrate(self, msg):
+        """ Callback to send image to calibrate through topic
+        Args:
+            msg: 'CvBridge' image to send to calibrate
+        Returns:
+        """
 
         cam_label = msg.data
 
@@ -375,7 +413,11 @@ class MappingNode(
             height=self._VIDEO_HEIGHT)
 
     def run(self):
-        
+        """ Cycle of threadh execution
+        Args:
+        Returns:
+        """
+
         while True:
             self.tick = time.time()
             try:
@@ -399,13 +441,6 @@ class MappingNode(
                 # TODO: integrate stitcher
                 # if self._STITCHER and "other_condition":
                 #   self.img_stitch(imgs_dic)
-
-                # -------------------------------------------------------------
-                # Show local graphic user interface
-                # if self._LOCAL_RUN and self._LOCAL_GUI:
-                #     show_local_gui(
-                #         imgs_dic=imgs_dic, 
-                #         win_name="LOCAL_VIDEO_STREAMING")
 
                 # -------------------------------------------------------------
                 # Publish image

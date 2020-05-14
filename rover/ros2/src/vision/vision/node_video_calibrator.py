@@ -256,6 +256,13 @@ class CalibratorPublishers(Node):
             self.load_extrinsic()
 
     def publish_extrinsic(self, cam_label, extrinsic_data):
+        """ Publish extrinsic result
+        Args:
+            cam_label: `String` camera label of extrinsic calibration
+            extrinsic_data: `Extrinsic` extrinsic calibration data to send 
+                in message
+        Returns:
+        """  
 
         try: 
             extrinsic_msg = Extrinsic()

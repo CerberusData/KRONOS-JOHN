@@ -54,26 +54,6 @@ def printlog(msg, msg_type="INFO", flush=True):
 
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
     
-def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=10):
-    """     
-        Show a local video with the current cameras, deping on the configuration
-        and the camera streamings given by imgs_dic the distribution of images 
-        in the window will change.
-        Args:
-            imgs_dic: `dictionary` dictionary of images with key as the camera 
-                label and value as the image streaming of that camera
-            win_name: `string` name of window to create local gui window
-            show_time: `boolean` show local time on images
-        Returns:
-    """
-
-    # for key, value in imgs_dic.items():
-    cv2.imshow("supervisors_image", imgs_dic["P"])  
-    key = cv2.waitKey(show_time) # Show video and capture key
-
-    if key==113 or key==81: # (Q) If press q then quit
-        exit()
-
 def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), 
     fontScale=0.7):
     """
