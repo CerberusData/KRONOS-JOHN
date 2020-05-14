@@ -1,0 +1,12 @@
+string cam_label
+float32[] projection_matrix
+int16[] vp
+int16[] p1
+int16[] p2
+int16[] p3
+int16[] p4
+float32 dead_view
+float32 ppmx
+float32 ppmy
+int16[] unwarped_size
+int16[] image_size

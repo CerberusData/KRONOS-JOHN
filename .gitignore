@@ -4,3 +4,16 @@ rover/packages/*.tbz2
 rover/packages/*.deb
 ssh-keys/*.pub
 ssh-keys/id_balena
+rover/ros2/src/vision/vision/scripts/*.jpg
+rover/ros2/src/vision_opencv/
+rover/ros2/install/
+rover/ros2/build/
+rover/ros2/log/
+rover/configs/nodes_local_launch.yaml
+rover/configs/keys/
+rover/ros2/src/vision/vision/extrinsic/*.jpg
+rover/configs/Extrinsic_640_360_LL.yaml
+rover/configs/Extrinsic_640_360_RR.yaml
+rover/configs/Extrinsic_640_360_B.yaml
+*.pyc
+.vscode

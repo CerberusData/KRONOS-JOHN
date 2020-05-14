@@ -1,12 +1,47 @@
-#!/bin/bash
-#
+#! /bin/bash
+# -----------------------------------------------------------------------------
 # Download from nvidia packages to build GPU containers for balena
-# Davidnet (david@kiwicampus.com)
-set -euo pipefail
+# Davidnet (david@kiwibot.com)
+# JohnBetaCode (john@kiwibot.com)
 
-nvpmodel -m 0
-/usr/src/app/nvidia_utils/jetson_clocks.sh
+# -----------------------------------------------------------------------------
+# Safe bash script
+# set -euo pipefail 
+clear
 
-xinit &
-wget https://s3.amazonaws.com/kiwibot/eyes.mp4
-while true ; do gst-launch-1.0 filesrc location=eyes.mp4 !  qtdemux name=demux demux.video_0 ! queue ! h264parse ! omxh264dec !  nvoverlaysink display-id=0 -e ; done
+# -----------------------------------------------------------------------------
+# Use the maximum frequency of the CPU
+# nvpmodel -m 0 #--verbose
+
+# Turn on the jetson fan
+# bash /usr/src/app/jetson_clocks.sh
+
+# -----------------------------------------------------------------------------
+# Eyer/Face videos
+# wget https://s3.amazonaws.com/kiwibot/eyes.mp4 -nc -q
+# nvgstplayer-1.0 -i /data/eyes.mp4 --svd="omxh264dec" --svs="nvoverlaysink # display-id=0" --loop-forever
+
+# -----------------------------------------------------------------------------
+# Source ROS2 and execute ROS launch
+echo "source /opt/ros/dashing/setup.bash" >> ~/.bashrc
+echo "source /usr/src/app/dev_ws/install/setup.bash" >> ~/.bashrc
+source /opt/ros/dashing/setup.bash
+source /usr/src/app/dev_ws/install/setup.bash
+ros2 launch /usr/src/app/configs/bot.launch.py &
+
+sleep 10
+
+# -----------------------------------------------------------------------------
+# Run Freedoom agent stuff
+# Freedom Robotics services
+if [ "$FR_AGENT" == "1" ]
+then 
+    echo "launching freedom agent"
+    python3 /usr/src/app/freedom_robotics/inject_freedom.py
+    python3 /usr/src/app/freedom_robotics/keep_alive_freedom.py &
+else
+    echo "No fredoom robotics agent configured"
+fi
+
+# -----------------------------------------------------------------------------
+sleep infinity 
