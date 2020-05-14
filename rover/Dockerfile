@@ -210,7 +210,8 @@ RUN \
 RUN \
     apt-get update && \
     apt-get install -y \
-    htop
+    htop \
+    can-utils
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here

@@ -27,7 +27,7 @@ find_package(utils REQUIRED)
 
 include_directories(include)
 
-add_library(${PROJECT_NAME}_lib 
+add_library(${PROJECT_NAME} 
   lib/socket_can.cpp
 )
 

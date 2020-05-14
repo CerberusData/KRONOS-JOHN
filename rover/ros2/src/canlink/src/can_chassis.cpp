@@ -16,6 +16,10 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
     /* Publishers */
     can_dvr_status_pub_ = this->create_publisher<std_msgs::msg::String>(
         "/canlink/chassis/connection_status", 10);
+
+    // auto msgstring = std::make_unique<std_msgs::msg::String>();
+    // msgstring->data = "NOT OK";
+    // can_dvr_status_pub_->publish(std::move(msgstring));
     
     /* CAN Driver Instantiation - Open socket */
     try
@@ -42,6 +46,7 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
         std::string errorStr(buff);
         can_dvr_status_msg_.data = errorStr;
     }
+
     can_dvr_status_pub_->publish(can_dvr_status_msg_);
 
     /* Start a new thread to read continuously the CAN Socket data */
@@ -116,12 +121,13 @@ void CANChassis::StartCANBusRead()
         - Calls *ReadSocket()* (Def at socket_can.cpp) to read the Socket which returns the memory addres to a frame (Reference)
         - If the CAN Id addres matches the Kiwibot addres it calls *PublishCANInfo()* 
     */
-    RCLCPP_INFO(this->get_logger(), "CAN bus thread initialization");
-    can_dvr_status_pub_->publish(can_dvr_status_msg_);
+
     struct can_frame *frame;
     while (true)
     {
+        RCLCPP_WARN(this->get_logger(), "WHILE LOOP");
         frame = can_driver_->ReadSocket();
+        RCLCPP_WARN(this->get_logger(), "valid frame %x, id: %x", frame->can_id, frame->data[0]);
         if (frame)
         {
             if ((frame->can_id & 0xFFF) == KIWIBOT_ADDRESS)
@@ -129,6 +135,7 @@ void CANChassis::StartCANBusRead()
                 PublishCANInfo(frame);
             }
         }
+
         else
         {
             RCLCPP_INFO(this->get_logger(), "Impossible to read CAN bus");
