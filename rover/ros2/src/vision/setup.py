@@ -34,7 +34,8 @@ setup(
         'console_scripts': [
             'video_mapping = vision.node_video_mapping:main',
             'video_calibrator = vision.node_video_calibrator:main',
-            'video_particle = vision.node_video_particle:main'
+            'video_particle = vision.node_video_particle:main',
+            'local_console = vision.node_local_console:main'
         ],
     },
 )
