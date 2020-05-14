@@ -137,9 +137,9 @@ def generate_launch_description():
             "node_name": 'local_console',
             "package": 'vision',
             "output": 'screen',
-            "launch": 
-                (int(os.getenv(key="NODE_LOCAL_CONSOLE", default=0) and
-                 int(os.getenv(key="LOCAL_GUI", default=0))
+            "launch": int(os.getenv(
+                key="NODE_LOCAL_CONSOLE", 
+                default=0))
         },
         "NODE_CANLINK_CHASSIS": {
             "node_executable": 'canlink_chassis',
