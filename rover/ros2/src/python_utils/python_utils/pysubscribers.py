@@ -19,7 +19,6 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from usr_msgs.msg import VisualMessage
 from usr_msgs.msg import Extrinsic
 
-from vision.utils.vision_utils import print_text_list
 from vision.utils.vision_utils import printlog
 
 from vision.extrinsic.extrinsic_utils import ExtrinsicClass
@@ -61,33 +60,6 @@ class VisualDebuggerSubscriber():
         
         self.visual_debugger_msg = ""
         self.visual_debugger_type = "INFO"
-
-    def draw_visual_debugger(self, img):
-        """ Draws the visual debugger message
-        Args:
-            img: `cv2.math` image to draw visual
-                debugger message
-        Returns:
-        """
-
-        if not self.visual_debugger_msg:
-            return img
-
-        color = (255, 255, 255)
-
-        if (self.visual_debugger_type == "ERROR" or
-            self.visual_debugger_type == "ERR"):
-            color = (0, 0, 255)
-        elif (self.visual_debugger_type == "WARNING" or
-            self.visual_debugger_type == "WARN"):
-            color = (0, 255, 255)
-        elif self.visual_debugger_type == "OKGREEN":
-            color = (0, 255, 0)
-
-        return print_text_list(
-            img=img, tex_list=[self.visual_debugger_msg], 
-            color=color, orig=(10, 50), 
-            fontScale=0.7)
 
 class ExtrinsicSubscriber():
 

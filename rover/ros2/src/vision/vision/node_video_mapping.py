@@ -8,10 +8,11 @@ Code Information:
 """
 
 # =============================================================================
-from functools import partial 
 import time
 import cv2
 import os
+
+from threading import Thread, Event
 
 import rclpy
 from rclpy.node import Node
@@ -21,12 +22,11 @@ from rclpy.executors import MultiThreadedExecutor
 
 from vision.utils.cam_handler import read_cams_configuration
 from vision.utils.cam_handler import CamerasCaptures
-from vision.utils.vision_utils import show_local_gui
-
-from std_msgs.msg import String
-from std_msgs.msg import Bool
 
 from vision.utils.vision_utils import matrix_from_flat
+from vision.utils.vision_utils import print_text_list
+from vision.utils.vision_utils import show_local_gui
+from vision.utils.vision_utils import insert_image
 from vision.utils.vision_utils import printlog
 
 from sensor_msgs.msg import Image
@@ -37,17 +37,16 @@ from vision.stitcher.stitcher import Stitcher
 from usr_msgs.msg import CamerasStatus
 from usr_msgs.msg import VisualMessage
 
+from std_msgs.msg import String
+
 from python_utils.pysubscribers import VisualDebuggerSubscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
 
-from threading import Thread, Event
-
 # =============================================================================
-class MappingNode(
-    Node, Thread,
+class GraphicInterface(
     VisualDebuggerSubscriber):
 
-    def __init__(self):
+    def __init__(self, parent_node):
         """ 
             VisualDebuggerSubscriber:
                 Methods:
@@ -63,14 +62,144 @@ class MappingNode(
         """
 
         # ---------------------------------------------------------------------
+        VisualDebuggerSubscriber.__init__(self, parent_node=self)
+
+        # ---------------------------------------------------------------------
+        self._VISUAL_DEBUGGER = int(os.getenv(
+            key="VISUAL_DEBUGGER", default=1))
+
+        # ---------------------------------------------------------------------
+
+    def draw_components(self, imgs_dict):
+        
+        # ---------------------------------------------------------------------
+        # OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS
+        # self.draw_lateral_cams(imgs_dict)
+        if "RR" in imgs_dict.keys():
+            insert_image(
+                original_image=imgs_dict["P"], inserted_image=imgs_dict["RR"], 
+                new_width=int(imgs_dict["P"].shape[1]*0.3), 
+                new_height=int(imgs_dict["P"].shape[0]*0.3), 
+                position='ur')
+        if "LL" in imgs_dict.keys():
+            insert_image(
+                original_image=imgs_dict["P"], inserted_image=imgs_dict["LL"], 
+                new_width=int(imgs_dict["P"].shape[1]*0.3), 
+                new_height=int(imgs_dict["P"].shape[0]*0.3), 
+                position='ul')
+        if "B" in imgs_dict.keys():
+            insert_image(
+                original_image=imgs_dict["P"], inserted_image=imgs_dict["B"], 
+                new_width=int(imgs_dict["P"].shape[1]*0.4), 
+                new_height=int(imgs_dict["P"].shape[0]*0.4), 
+                position='uc')
+
+        # ---------------------------------------------------------------------
+        # DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUG
+        if self._VISUAL_DEBUGGER:
+            self.draw_visual_debugger(img=imgs_dict["P"])
+
+    def draw_extrinsic(self):
+        pass
+
+    def draw_lateral_cams(self, imgs_dict):
+        pass
+
+    def draw_rear_camera(self):
+        pass
+
+    def draw_compass(self):
+        pass
+
+    def draw_visual_debugger(self, img):
+        """ Draws the visual debugger message
+        Args:
+            img: `cv2.math` image to draw visual
+                debugger message
+        Returns:
+        """
+
+        if not self.visual_debugger_msg:
+            return
+
+        color = (255, 255, 255)
+        if (self.visual_debugger_type == "ERROR" or
+            self.visual_debugger_type == "ERR"):
+            color = (0, 0, 255)
+        elif (self.visual_debugger_type == "WARNING" or
+            self.visual_debugger_type == "WARN"):
+            color = (0, 255, 255)
+        elif self.visual_debugger_type == "OKGREEN":
+            color = (0, 255, 0)
+
+        print_text_list(
+            img=img, tex_list=[self.visual_debugger_msg], 
+            color=color, orig=(10, int(img.shape[0]*0.95)), 
+            fontScale=0.7)
+
+class StreamingOptimizer(object):
+
+    def __init__(self):
+        """     
+            Creates video optimizer object for third party services to get the 
+            parameters with images quality are reduced to be sent.
+        Args:
+        Returns:
+        """
+
+        # Read local variables of video streaming configuration
+        self.IDLE_TIME = int(os.environ.get("FR_STREAMING_IDLE_TIME", 120))
+        self.STREAMING_FACTOR = float(os.getenv("FR_STREAMING_FACTOR", 0.4)) 
+        self.STREAMING_IDLE_FACTOR = float(os.getenv("FR_STREAMING_IDLE_FACTOR", 0.2))  
+        
+        self.inactive_timer = 0
+        self._time_tick = time.time()
+
+    def optimize(self, img):
+        """     
+            reduces the images quality to be sent.
+        Args:
+            img: `cv2.math` image to reduce quality
+        Returns:
+        """
+
+        if self.inactive_timer < self.IDLE_TIME + 1:
+            self.inactive_timer = time.time() - self._time_tick
+
+        elif self.inactive_timer >= self.IDLE_TIME:
+            img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
+                dsize=(int(img.shape[1] * self.STREAMING_IDLE_FACTOR), 
+                       int(img.shape[0] * self.STREAMING_IDLE_FACTOR)))
+            img = cv2.cvtColor(src=img, code=cv2.COLOR_GRAY2BGR)
+
+        return img
+
+    # TODO(JOHN): Integrate robot actions to reset idle time 
+    def cb_actuator_action(self):
+        """     
+            Reset inactive timer when a action coming from actuator reference
+            control is received
+        Args:
+        Returns:
+        """
+
+        self._time_tick = time.time()
+
+class MappingNode(
+    Node, Thread,
+    GraphicInterface):
+
+    def __init__(self):
+        
+        # ---------------------------------------------------------------------
         super().__init__('MappingNode')
 
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
-
-        VisualDebuggerSubscriber.__init__(self, parent_node=self)
-        Thread.__init__(self)
         
+        Thread.__init__(self)
+        GraphicInterface.__init__(self, parent_node=self)
+
         # ---------------------------------------------------------------------
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
         self._LOCAL_GUI = int(os.getenv(key="LOCAL_GUI", default=0)) 
@@ -89,9 +218,6 @@ class MappingNode(
         self._STITCHER_SUP_MODE = int(os.getenv(
             key="STITCHER_SUP_MODE", default=0))
 
-        self._VISUAL_DEBUGGER = int(os.getenv(
-            key="VISUAL_DEBUGGER", default=1))
-        
         # ---------------------------------------------------------------------
         # Initiate CameraSupervisors Class that handles the threads that reads 
         # the cameras
@@ -107,7 +233,7 @@ class MappingNode(
         self.cams_caps = CamerasCaptures(cams_config=self.cams_config)
         # print(cams_status = self.cams_caps.get_cameras_status())
                 
-        self.img_optimizer = streaming_optimizer() 
+        self.img_optimizer = StreamingOptimizer() 
         self.img_bridge = CvBridge()
         
         # ---------------------------------------------------------------------
@@ -257,37 +383,35 @@ class MappingNode(
                 imgs_dic = dict(map(
                     lambda o: (o.cam_label, o.get_image()), 
                     self.cams_caps.camera_handlers.values()))
-
+                
                 # Show calibration if something to show
                 if self.calibrator_img is not None:
-                    img = self.calibrator_img
-                else:
-                    img = imgs_dic["C"]
+                    imgs_dic["P"] = self.calibrator_img
+                else: # Else user grapich components
+                    imgs_dic["P"] = imgs_dic["C"].copy()
+                    self.draw_components(
+                        imgs_dict=imgs_dic)
+
+                    # Optimize image
+                    if self._FR_STREAMING_OPTIMIZER:
+                        self.img_optimizer.optimize(img=imgs_dic["P"])
+
                 # TODO: integrate stitcher
                 # if self._STITCHER and "other_condition":
                 #   self.img_stitch(imgs_dic)
 
-                # Draw visual debugger message
-                if self._VISUAL_DEBUGGER:
-                    self.draw_visual_debugger(img=img)
-
-                # -------------------------------------------------------------
-                # Optimize image
-                if self._FR_STREAMING_OPTIMIZER:
-                    img = self.img_optimizer.optimize(img=img)
-
                 # -------------------------------------------------------------
                 # Show local graphic user interface
-                if self._LOCAL_RUN and self._LOCAL_GUI:
-                    show_local_gui(
-                        imgs_dic=imgs_dic, 
-                        win_name="LOCAL_VIDEO_STREAMING")
+                # if self._LOCAL_RUN and self._LOCAL_GUI:
+                #     show_local_gui(
+                #         imgs_dic=imgs_dic, 
+                #         win_name="LOCAL_VIDEO_STREAMING")
 
                 # -------------------------------------------------------------
                 # Publish image
                 if self.pub_streaming is not None:
                     img_msg = self.img_bridge.cv2_to_imgmsg(
-                        cvim=img, encoding="bgr8")
+                        cvim=imgs_dic["P"], encoding="bgr8")
                     t = str(self.get_clock().now().nanoseconds)
                     img_msg.header.stamp.sec = int(t[0:10])
                     img_msg.header.stamp.nanosec = int(t[10:])
@@ -301,58 +425,10 @@ class MappingNode(
                 if twait <= 0.:
                     continue
                 time.sleep(twait)
-                print("fps:", 1./(time.time() - self.tick), flush=True)
+                # print("fps:", 1./(time.time() - self.tick), flush=True)
                 
             except Exception as e:
                 printlog(msg=e, msg_type="ERROR")
-
-class streaming_optimizer(object):
-
-    def __init__(self):
-        """     
-            Creates video optimizer object for third party services to get the 
-            parameters with images quality are reduced to be sent.
-        Args:
-        Returns:
-        """
-
-        # Read local variables of video streaming configuration
-        self.IDLE_TIME = int(os.environ.get("FR_STREAMING_IDLE_TIME", 120))
-        self.STREAMING_FACTOR = float(os.getenv("FR_STREAMING_FACTOR", 0.4)) 
-        self.STREAMING_IDLE_FACTOR = float(os.getenv("FR_STREAMING_IDLE_FACTOR", 0.2))  
-        
-        self.inactive_timer = 0
-        self._time_tick = time.time()
-
-    def optimize(self, img):
-        """     
-            reduces the images quality to be sent.
-        Args:
-            img: `cv2.math` image to reduce quality
-        Returns:
-        """
-
-        if self.inactive_timer < self.IDLE_TIME + 1:
-            self.inactive_timer = time.time() - self._time_tick
-
-        elif self.inactive_timer >= self.IDLE_TIME:
-            img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
-                dsize=(int(img.shape[1] * self.STREAMING_IDLE_FACTOR), 
-                       int(img.shape[0] * self.STREAMING_IDLE_FACTOR)))
-            img = cv2.cvtColor(src=img, code=cv2.COLOR_GRAY2BGR)
-
-        return img
-
-    # TODO(JOHN): Integrate robot actions to reset idle time 
-    def cb_actuator_action(self):
-        """     
-            Reset inactive timer when a action coming from actuator reference
-            control is received
-        Args:
-        Returns:
-        """
-
-        self._time_tick = time.time()
 
 # =============================================================================
 def main(args=None):

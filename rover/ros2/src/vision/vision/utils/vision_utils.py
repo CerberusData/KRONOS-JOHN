@@ -54,7 +54,7 @@ def printlog(msg, msg_type="INFO", flush=True):
 
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
     
-def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO"):
+def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO", show_time=10):
     """     
         Show a local video with the current cameras, deping on the configuration
         and the camera streamings given by imgs_dic the distribution of images 
@@ -67,43 +67,15 @@ def show_local_gui(imgs_dic, win_name="LOCAL_VIDEO"):
         Returns:
     """
 
-    for img in imgs_dic.values(): # Draw images margins
-        cv2.rectangle(img=img, pt1=(0, 0), pt2=(img.shape[1]-1, img.shape[0]-1), 
-            color=(150, 150, 150), thickness=1) 
+    # for key, value in imgs_dic.items():
+    cv2.imshow("supervisors_image", imgs_dic["P"])  
+    key = cv2.waitKey(show_time) # Show video and capture key
 
-    if "C" not in imgs_dic.keys(): 
-        return
-    elif set(imgs_dic.keys()) == set(["C", "B", "LL", "RR", "P"]):
-        stream = np.concatenate((np.concatenate((imgs_dic["C"], imgs_dic["B"]), axis=0), 
-            np.concatenate((imgs_dic["LL"], imgs_dic["RR"]), axis=0)), axis=1)
-        stream[int((stream.shape[0] - imgs_dic["P"].shape[0])*0.5): 
-            int((stream.shape[0] - imgs_dic["P"].shape[0])*0.5) + imgs_dic["P"].shape[0],
-            int((stream.shape[1] - imgs_dic["P"].shape[1])*0.5): 
-            int((stream.shape[1] - imgs_dic["P"].shape[1])*0.5) + imgs_dic["P"].shape[1]] = imgs_dic["P"]
-    elif set(imgs_dic.keys()) == set(["C", "LL", "RR", "P"]):
-        stream = (np.concatenate((imgs_dic["LL"], imgs_dic["P"], imgs_dic["RR"]), axis=1))
-    elif set(imgs_dic.keys()) == set(["C", "LL", "P"]):
-        stream = (np.concatenate((imgs_dic["LL"], imgs_dic["P"]), axis=1))
-    elif set(imgs_dic.keys()) == set(["C", "RR", "P"]):
-            stream = (np.concatenate((imgs_dic["P"], imgs_dic["RR"]), axis=1))
-    elif set(imgs_dic.keys()) == set(["P"]):
-        stream = imgs_dic["P"]
-    elif set(imgs_dic.keys()) == set(["C"]):
-        stream = imgs_dic["C"]
-    else:
-        for key, value in imgs_dic.items():
-            cv2.imshow(key, value)  
-        key = cv2.waitKey(10) # Show video and capture key
-        if key==113 or key==81: # (Q) If press q then quit
-            exit()
-        return
-
-    cv2.imshow(win_name, stream) 
-    key = cv2.waitKey(10) # Show video and capture key
     if key==113 or key==81: # (Q) If press q then quit
-        exit() 
+        exit()
 
-def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), fontScale=0.7):
+def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), 
+    fontScale=0.7):
     """
         Print a text list on image in desending order
         Args:
@@ -205,6 +177,76 @@ def overlay_image(l_img, s_img, pos, transparency):
 
     # Return results
     return l_img
+
+def insert_image(original_image, inserted_image, new_width, new_height, 
+    position='uc', line_width=2, border_color=(255,255,255), 
+    interpolation=cv2.INTER_NEAREST):
+    """     
+        inserts an image "inserted_image" over input image "original_image"
+    Args:
+        original_image: `cv2.math` background image
+        inserted_image: `cv2.math` overlayed image
+        new_width: `int` new width for overlayed image
+        new_height: `int` new height for overlayed image
+        position: `string` corner to overlay image
+            upper left: ul
+            upper right: ur
+            lower left: ll
+            lower right: lr
+        line_width: `int` frame line width
+        border_color: `list` [B,G,R] color to draw a frame in output image
+        interpolation: `string` interpolation flag to resize images
+    Returns:
+    """   
+
+    # Overlay image to upper left side
+    height, width, _ = original_image.shape
+    if position == 'ul':
+        original_image[0:new_height:, 0:new_width, :] = cv2.resize(
+            inserted_image, (new_width, new_height), 
+            interpolation=interpolation)
+        cv2.rectangle(
+            original_image, (0, 0), (new_width, new_height), 
+            border_color, line_width)
+
+    # Overlay image to upper right side
+    elif position == 'ur':
+        original_image[0:new_height:, -new_width:,:] = cv2.resize(
+            inserted_image, (new_width, new_height), 
+            interpolation=interpolation)
+        cv2.rectangle(
+            original_image, (width - new_width, 0), (width, new_height), 
+            border_color, line_width)
+
+    # Overlay image to upper center side
+    elif position == 'uc':
+        original_image[
+            0:new_height:, 
+            int(width*0.5 - new_width*0.5):int(width*0.5 + new_width*0.5),:] = cv2.resize(
+            inserted_image, (new_width, new_height), 
+            interpolation=interpolation)
+        cv2.rectangle(
+            original_image, 
+            (int(width*0.5 - new_width*0.5), 0),
+            (int(width*0.5 + new_width*0.5), new_height), 
+            border_color, 
+            line_width)
+
+    # Overlay image to lower left side
+    elif position == 'll':
+        original_image[-new_height:, 0:new_width, :] = cv2.resize(
+            inserted_image, (new_width, new_height), interpolation=interpolation)
+        cv2.rectangle(
+            original_image, (0, height - new_height), (new_width, height), 
+                border_color, line_width)
+
+    # Overlay image to lower right side
+    elif position == 'lr':
+        original_image[-new_height:, -new_width:, :] = cv2.resize(
+            inserted_image, (new_width,new_height), interpolation=interpolation)
+        cv2.rectangle(
+            original_image, (width - new_width, height - new_height), 
+                (width, height), border_color, line_width)
 
 # =============================================================================
 # MATH/GEOMETRY OPERATIONS - MATH/GEOMETRY OPERATIONS - MATH/GEOMETRY OPERATION

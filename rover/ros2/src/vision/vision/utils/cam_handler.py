@@ -286,17 +286,6 @@ class CameraHandler():
             (int(self.video_width*0.15), int(self.video_height*0.5)),
             cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 4)
 
-    def __str__(self):
-
-        _str="CAM:{}, VIDEO:{}, SIZE:{}X{}, FPS:{}, PROP_MODE:{}".format(
-            self.cam_label, 
-            self.cam_device_number,
-            self.video_width, 
-            self.video_height,
-            self.fps,
-            self.video_format)
-        return _str
-
     def get_image(self):
         
         # If camera got image capture new frame 
@@ -318,8 +307,8 @@ class CameraHandler():
                         "camera".format(self.cam_label))
 
                 # Flip the image if option is enable
-                if self.video_flip != 0:
-                    cv2.flip(src=cap_image, flipCode=-1)
+                if self.video_flip:
+                    cap_image = cv2.flip(src=cap_image, flipCode=-1)
 
                 # Resize image
                 self.image = cv2.resize(cap_image, 
@@ -342,6 +331,17 @@ class CameraHandler():
         #     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1)
 
         return self.image
+
+    def __str__(self):
+
+        _str="CAM:{}, VIDEO:{}, SIZE:{}X{}, FPS:{}, PROP_MODE:{}".format(
+            self.cam_label, 
+            self.cam_device_number,
+            self.video_width, 
+            self.video_height,
+            self.fps,
+            self.video_format)
+        return _str
 
 class CamerasCaptures():
 
