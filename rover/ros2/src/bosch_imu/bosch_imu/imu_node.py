@@ -136,7 +136,7 @@ class ImuNode(Node):
         # Parameters setup
         self.port = '/dev/ttyTHS2'
         self.frame_id = "imu_link"
-        self.frequency = 30
+        self.frequency = 10
         self.opr_mode = 0x0C
         self.pub_rate = 1.0 / self.frequency
 
@@ -262,8 +262,13 @@ class ImuNode(Node):
 
         # Pitch angle
         sinp = 2 * ((w * y) - (z * x))
-        pitch = math.asin(sinp)
-
+        # print(sinp)
+        if (abs(sinp) >= 1.0):
+            pitch = math.copysign(math.pi /2, sinp)
+        
+        else:
+            pitch = math.asin(sinp)
+        # print(pitch)
         # Yaw angle
         siny_cosp = 2 * ((w * z) + (x * y))
         cosy_cosp = 1 - (2 * ((y ** 2) + (z **2)))
@@ -364,7 +369,7 @@ class ImuNode(Node):
             # Raw data
             self.imu_raw_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.imu_raw_msg.header.frame_id = self.frame_id
-            self.imu_raw_msg.header.seq = self.seq_
+            # self.imu_raw_msg.header.seq = self.seq_
             self.imu_raw_msg.orientation_covariance[0] = -1
             self.imu_raw_msg.linear_acceleration.x = float(st.unpack('h', st.pack('BB', buf[0], buf[1]))[0]) / self.acc_fact_
             self.imu_raw_msg.linear_acceleration.y = float(st.unpack('h', st.pack('BB', buf[2], buf[3]))[0]) / self.acc_fact_
@@ -379,7 +384,7 @@ class ImuNode(Node):
             # Filtered data
             self.imu_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.imu_msg.header.frame_id = self.frame_id
-            self.imu_msg.header.seq = self.seq_
+            # self.imu_msg.header.seq = self.seq_
             self.imu_msg.orientation.w = float(st.unpack('h', st.pack('BB', buf[24], buf[25]))[0])
             self.imu_msg.orientation.x = float(st.unpack('h', st.pack('BB', buf[26], buf[27]))[0])
             self.imu_msg.orientation.y = float(st.unpack('h', st.pack('BB', buf[28], buf[29]))[0])
@@ -411,7 +416,7 @@ class ImuNode(Node):
             # Magnetometer data
             self.mag_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.mag_msg.header.frame_id = self.frame_id
-            self.mag_msg.header.seq = self.seq_
+            # self.mag_msg.header.seq = self.seq_
             self.mag_msg.magnetic_field.x = float(st.unpack('h', st.pack('BB', buf[6], buf[7]))[0]) / self.mag_fact_
             self.mag_msg.magnetic_field.y = float(st.unpack('h', st.pack('BB', buf[8], buf[9]))[0]) / self.mag_fact_
             self.mag_msg.magnetic_field.z = float(st.unpack('h', st.pack('BB', buf[10], buf[11]))[0]) / self.mag_fact_
@@ -428,10 +433,10 @@ class ImuNode(Node):
             """
             self.imu_bot_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.imu_bot_msg.header.frame_id = self.frame_id
-            self.imu_bot_msg.header.seq = self.seq_
-            self.imu_bot_msg.linear_acceleration.x = self.linear_acceleration.z - gravity_z
-            self.imu_bot_msg.linear_acceleration.y = self.linear_acceleration.x - gravity_x
-            self.imu_bot_msg.linear_acceleration.z = self.linear_acceleration.y - gravity_y
+            # self.imu_bot_msg.header.seq = self.seq_
+            self.imu_bot_msg.linear_acceleration.x = self.imu_msg.linear_acceleration.z - gravity_z
+            self.imu_bot_msg.linear_acceleration.y = self.imu_msg.linear_acceleration.x - gravity_x
+            self.imu_bot_msg.linear_acceleration.z = self.imu_msg.linear_acceleration.y - gravity_y
             self.imu_bot_msg.linear_acceleration_covariance = [3e-1, 0.0, 0.0, 0.0, 3e-1, 0.0, 0.0, 0.0, 3e-1]
             self.imu_bot_msg.angular_velocity.x = self.imu_msg.angular_velocity.z
             self.imu_bot_msg.angular_velocity.y = self.imu_msg.angular_velocity.x
@@ -497,7 +502,7 @@ class ImuNode(Node):
             # Kiwibot filtered data for EKF
             self.imu_ekf_msg.header.stamp =rclpy.clock.Clock().now().to_msg()
             self.imu_ekf_msg.header.frame_id = self.frame_id
-            self.imu_ekf_msg.header.seq = self.seq_
+            # self.imu_ekf_msg.header.seq = self.seq_
             self.imu_ekf_msg.orientation.x = quaternion_bot_ekf[0]
             self.imu_ekf_msg.orientation.y = quaternion_bot_ekf[1]
             self.imu_ekf_msg.orientation.z = quaternion_bot_ekf[2]
@@ -530,11 +535,11 @@ class ImuNode(Node):
             # Temperature data
             self.tmp_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.tmp_msg.header.frame_id = self.frame_id
-            self.tmp_msg.header.seq = self.seq_
+            # self.tmp_msg.header.seq = self.seq_
             self.tmp_msg.temperature = buf[44]
 
             self.status_msg.data = "IMU Ok"
-            self.seq_ += 1
+            # self.seq_ += 1
 
         else:
             self.status_msg.data = "Unavailable data"
@@ -543,14 +548,14 @@ class ImuNode(Node):
         """
             Desc: Publisher for the IMU node
         """
-        # self._update_imu_data()
+        self._update_imu_data()
 
         self.get_logger().info("Publishing!")
         #self.radio_msg.data = "Radio Ok!"
         #self.pub_radio_check.publish(self.radio_msg)
         
         # Raw data publisher
-        self.pub_imu_raw .publish(self.imu_raw_msg)
+        self.pub_imu_raw.publish(self.imu_raw_msg)
 
         # Filtered data publisher
         if (self._counter > 300):
@@ -578,7 +583,7 @@ def main(args = None):
     rclpy.spin(imu_node)
     
     # Closing Serial Port
-    # imu_node.ser.close()
+    imu_node.ser.close()
 
     imu_node.destoy_node()
     rclpy.shutdown()
