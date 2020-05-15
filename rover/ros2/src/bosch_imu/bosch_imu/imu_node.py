@@ -132,9 +132,9 @@ class ImuNode(Node):
         # self.opr_mode_ = self.get_parameter("operation_mode").value
 
         # Parameters setup
-        self.port = "/dev/ttyTHS2"
-        self.frame_id = "imu_bosch_link"
-        self.frequency = 40
+        self.port = "/dev/ttyUSB0"
+        self.frame_id = "imu_link"
+        self.frequency = 30
         self.opr_mode = 0x0C
         self.pub_rate = 1.0 / self.frequency
 
@@ -162,46 +162,52 @@ class ImuNode(Node):
         self._yaw = 0.0
 
         # Magnetic field for Berkeley - For Medellin it is -8.2
-        self._mgn_decl = float(os.getenv("IMU_MAGNETIC_DECLINATION", -14.3)) * (math.pi / 180.0)
+        self._mgn_decl = float(
+            os.getenv("IMU_MAGNETIC_DECLINATION", -14.3)) * (math.pi / 180.0)
         self._move_factor = float(os.getenv("IMU_MOVING_FACTOR", 0.014))
 
-        # # Open Serial Port
-        # self.get_logger.info("Opening Serial Port:  %s", self.port)
-        # try:
-        #     self.ser = serial.Serial(port = self.port, baudrate = 115200, timeout = 0.02)
-        # except serial.serialutil.SerialException:
-        #     self.get_logger.error("IMU not found at port " + self.port + ". Check the port number")
-        #     sys.exit(0)
+        # Open Serial Port
+        self.get_logger().info("Opening Serial Port: %s" + self.port)
 
-        # # Check IMU ID
-        # buf = self._read_from_dev(CHIP_ID, 1)
-        # if (buf == 0) or (buf[0] != BNO055_ID):
-        #     sys.exit(0)
+        try:
+            self.ser = serial.Serial(
+                port = self.port, baudrate = 115200, timeout = 0.02)
 
-        # # IMU Setup
-        # if not(self._write_to_dev(OPER_MODE, 1, OPER_MODE_CONFIG)):
-        #     self.get_logger.error("Unable to set IMU into configuration mode.")
+        except serial.serialutil.SerialException:
+            self.get_logger().error(
+                "IMU not found at port " + self.port + ". Check the port number")
+            sys.exit(0)
 
-        # if not(self._write_to_dev(PWR_MODE, 1, PWR_MODE_NORMAL)):
-        #     self.get_logger.error("Unable to set IMU normal power mode.")
+        # Check IMU ID
+        buf = self._read_from_dev(CHIP_ID, 1)
+        if (buf == 0) or (buf[0] != BNO055_ID):
+            print(buf)
+            sys.exit(0)
 
-        # if not(self._write_to_dev(PAGE_ID, 1, 0x00)):
-        #     self.get_logger.error("Unable to set IMU register page 0.")
+        # IMU Setup
+        if not(self._write_to_dev(OPER_MODE, 1, OPER_MODE_CONFIG)):
+            self.get_logger().error("Unable to set IMU into configuration mode.")
 
-        # if not(self._write_to_dev(SYS_TRIGGER, 1, 0x00)):
-        #     self.get_logger.error("Unable to start IMU.")
+        if not(self._write_to_dev(PWR_MODE, 1, PWR_MODE_NORMAL)):
+            self.get_logger().error("Unable to set IMU normal power mode.")
 
-        # if not(self._write_to_dev(UNIT_SEL, 1, 0x83)):
-        #     self.get_logger.error("Unable to set IMU units.")
+        if not(self._write_to_dev(PAGE_ID, 1, 0x00)):
+            self.get_logger().error("Unable to set IMU register page 0.")
 
-        # if not(self._write_to_dev(AXIS_MAP_CONFIG, 1, 0x24)):
-        #     self.get_logger.error("Unable to remap IMU axis.")
+        if not(self._write_to_dev(SYS_TRIGGER, 1, 0x00)):
+            self.get_logger().error("Unable to start IMU.")
 
-        # if not(self._write_to_dev(AXIS_MAP_SIGN, 1, 0x06)):
-        #     self.get_logger.error("Unable to set IMU axis signs.")
+        if not(self._write_to_dev(UNIT_SEL, 1, 0x83)):
+            self.get_logger().error("Unable to set IMU units.")
 
-        # if not(self._write_to_dev(OPER_MODE, 1, OPER_MODE_NDOF))
-        #     self.get_logger.error("Unable to set IMU operation into operation mode.")
+        if not(self._write_to_dev(AXIS_MAP_CONFIG, 1, 0x24)):
+            self.get_logger().error("Unable to remap IMU axis.")
+
+        if not(self._write_to_dev(AXIS_MAP_SIGN, 1, 0x06)):
+            self.get_logger().error("Unable to set IMU axis signs.")
+
+        if not(self._write_to_dev(OPER_MODE, 1, OPER_MODE_NDOF)):
+            self.get_logger().error("Unable to set IMU operation into operation mode.")
         
         self.get_logger().info("Bosch BNO055 IMU configuration completed.")
         
@@ -278,7 +284,7 @@ class ImuNode(Node):
             return 0
         
         # Response checking
-        if (bug_in.__len__ != (2 + length)) or (buf_in[0] != START_BYTE_RESP):
+        if (buf_in.__len__ != (2 + length)) or (buf_in[0] != START_BYTE_RESP):
             return 0
         
         buf_in.pop(0)
@@ -507,12 +513,11 @@ class ImuNode(Node):
         # self._update_imu_data()
 
         self.get_logger().info("Publishing!")
-        self.radio_msg.data = "Radio Ok!"
-        self.pub_radio_check.publish(self.radio_msg)
-
-        """
+        #self.radio_msg.data = "Radio Ok!"
+        #self.pub_radio_check.publish(self.radio_msg)
+        
         # Raw data publisher
-        self.pub_raw_.publish(self.imu_raw_msg)
+        self.pub_imu_raw .publish(self.imu_raw_msg)
 
         # Filtered data publisher
         if (self._counter > 300):
@@ -524,14 +529,14 @@ class ImuNode(Node):
             self.pub_bot_move.publish(self.move_msg)
 
         # Magnetometer data publisher
-        self.pub_mag_.publish(self.mag_msg)
+        self.pub_imu_mag.publish(self.mag_msg)
 
         # Temperature data publisher
-        self.pub_temp_.publish(self.tmp_msg)
+        self.pub_imu_temp.publish(self.tmp_msg)
 
         # IMU status publisher
         self.pub_imu_status.publish(self.status_msg)
-        """
+        
 
 def main(args = None):
     rclpy.init(args = args)

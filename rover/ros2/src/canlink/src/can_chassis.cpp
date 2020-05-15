@@ -125,9 +125,9 @@ void CANChassis::StartCANBusRead()
     struct can_frame *frame;
     while (true)
     {
-        RCLCPP_WARN(this->get_logger(), "WHILE LOOP");
+        // RCLCPP_WARN(this->get_logger(), "WHILE LOOP");
+        // RCLCPP_WARN(this->get_logger(), "valid frame %x, id: %x", frame->can_id, frame->data[0]);
         frame = can_driver_->ReadSocket();
-        RCLCPP_WARN(this->get_logger(), "valid frame %x, id: %x", frame->can_id, frame->data[0]);
         if (frame)
         {
             if ((frame->can_id & 0xFFF) == KIWIBOT_ADDRESS)

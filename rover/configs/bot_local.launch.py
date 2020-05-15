@@ -139,7 +139,7 @@ def generate_launch_description():
             "output": 'screen',
             "launch": int(os.getenv(
                 key="NODE_CANLINK_CHASSIS", 
-                default=1))
+                default=0))
         },
         "NODE_CANLINK_CABIN": {
             "node_executable": 'canlink_cabin',
@@ -148,7 +148,7 @@ def generate_launch_description():
             "output": 'screen',
             "launch": int(os.getenv(
                 key="NODE_CANLINK_CABIN", 
-                default=1))
+                default=0))
         }
     }
 
