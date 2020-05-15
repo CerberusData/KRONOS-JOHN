@@ -134,7 +134,7 @@ class ImuNode(Node):
         # self.opr_mode_ = self.get_parameter("operation_mode").value
 
         # Parameters setup
-        self.port = "/dev/ttyUSB0"
+        self.port = '/dev/ttyTHS2'
         self.frame_id = "imu_link"
         self.frequency = 30
         self.opr_mode = 0x0C
@@ -180,12 +180,23 @@ class ImuNode(Node):
                 "IMU not found at port " + self.port + ". Check the port number")
             sys.exit(0)
 
-        # Check IMU ID
-        buf = self._read_from_dev(CHIP_ID, 1)
-        if (buf == 0) or (buf[0] != BNO055_ID):
-            print(buf)
-            sys.exit(0)
+        # # Check IMU ID
+        # buf = self._read_from_dev(CHIP_ID, 1)
+        # if (buf == 0) or (buf[0] != BNO055_ID):
+        #     print(buf)
+        #     sys.exit(0)
 
+        # Check if IMU ID is correct
+        if not self._check_id():
+            self.get_logger().error("Device ID is incorrect. Shutdown.")
+            correct_id = False
+
+            for x in range(30):
+                self.get_logger().error("Rechecking IMU device ID attempt {}".format(x))
+                if self._check_id():                  
+                    correct_id = True              
+                    break
+        
         # IMU Setup
         if not(self._write_to_dev(OPER_MODE, 1, OPER_MODE_CONFIG)):
             self.get_logger().error("Unable to set IMU into configuration mode.")
@@ -227,6 +238,14 @@ class ImuNode(Node):
         else:
             raise Exception("Can not set the process name on non-linux systems: " + str(sys.platform))
 
+
+    def _check_id(self):
+        buf = self._read_from_dev(CHIP_ID, 1)
+        
+        if buf == 0:
+            return False
+        
+        return buf[0] == BNO055_ID
 
     def _euler_from_quaternion(self, quat_x, quat_y, quat_z, quat_w):
         """
@@ -284,18 +303,21 @@ class ImuNode(Node):
         # Data allocation in the exit buffer
         buf_out = bytearray()
         buf_out.append(START_BYTE_WR)
-        buf_out.append(WRITE)
+        buf_out.append(READ)
         buf_out.append(reg_addr)
         buf_out.append(length)
 
         try: 
             self.ser.write(buf_out)
             buf_in = bytearray(self.ser.read(2 + length))
+            print("Check 1")
         except:
+            print("Check 2")
             return 0
         
         # Response checking
         if (buf_in.__len__ != (2 + length)) or (buf_in[0] != START_BYTE_RESP):
+            print("Check 3")
             return 0
         
         buf_in.pop(0)
