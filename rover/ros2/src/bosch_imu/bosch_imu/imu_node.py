@@ -92,6 +92,8 @@ class ImuNode(Node):
 
         super().__init__("imu_node")
 
+        self._setProcessName(name="imu_node")
+
         # Publishers
         self.pub_imu_raw = self.create_publisher(
             Imu, 'imu/raw', 1)              # Raw data - imu_raw_msg
@@ -167,11 +169,11 @@ class ImuNode(Node):
         self._move_factor = float(os.getenv("IMU_MOVING_FACTOR", 0.014))
 
         # Open Serial Port
-        self.get_logger().info("Opening Serial Port: %s" + self.port)
+        self.get_logger().info("Opening Serial Port: " + self.port)
 
         try:
             self.ser = serial.Serial(
-                port = self.port, baudrate = 115200, timeout = 0.02)
+                port=self.port, baudrate=115200, timeout=0.02)
 
         except serial.serialutil.SerialException:
             self.get_logger().error(
@@ -216,6 +218,15 @@ class ImuNode(Node):
             timer_period_sec=self.pub_rate,
             callback=self.cb_publish_imu
         )
+
+    def _setProcessName(self, name):
+        if sys.platform in ['linux2', 'linux']:
+            import ctypes
+            libc = ctypes.cdll.LoadLibrary('libc.so.6')
+            libc.prctl(15, name, 0, 0, 0)
+        else:
+            raise Exception("Can not set the process name on non-linux systems: " + str(sys.platform))
+
 
     def _euler_from_quaternion(self, quat_x, quat_y, quat_z, quat_w):
         """
