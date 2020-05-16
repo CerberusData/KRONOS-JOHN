@@ -356,9 +356,9 @@ class CalibratorPublishers(Node):
                     "p2": list(ext_cal["p2"]), 
                     "p3": list(ext_cal["p3"]), 
                     "p4": list(ext_cal["p4"]), 
-                    "dead_view": surf_relation["dead_view_distance"],
-                    "ppmx": surf_relation["ppmx"],
-                    "ppmy": surf_relation["ppmy"], 
+                    "dead_view": round(surf_relation["dead_view_distance"], 2),
+                    "ppmx": round(surf_relation["ppmx"], 3),
+                    "ppmy": round(surf_relation["ppmy"], 3), 
                     "unwarped_size": list(self._UNWARPED_SIZE),
                     "image_size": list(self._VIDEO_SIZE)
                     }

@@ -41,10 +41,32 @@ class GraphicInterface():
             parent_node=parent_node)
 
         # ---------------------------------------------------------------------
+        # User enviroment variables
         self._VISUAL_DEBUGGER = int(os.getenv(
             key="VISUAL_DEBUGGER", default=1))
         self._VISUAL_OVERLAY_CAMS = int(os.getenv(
             key="VISUAL_OVERLAY_CAMS", default=1))
+        self._VISUAL_WAYPOINT = int(os.getenv(
+            key="VISUAL_WAYPOINT", default=1))
+        self._GUI_GAME_OVER_SCREEN = int(os.getenv(
+            key="GUI_GAME_OVER_SCREEN", default=1))
+        self._GUI_STOP_SCREEN = int(os.getenv(
+            key="GUI_STOP_SCREEN", default=1))
+        self._GUI_WAYPOINT_AREA = int(os.getenv(
+            key="GUI_WAYPOINT_AREA", default=1))
+        self._GUI_UNDISTORD_AREA = int(os.getenv(
+            key="GUI_UNDISTORD_AREA", default=1))
+
+        self._IMGS_PATH = os.path.join(os.path.dirname(__file__), "resources")
+
+        # ---------------------------------------------------------------------
+        # Graphics Images
+        self.stop_sing = cv2.imread(filename=os.path.join(
+            self._IMGS_PATH, "stop_sing.png"), 
+            flags=cv2.IMREAD_UNCHANGED)
+        self.game_over = cv2.imread(filename=os.path.join(
+            self._IMGS_PATH, "game_over.png"), 
+            flags=cv2.IMREAD_UNCHANGED)
 
         # ---------------------------------------------------------------------
 
@@ -74,8 +96,12 @@ class GraphicInterface():
         # ---------------------------------------------------------------------
         # DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUG
         if self._VISUAL_DEBUGGER:
-            self.sub_visual_debugger.draw(
-                img=imgs_dict["P"])
+            self.sub_visual_debugger.draw(img=imgs_dict["P"])
+
+        # ---------------------------------------------------------------------
+        # WAYPOINT - WAYPOINT - WAYPOINT - WAYPOINT - WAYPOINT - WAYPOINT - WAY
+        if self._VISUAL_WAYPOINT:
+            self.draw_extrinsic(img=imgs_dict["P"], cam_label="C")
 
         # ---------------------------------------------------------------------
         # ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM -
@@ -91,19 +117,46 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # STOP SCREEN - STOP SCREEN - STOP SCREEN - STOP SCREEN - STOP SCREEN -
-        
+        if self._GUI_STOP_SCREEN:
+            pass
+
         # ---------------------------------------------------------------------          
         # GAMEOVER SCREEN - GAMEOVER SCREEN - GAMEOVER SCREEN - GAMEOVER SCREEN
+        if self._GUI_GAME_OVER_SCREEN:
+            pass
 
         # ---------------------------------------------------------------------
 
-    def draw_extrinsic(self):
+    def draw_extrinsic(self, img, cam_label="C", thickness=2):
         """ 
             Draw extrinsic calibration components
-            Methods:
-            Arguments:
+            Args:
+                img: 'cv2.math' image to draw components
+                cam_label: 'string' camera label to get extrinsic components
+            returns:
         """
-        pass
+        
+        if cam_label in self.sub_extrinsic.extrinsic.cams.keys():
+            if self.sub_extrinsic.extrinsic.cams[cam_label] is None:
+                return
+
+            # Draw surface perspective projection contour
+            if self._GUI_UNDISTORD_AREA:
+                cv2.drawContours(
+                    image=img, 
+                    contours=[self.sub_extrinsic.extrinsic.cams[
+                        cam_label]["undistord_cnt"]], 
+                    contourIdx=0, color=(0, 0, 200), 
+                    thickness=thickness)
+
+            # Draw waypoint area contour
+            if self._GUI_WAYPOINT_AREA:
+                cv2.drawContours(
+                    image=img, 
+                    contours=[self.sub_extrinsic.extrinsic.cams[
+                        cam_label]["waypoint_area"]], 
+                    contourIdx=0, color=(0, 200, 0), 
+                    thickness=thickness)
 
     def draw_lateral_cams(self, imgs_dict, rcam):
         """ 

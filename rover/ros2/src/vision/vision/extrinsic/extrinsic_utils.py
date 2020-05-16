@@ -56,7 +56,7 @@ class Extrinsic():
         self.flush = False
 
     def __str__(self):
-        str_ = ""
+        str_ = "\n"
         for cam_label, params in self.cams.items():
             str_ += "\nCAM:{}\n".format(cam_label)
             if params is not None:
@@ -99,7 +99,6 @@ class Extrinsic():
                 extrinsic_cal["mtime_days"] = (atime-mtime).days # Last modification date in days
                 extrinsic_cal["ctime_days"] = (atime-ctime).days # Last creation date in days
                 extrinsic_cal["out_date"]={"state":False, "days":0}
-                
                 
                 if (extrinsic_cal["mtime_days"] > self._CALIBRATION_DAYS_OUT
                     or extrinsic_cal["ctime_days"] > self._CALIBRATION_DAYS_OUT):
@@ -158,15 +157,9 @@ class Extrinsic():
                         M=extrinsic_cal["M"], 
                         ppmx=extrinsic_cal["ppmx"], 
                         ppmy=extrinsic_cal["ppmy"])
-                extrinsic_cal["cam_disp_angle"] = cam_disp_angle
-                extrinsic_cal["cam_view_angle"] = cam_view_angle
-                extrinsic_cal["cam_aper_angle"] = cam_aper_angle
-
-                extrinsic_cal["view_coord_pix"] = \
-                    extrinsic_cal["view_coord_m"][1] - extrinsic_cal["view_coord_m"][1] 
-                
-                extrinsic_cal["dead_view_m"] = \
-                    extrinsic_cal["view_coord_pix"]/extrinsic_cal["ppmy"]
+                extrinsic_cal["cam_disp_angle"] = round(cam_disp_angle, 2)
+                extrinsic_cal["cam_view_angle"] = round(cam_view_angle, 2)
+                extrinsic_cal["cam_aper_angle"] = round(cam_aper_angle, 2)
 
                 printlog(msg="{} extrinsic parameters loaded".format(
                     FILE_NAME), msg_type="OKGREEN", flush=self.flush)
