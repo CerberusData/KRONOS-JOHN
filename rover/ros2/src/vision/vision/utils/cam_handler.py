@@ -75,7 +75,7 @@ def find_video_devices():
         cams_list: `list` with video camera devices numbers
     """
 
-    # Check for video devicesio
+    # Check for video devices
     p = re.compile(r".+video(?P<video>\d+)$", re.I)
     devices = subprocess.check_output("ls -l /dev", shell=True).decode('utf-8')
     avail_cameras = []
@@ -89,7 +89,7 @@ def find_video_devices():
     cams_list = list(sorted(map(int,avail_cameras)))
 
     return cams_list
- 
+
 def find_usb_ports(cameras):
     """ Finds and lists video devices ports
     Args:
@@ -97,7 +97,7 @@ def find_usb_ports(cameras):
     Returns:
         avail_ports: `list` with video camera devices ports
     """
-    
+
     # find usb port given a video number device
     avail_ports = []
     p = re.compile(r"\d-(?P<video>[0-9.]+).+", re.I)
@@ -124,9 +124,9 @@ def find_usb_ports(cameras):
     return avail_ports
 
 def decode_fourcc(v):
- # https://shimat.github.io/opencvsharp_docs/html/5e5a9f7a-b360-809c-b542-799b01ac1aa2.htm
-  v = int(v)
-  return "".join([chr((v >> 8 * i) & 0xFF) for i in range(4)])
+    # https://shimat.github.io/opencvsharp_docs/html/5e5a9f7a-b360-809c-b542-799b01ac1aa2.htm
+    v = int(v)
+    return "".join([chr((v >> 8 * i) & 0xFF) for i in range(4)])
 
 # =============================================================================
 class CameraHandler():
@@ -156,7 +156,7 @@ class CameraHandler():
         self.video_width  = self.cam_config["WIDTH"][1]
         self.video_format=None
         self.fps = 0
-        
+
         # Camera properties        
         self.image = np.zeros((self.video_height, self.video_width, 3),
             dtype=np.uint8) # Camera Image
@@ -206,7 +206,7 @@ class CameraHandler():
                         self.video_format, 
                         self.cap.get(cv2.CAP_PROP_AUTO_EXPOSURE)
                         ), msg_type="INFO")
-                    
+
                     # Print warning if desired fps are not supported
                     if self.cam_config["FPS"]>float(self.cap.get(
                         cv2.CAP_PROP_FPS)):
@@ -237,14 +237,14 @@ class CameraHandler():
             self.set_error_image("{} {}".format(self.cam_label, "CAN NOT OPEN"))
             self.grabbed = False
             self.cap = None
-    
+
     def set_properties(self):
         """ Assigns video handler's properties
         Args:
         Returns:
         """
 
-        # Open cameras in MJPG format requires less bandwithd 
+        # Open cameras in MJPG format requires less bandwidth 
         self.cap.set(
             cv2.CAP_PROP_FOURCC, 
             cv2.VideoWriter_fourcc(*"MJPG"))

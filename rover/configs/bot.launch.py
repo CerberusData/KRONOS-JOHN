@@ -61,13 +61,13 @@ def printlog(msg, msg_type="INFO", flush=True):
     caller = inspect.stack()[1][3].upper()
     _str = "[{}][{}][{}]: {}".format(bcolors.LOG[msg_type][1], org, caller, msg)
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
-    
+
 def read_node_launch(default_file):
     
     CONF_PATH = os.path.dirname(os.path.abspath(__file__))
     CONF_FILE = 'nodes_local_launch.yaml'
     FILE_PATH = os.path.join(CONF_PATH, CONF_FILE)
-    
+
     if not os.path.exists(FILE_PATH):
         
         try:
@@ -75,13 +75,13 @@ def read_node_launch(default_file):
                 yaml.dump(default_file, outfile, default_flow_style=False)
             printlog(msg="Nodes launch file created", 
                 msg_type="WARN")
-                
+
         except Exception as e:
             printlog(msg="Error creating nodes launch file: {}".format(e), 
                 msg_type="ERROR")
- 
+
         return default_file
-    
+
     else:
         
         try:
@@ -89,7 +89,7 @@ def read_node_launch(default_file):
                 default_file = yaml.safe_load(stream)
             printlog(msg="Nodes local launch file {}".format(
                 CONF_FILE), msg_type="OKGREEN")
-                
+
         except Exception as e:
             printlog(msg="Error reading nodes launch file: {}".format(e), 
                 msg_type="ERROR")
@@ -163,7 +163,7 @@ def generate_launch_description():
 
     if os.getenv(key="LOCAL_LAUNCH", default=0):
         nodes = read_node_launch(default_file=nodes)
-        
+
     # Print nodes to launch
     srt_ = "\n\nLaunching:"
     for key, node_args in nodes.items():
@@ -189,7 +189,7 @@ def generate_launch_description():
     # ld.add_action(launch.actions.ExecuteProcess(
     #     cmd=[sys.executable, '-u', './script_name.py', '--ignore-sigint', '--ignore-sigterm']
     # ))
-    
+
     return ld
 
     # ============================================================================

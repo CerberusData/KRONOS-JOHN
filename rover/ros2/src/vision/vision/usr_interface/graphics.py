@@ -15,7 +15,7 @@ from python_utils.pysubscribers import Robot
 # =============================================================================
 class GraphicInterface():
 
-    def __init__(self, parent_node):
+    def __init__(self, parent_node, cam_labels=["C"]):
         """ 
             Object class constructor
             Methods:
@@ -35,7 +35,8 @@ class GraphicInterface():
         self.sub_visual_debugger = VisualDebuggerSubscriber(
             parent_node=parent_node)
         self.sub_extrinsic = ExtrinsicSubscriber(
-            parent_node=parent_node)
+            parent_node=parent_node, 
+            cam_labels=cam_labels)
         self.sub_bot = Robot(
             parent_node=parent_node)
 

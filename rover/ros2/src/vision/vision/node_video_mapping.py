@@ -44,14 +44,13 @@ class MappingNode(Node, Thread):
         Args:
         Returns:
         """
-        
+
         # ---------------------------------------------------------------------
         super().__init__('MappingNode')
 
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
-        self.gui = GraphicInterface(parent_node=self)
-
+        
         Thread.__init__(self)
 
         # ---------------------------------------------------------------------
@@ -81,14 +80,17 @@ class MappingNode(Node, Thread):
             exit()
         else:
             self.get_logger().info("cameras configuration loaded")
-        
+
         # Start cameras handler with configuration
         self.cams_caps = CamerasCaptures(cams_config=self.cams_config)
         # print(cams_status = self.cams_caps.get_cameras_status())
-                
+
+        self.gui = GraphicInterface(
+            cam_labels=self.cams_config.keys(),
+            parent_node=self)
         self.img_optimizer = StreamingOptimizer() 
         self.img_bridge = CvBridge()
-        
+
         # ---------------------------------------------------------------------
         # Stitcher object
         self.stitcher = None
@@ -99,7 +101,7 @@ class MappingNode(Node, Thread):
 
         # ---------------------------------------------------------------------
         # Services
-        
+
         # ---------------------------------------------------------------------
         # Publishers
 
@@ -214,7 +216,7 @@ class MappingNode(Node, Thread):
         Returns:
             _: `cv2.math` images stitched
         """
-        
+
         cam_keys = self.cams_caps.camera_handlers.keys()
         imgs = [
             None if not "RR" in cam_keys else imgs_dic["RR"].copy(),
@@ -234,7 +236,7 @@ class MappingNode(Node, Thread):
             height=self._VIDEO_HEIGHT)
 
     def run(self):
-        """ Cycle of threadh execution
+        """ Cycle of threads execution
         Args:
         Returns:
         """
@@ -246,23 +248,23 @@ class MappingNode(Node, Thread):
                 imgs_dic = dict(map(
                     lambda o: (o.cam_label, o.get_image()), 
                     self.cams_caps.camera_handlers.values()))
-                
+
                 # Show calibration if something to show
                 if self.calibrator_img is not None:
                     imgs_dic["P"] = self.calibrator_img
-                
+
                 # If stitch video
                 elif self.stitcher is not None and self.gui.sub_bot.stream_stitch:
                     imgs_dic["P"] = self.img_stitch(imgs_dic=imgs_dic)
-                
-                # Else draw user grapich components
+
+                # Else draw user graphics components
                 else: 
                     self.gui.draw_components(imgs_dict=imgs_dic)
-                    
+
                     # Optimize image
                     if self._FR_STREAMING_OPTIMIZER:
                         self.img_optimizer.optimize(img=imgs_dic["P"])
-                
+
                 # -------------------------------------------------------------
                 # Publish image
                 if self.pub_streaming is not None:
@@ -273,7 +275,7 @@ class MappingNode(Node, Thread):
                     # img_msg.header.stamp.nanosec = int(t[10:])
                     # img_msg.header.frame_id = t
                     self.pub_streaming.publish(img_msg)
-                
+
                 # -------------------------------------------------------------
                 # Operate times for next frame iteration
                 tock = time.time() - self.tick
@@ -282,7 +284,7 @@ class MappingNode(Node, Thread):
                     continue
                 time.sleep(twait)
                 # print("fps:", 1./(time.time() - self.tick), flush=True)
-                
+
             except Exception as e:
                 printlog(msg=e, msg_type="ERROR")
 

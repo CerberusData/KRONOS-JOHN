@@ -100,7 +100,7 @@ class IntrinsicClass():
             self.map2 = map2
 
             printlog(msg="{} instrinsic configuration loaded".format(
-                self.file_name), msg_type="OKGREEN")
+                self.file_name), msg_type="INFO")
 
         except Exception as e:
 

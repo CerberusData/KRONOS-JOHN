@@ -17,13 +17,14 @@ from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from usr_msgs.msg import VisualMessage
-from usr_msgs.msg import Extrinsic
+from usr_msgs.msg import Extrinsic as Extrinsic_msg
 from std_msgs.msg import Bool
 
 from vision.utils.vision_utils import print_text_list
 from vision.utils.vision_utils import printlog
 
-from vision.extrinsic.extrinsic_utils import ExtrinsicClass
+from vision.intrinsic.intrinsic_utils import IntrinsicClass
+from vision.extrinsic.extrinsic_utils import Extrinsic
 
 # =============================================================================
 class VisualDebuggerSubscriber():
@@ -89,18 +90,28 @@ class VisualDebuggerSubscriber():
             color=color, orig=(10, int(img.shape[0]*0.95)), 
             fontScale=0.7)
 
-class ExtrinsicSubscriber(ExtrinsicClass):
+class ExtrinsicSubscriber():
 
-    def __init__(self, parent_node):
+    def __init__(self, parent_node, cam_labels=["C"]):
 
-        ExtrinsicClass.__init__(self)
+        self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
+        self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
 
         # Subscribers
         self._sub_extrinsic_params = parent_node.create_subscription(
-            msg_type=Extrinsic, topic='video_calibrator/extrinsic_parameters', 
+            msg_type=Extrinsic_msg, topic='video_calibrator/extrinsic_parameters', 
             callback=self.cb_extrinsic_params, qos_profile=2,
             callback_group=parent_node.callback_group
             )
+
+        # Read intrinsic parameters from file
+        self.intrinsic = IntrinsicClass()
+
+        # extrinsic parameters dictionary
+        self.extrinsic = Extrinsic(
+            dist=self.intrinsic.distortion_coefficients,
+            mtx=self.intrinsic.mtx,
+            cam_labels=cam_labels)
 
     def cb_extrinsic_params(self, msg):
         """ Re-assing extrinsic calibration 
@@ -112,24 +123,21 @@ class ExtrinsicSubscriber(ExtrinsicClass):
         """
 
         try: 
-            self.M = msg.projection_matrix
-            self.p1 = msg.p1
-            self.p2 = msg.p2
-            self.p3 = msg.p3
-            self.p4 = msg.p4
-            self.vp = msg.vp
-            self.dead_view = msg.dead_view
-            self.ppmx = msg.ppmx
-            self.ppmy = msg.ppmy
-            self.warped_size = msg.unwarped_size
-            self.image_size = msg.image_size
+            if msg.cam_label in self.extrinsic.cams.keys():
+                self.extrinsic.load(
+                    mtx=self.intrinsic.mtx, 
+                    dist=self.intrinsic.distortion_coefficients,
+                    FILE_NAME="Extrinsic_{}_{}_{}.yaml".format(
+                        self._VIDEO_WIDTH, 
+                        self._VIDEO_HEIGHT, 
+                        msg.cam_label))
 
         except Exception as e:
             printlog(msg="Error getting extrinsic calibration"
                 "from topic, {}".format(e), msg_type="ERROR")
             return False
-
-        printlog(msg="Extrinsic parameters updated", msg_type="INFO")
+        printlog(msg="Extrinsic parameters for CAM{} updated".format(
+            msg.cam_label), msg_type="INFO")
 
 class WebclientControl():
 

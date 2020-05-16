@@ -20,105 +20,72 @@ from vision.utils.vision_utils import matrix_from_flat
 from vision.utils.vision_utils import overlay_image
 from vision.utils.vision_utils import printlog
 from vision.utils.vision_utils import dotline
-from vision.utils.vision_utils import printlog
 
 cv2v_base = cv2.__version__.split(".")[0]
 
 # =============================================================================
-class ExtrinsicClass():
+class Extrinsic():
 
-    def __init__(self):
+    def __init__(self, cam_labels, mtx=None, dist=None):
 
-        # EXtrinsic parameters
-        self.__M = None # perspetive transformation matrix
-        self.__Minv = None # inverse of perspetive transformation matrix
-        self.__p1 = None # first point of perpective geometry in original image
-        self.__p2 = None # second point of perpective geometry in original image
-        self.__p3 = None # third point of perpective geometry in original image
-        self.__p4 = None # fourth point of perpective geometry in original image
-        self.__vp = None # Vanishing point in original image
-        self.dead_view = None # Dead view distance in meters
-        self.ppmx = None # pixel per meter in x axis
-        self.ppmy = None # pixel per meter in y axis 
-        self.__warped_size = None # Image warped space size
-        self.__image_size = None # Image size which extrinsic calibration was performed
+        self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
+            default=os.path.dirname(os.path.abspath(__file__))))
+        self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
+        self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
 
-    @property
-    def M(self):
-        return self.__M
-    @M.setter
-    def M(self, warpM):
-        if isinstance(warpM, list):
-            self.__M = matrix_from_flat(list_vector= warpM)
-            self.__Minv = np.linalg.inv(warpM)
-        elif isinstance(warpM, type(np.array)):
-            self.__M = warpM
-            self.__Minv = np.linalg.inv(warpM)
-        else:
-            self.__M = None
-    @property
-    def p1(self):
-        return self.__p1
-    @property
-    def p2(self):
-        return self.__p2
-    @property
-    def p3(self):
-        return self.__p3
-    @property
-    def p4(self):
-        return self.__p4
-    @property
-    def vp(self):
-        return self.__vp
+        self._CALIBRATION_DAYS_OUT = int(os.getenv(
+            key="VISION_CAL_DAYS_OUT", default=10))
+        self._CALIBRATION_DAYS_REMOVE = int(os.getenv(
+            key="VISION_CAL_DAYS_REMOVE", default=20))
 
-    @property
-    def warped_size(self):
-        return self.__unwarped_size
-    @warped_size.setter
-    def warped_size(self, warped_size):
-        self.__warped_size = tuple(warped_size)
+        # enable print logs
+        self.flush = True
 
-    @property
-    def image_size(self):
-        return self.__image_size
-    @image_size.setter
-    def image_size(self, image_size):
-        self.__image_size = tuple(image_size)
+        # Intrinsic parameters
+        self.mtx = mtx
+        self.dist = dist
 
-    # def __str__(self):
-    #     str_ = ""
-    #     for cam_label, params in self.calibration.items():
-    #         str_ += "\nCAM:{}\n".format(cam_label)
-    #         if params is not None:
-    #             for param_name, param_value in params.items():
-    #                 value = ": {}".format(param_value) if type(param_value
-    #                     ) in [float, int, tuple] else ""                        
-    #                 str_ += "\t{}: {}{}\n".format(param_name, 
-    #                     type(param_value), value)
-    #             str_ += "\tmtime_days:{}\n".format(params["mtime_days"])
-    #             str_ += "\tctime_days:{}\n".format(params["mtime_days"])
-    #         else:
-    #             str_ += "\t{}\n".format(params)
-    #     str_ += "\n"
-    #     return str_
+        # Extrinsic parameters
+        self.cams = {cam_key: self.load(
+            mtx=mtx, dist=dist, 
+            FILE_NAME="Extrinsic_{}_{}_{}.yaml".format(self._VIDEO_WIDTH, 
+                self._VIDEO_HEIGHT, cam_key)) for cam_key in cam_labels}
 
-    def load(self, CONF_PATH, FILE_NAME):
+        # Disable print logs
+        printlog(msg=str(self), msg_type="INFO", flush=self.flush)
+        self.flush = False
+
+    def __str__(self):
+        str_ = ""
+        for cam_label, params in self.cams.items():
+            str_ += "\nCAM:{}\n".format(cam_label)
+            if params is not None:
+                for param_name, param_value in params.items():
+                    value = ": {}".format(param_value) if type(param_value
+                        ) in [float, int, tuple, list] else ""                        
+                    str_ += "\t{}: {}{}\n".format(param_name, 
+                        type(param_value), value)
+            else:
+                str_ += "\t{}\n".format(params)
+        str_ += "\n"
+        return str_
+
+    def load(self, FILE_NAME, mtx=None, dist=None):
         """ 
             Loads extrinsic camera parameters from file  
         Args:
-            CONF_PATH: `string` path to extrinsic calibration yaml file
             FILE_NAME: `string` extrinsic calibration yaml file name
+            mtx: 'numpy.darray' matrix distortion coeficients
+            dist: 'numpy.darray' vector distortion coeficients
         Returns:
-            file_path: `dict` extrinsic camera configuration
-                dictionary
         """
+
+        CONF_PATH = self._CONF_PATH
 
         abs_path = os.path.join(CONF_PATH, FILE_NAME)
         if os.path.isfile(abs_path):
 
             try: 
-
                 # -----------------------------------------------------------------
                 # Read base data from file
                 with open(abs_path, 'r') as stream:
@@ -133,27 +100,24 @@ class ExtrinsicClass():
                 extrinsic_cal["ctime_days"] = (atime-ctime).days # Last creation date in days
                 extrinsic_cal["out_date"]={"state":False, "days":0}
                 
-                CALIBRATION_DAYS_OUT = int(os.getenv(
-                    key="VISION_CAL_DAYS_OUT", default=10))
-                CALIBRATION_DAYS_REMOVE = int(os.getenv(
-                    key="VISION_CAL_DAYS_REMOVE", default=20))
-                if (extrinsic_cal["mtime_days"] > CALIBRATION_DAYS_OUT
-                    or extrinsic_cal["ctime_days"] > CALIBRATION_DAYS_OUT):
+                
+                if (extrinsic_cal["mtime_days"] > self._CALIBRATION_DAYS_OUT
+                    or extrinsic_cal["ctime_days"] > self._CALIBRATION_DAYS_OUT):
 
                     extrinsic_cal["out_date"]["state"]=True
                     extrinsic_cal["out_date"]["days"]= extrinsic_cal["mtime_days"] if (
                         extrinsic_cal["mtime_days"] > extrinsic_cal["ctime_days"]) else extrinsic_cal["ctime_days"] 
 
                     # Remove calibration file if it's too old and report log
-                    if extrinsic_cal["out_date"]["days"] > CALIBRATION_DAYS_REMOVE:
+                    if extrinsic_cal["out_date"]["days"] > self._CALIBRATION_DAYS_REMOVE:
                         os.remove(abs_path)
                         printlog(msg="{} camera calibration has been removed, "
                             "please re-calibrate cameras now".format(
-                            cam_label), msg_type="WARN")
+                            FILE_NAME), msg_type="WARN", flush=self.flush)
                     else: # Warning if calibration file is being to old    
                         printlog(msg="{} camera calibration will be removed in {}"
-                            " days".format(cam_label, self._CALIBRATION_DAYS_REMOVE - extrinsic_cal["out_date"]["days"]), 
-                            msg_type="WARN")
+                            " days".format(FILE_NAME, self._CALIBRATION_DAYS_REMOVE - extrinsic_cal["out_date"]["days"]), 
+                            msg_type="WARN", flush=self.flush)
 
                 # -----------------------------------------------------------------
                 # Calculate extra parameters
@@ -204,130 +168,23 @@ class ExtrinsicClass():
                 extrinsic_cal["dead_view_m"] = \
                     extrinsic_cal["view_coord_pix"]/extrinsic_cal["ppmy"]
 
+                printlog(msg="{} extrinsic parameters loaded".format(
+                    FILE_NAME), msg_type="OKGREEN", flush=self.flush)
+
                 # -----------------------------------------------------------------
                 return extrinsic_cal
 
             except Exception as e:
                 printlog(msg="error while reading {}, {}".format(
-                    abs_path, e), msg_type="ERROR")
+                    abs_path, e), msg_type="ERROR", flush=self.flush)
                 return None
+        else:
+            printlog(msg="No extrinsic file {}".format(
+                FILE_NAME), msg_type="WARN", flush=self.flush)
 
         return None
 
-    def calculate_extra_params(self):
-        pass
-
 # =============================================================================
-def read_extrinsic_params(, mtx=None, dist=None):
-    """ 
-        Loads extrinsic camera parameters from file  
-    Args:
-        file_path: `string` absolute path to yaml file
-    Returns:
-        file_path: `dict` extrinsic camera configuration
-            dictionary
-    """
-
-    abs_path = os.path.join(CONF_PATH, FILE_NAME)
-    if os.path.isfile(abs_path):
-
-        try: 
-
-            # -----------------------------------------------------------------
-            # Read base data from file
-            with open(abs_path, 'r') as stream:
-                extrinsic_cal = yaml.safe_load(stream)
-
-            # -----------------------------------------------------------------
-            # Get extra parameters
-            mtime = datetime.datetime.fromtimestamp(os.path.getmtime(abs_path))
-            ctime = datetime.datetime.fromtimestamp(os.path.getctime(abs_path))
-            atime = datetime.datetime.fromtimestamp(os.path.getatime(abs_path))
-            extrinsic_cal["mtime_days"] = (atime-mtime).days # Last modification date in days
-            extrinsic_cal["ctime_days"] = (atime-ctime).days # Last creation date in days
-            extrinsic_cal["out_date"]={"state":False, "days":0}
-            
-            CALIBRATION_DAYS_OUT = int(os.getenv(
-                key="VISION_CAL_DAYS_OUT", default=10))
-            CALIBRATION_DAYS_REMOVE = int(os.getenv(
-                key="VISION_CAL_DAYS_REMOVE", default=20))
-            if (extrinsic_cal["mtime_days"] > CALIBRATION_DAYS_OUT
-                or extrinsic_cal["ctime_days"] > CALIBRATION_DAYS_OUT):
-
-                extrinsic_cal["out_date"]["state"]=True
-                extrinsic_cal["out_date"]["days"]= extrinsic_cal["mtime_days"] if (
-                    extrinsic_cal["mtime_days"] > extrinsic_cal["ctime_days"]) else extrinsic_cal["ctime_days"] 
-
-                # Remove calibration file if it's too old and report log
-                if extrinsic_cal["out_date"]["days"] > CALIBRATION_DAYS_REMOVE:
-                    os.remove(abs_path)
-                    printlog(msg="{} camera calibration has been removed, "
-                        "please re-calibrate cameras now".format(
-                        cam_label), msg_type="WARN")
-                else: # Warning if calibration file is being to old    
-                    printlog(msg="{} camera calibration will be removed in {}"
-                        " days".format(cam_label, self._CALIBRATION_DAYS_REMOVE - extrinsic_cal["out_date"]["days"]), 
-                        msg_type="WARN")
-
-            # -----------------------------------------------------------------
-            # Calculate extra parameters
-            SurfacesPoints=(
-                extrinsic_cal["p1"], 
-                extrinsic_cal["p2"], 
-                extrinsic_cal["p3"], 
-                extrinsic_cal["p4"])
-
-            extrinsic_cal["M_inv"] = np.linalg.inv(extrinsic_cal["M"])
-            extrinsic_cal["M"] = np.linalg.inv(extrinsic_cal["M_inv"])
-
-            extrinsic_cal["waypoint_area"] = get_contour_dist(
-                cnt=[(0                            , extrinsic_cal["p1"][1]), 
-                    (extrinsic_cal["image_size"][0], extrinsic_cal["p2"][1]), 
-                    (extrinsic_cal["image_size"][0], extrinsic_cal["image_size"][1]), 
-                    (0                             , extrinsic_cal["image_size"][1])], 
-                mtx=mtx, dist=dist)
-
-            extrinsic_cal["undistord_cnt"] = get_contour_dist(
-                cnt=[(0                            , 0), 
-                    (extrinsic_cal["image_size"][0], 0), 
-                    (extrinsic_cal["image_size"][0], extrinsic_cal["image_size"][1]), 
-                    (0                             , extrinsic_cal["image_size"][1])], 
-                mtx=mtx, dist=dist)
-
-            extrinsic_cal["view_coord_m"] = FindBotViewCord( 
-                M=extrinsic_cal["M"],
-                SurfacesPoints=SurfacesPoints, 
-                image_size=extrinsic_cal["image_size"])
-            extrinsic_cal["max_distance"] = \
-                extrinsic_cal["unwarped_size"][1]/extrinsic_cal["ppmy"]
-
-            cam_disp_angle, cam_view_angle, cam_aper_angle = \
-                find_angle_displacement(
-                    SurfacesPoints=SurfacesPoints,
-                    image_size=extrinsic_cal["image_size"], 
-                    M=extrinsic_cal["M"], 
-                    ppmx=extrinsic_cal["ppmx"], 
-                    ppmy=extrinsic_cal["ppmy"])
-            extrinsic_cal["cam_disp_angle"] = cam_disp_angle
-            extrinsic_cal["cam_view_angle"] = cam_view_angle
-            extrinsic_cal["cam_aper_angle"] = cam_aper_angle
-
-            extrinsic_cal["view_coord_pix"] = \
-                extrinsic_cal["view_coord_m"][1] - extrinsic_cal["view_coord_m"][1] 
-            
-            extrinsic_cal["dead_view_m"] = \
-                extrinsic_cal["view_coord_pix"]/extrinsic_cal["ppmy"]
-
-            # -----------------------------------------------------------------
-            return extrinsic_cal
-
-        except Exception as e:
-            printlog(msg="error while reading {}, {}".format(
-                abs_path, e), msg_type="ERROR")
-            return None
-
-    return None
-
 def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTOM, 
     HSVI, HSVS, PATTERN_FILTER_KERNEL=1, PATTERN_ITERATION_TRIES=20, 
     LOCAL_CALIBRATION=False):
@@ -1389,21 +1246,5 @@ def find_angle_displacement(SurfacesPoints, image_size, M, ppmx, ppmy):
     cam_view_angle = cam_aper_angle/2 + angle_r
     
     return cam_disp_angle, cam_view_angle, cam_aper_angle
-
-# =============================================================================
-if __name__ == '__main__':
-    
-    CONF_PATH = os.path.abspath(__file__ + "/../../../../../../configs")
-    VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
-    VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
-    CAM_LABEL = "C"
-    FILE_NAME = "Extrinsic_{}_{}_{}.yaml".format(
-        VIDEO_WIDTH, VIDEO_HEIGHT, CAM_LABEL)
-
-    extrinsic_params = read_extrinsic_params(
-        CONF_PATH=CONF_PATH, 
-        FILE_NAME=FILE_NAME)
-    
-    print(extrinsic_params)
 
 # =============================================================================

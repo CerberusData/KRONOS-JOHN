@@ -22,7 +22,6 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
 from vision.intrinsic.intrinsic_utils import IntrinsicClass
-from vision.extrinsic.extrinsic_utils import read_extrinsic_params
 from vision.extrinsic.extrinsic_utils import find_projection
 from vision.extrinsic.extrinsic_utils import get_rot_matrix
 from vision.extrinsic.extrinsic_utils import pixel_relation
@@ -343,7 +342,6 @@ class CalibratorPublishers(Node):
                     PATTERN_ITERATION_TRIES=self._VISION_CAL_PAT_ITE_TRIES)
                 if not surf_relation:
                     raise RuntimeError("No pattern found correctly")
-                    return False
 
                 # Save mono vision camera measurement parameters in file
                 extrinsic_file_name = 'Extrinsic_{}_{}_{}.yaml'.format(

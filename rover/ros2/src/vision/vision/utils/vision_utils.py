@@ -47,12 +47,14 @@ def printlog(msg, msg_type="INFO", flush=True):
                 destination.
         Returns:
     """
+    if not flush:
+        return
 
     org = os.path.splitext(os.path.basename(inspect.stack()[1][1]))[0].upper()
     caller = inspect.stack()[1][3].upper()
     _str = "[{}][{}][{}]: {}".format(bcolors.LOG[msg_type][1], org, caller, msg)
 
-    print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
+    print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=True)
     
 def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), 
     fontScale=0.7):
@@ -67,7 +69,7 @@ def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25),
             y_jump: 'int' jump or space between lines
         returns:
     """
-    
+
     y_jump = 30
     for idx, text in enumerate(tex_list):
         cv2.putText(img=img, text=text, 
@@ -111,7 +113,7 @@ def overlay_image(l_img, s_img, pos, transparency):
     """
 
     # Get superior image dimensions
-    s_img_height, s_img_width, s_img_channels = s_img.shape
+    _, _, s_img_channels = s_img.shape
 
     if s_img_channels == 3 and transparency != 1:
         s_img = cv2.cvtColor(s_img, cv2.COLOR_BGR2BGRA)
@@ -282,8 +284,7 @@ def line_intersection(line1, line2):
 
     div = det(xdiff, ydiff)
     if div == 0:
-       raise Exception('lines do not intersect')
-       return 0, 0
+        raise Exception('lines do not intersect')
 
     d = (det(*line1), det(*line2))
     x = det(d, xdiff) / div
@@ -320,18 +321,18 @@ def discrete_contour(contour, Dl):
         # Calculate length of segment
         segment_lenth = math.sqrt((next_cordinate[0] - cordinate[0])**2 +\
                         (next_cordinate[1] - cordinate[1])**2)
-        
+
         divitions = segment_lenth/Dl # Number of new point for current segment
         dy = next_cordinate[1] - cordinate[1] # Segment's height
         dx = next_cordinate[0] - cordinate[0] # Segment's width
-        
+
         if not divitions:
             ddy = 0 # Dy value to sum in Y axis
             ddx = 0 # Dx value to sum in X axis
         else:
             ddy = dy/divitions  # Dy value to sum in Y axis
             ddx = dx/divitions  # Dx value to sum in X axis
-        
+
         # get new intermediate points in segments
         for idx in range(0, int(divitions)):
             new_contour.append((int(cordinate[0] + (ddx*idx)), 

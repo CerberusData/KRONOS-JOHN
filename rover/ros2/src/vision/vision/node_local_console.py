@@ -64,7 +64,7 @@ class LocalConsoleNode(Node, Thread):
             msg_type=Image, topic=self.streaming_topic, 
             callback=self.cb_streaming_img, qos_profile=5, 
             callback_group=self.callback_group)
-        
+
         # ---------------------------------------------------------------------  
         # Publishers
         self.pub_cam_calibrate_msg = String()
@@ -130,7 +130,7 @@ class LocalConsoleNode(Node, Thread):
                 img_msg=data, desired_encoding="bgr8")
         except CvBridgeError as e:
             printlog(msg="Subscriber for camera in topic {}, {}".format(
-                self.streaming_topic, e), log_type="ERROR")
+                self.streaming_topic, e), msg_type="ERROR")
 
     def cb_mouse_event(self, event, x, y, flags, param):
         """
@@ -143,10 +143,10 @@ class LocalConsoleNode(Node, Thread):
                 param: 'XXXX' XXXX
             returns:
         """
-        
+
         x = x/self.streaming_img.shape[1]
         y = y/self.streaming_img.shape[0]
-         
+
         # Add point 
         if event == cv2.EVENT_LBUTTONDOWN:
             self.win_mouse_click = (x, y)
@@ -196,7 +196,7 @@ class LocalConsoleNode(Node, Thread):
         # If pressed A key then switch to left camera
         elif key == 97:
             pass
-        # If pressed M key then stiwch bewteen manual and waypoint mode
+        # If pressed M key then stiwch between manual and waypoint mode
         elif key == 109:
             pass
         # If pressed D key then switch to right camera
@@ -252,7 +252,7 @@ def main(args=None):
 
     # Runs callbacks in a pool of threads.
     executor = MultiThreadedExecutor()
-  
+
     # Execute work and block until the context associated with the 
     # executor is shutdown. Callbacks will be executed by the provided 
     # executor.
