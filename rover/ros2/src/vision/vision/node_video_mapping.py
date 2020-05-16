@@ -23,11 +23,9 @@ from rclpy.executors import MultiThreadedExecutor
 from vision.utils.cam_handler import read_cams_configuration
 from vision.utils.cam_handler import CamerasCaptures
 
-from vision.utils.vision_utils import matrix_from_flat
-from vision.utils.vision_utils import print_text_list
-from vision.utils.vision_utils import show_local_gui
-from vision.utils.vision_utils import insert_image
 from vision.utils.vision_utils import printlog
+
+from vision.usr_interface.graphics import GraphicInterface
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -35,187 +33,10 @@ from cv_bridge import CvBridge, CvBridgeError
 from vision.stitcher.stitcher import Stitcher
 
 from usr_msgs.msg import CamerasStatus
-from usr_msgs.msg import VisualMessage
-
 from std_msgs.msg import String
 
-from python_utils.pysubscribers import VisualDebuggerSubscriber
-from python_utils.pysubscribers import ExtrinsicSubscriber
-
 # =============================================================================
-class GraphicInterface(
-    VisualDebuggerSubscriber):
-
-    def __init__(self, parent_node):
-        """ 
-            Object class constructor
-            Methods:
-                cb_visual_debugger [None]: callback function for subscriptor
-                draw_visual_debugger [cv2.math]: Draws the visual debugger 
-                    message
-            Arguments:
-                VISUAL_DEBUGGER_TIME [int]: Timer with time to show message
-                visual_debugger_msg  [string]:Message to show in console
-                visual_debugger_type [string]: Type of message 
-                    "INFO, ERR, WARN"
-            _sub_visual_debugger [subscriptor]: 
-        """
-
-        # ---------------------------------------------------------------------
-        VisualDebuggerSubscriber.__init__(self, parent_node=self)
-
-        # ---------------------------------------------------------------------
-        self._VISUAL_DEBUGGER = int(os.getenv(
-            key="VISUAL_DEBUGGER", default=1))
-
-        # ---------------------------------------------------------------------
-
-    def draw_components(self, imgs_dict):
-        """ 
-            Draw graphic and user components on image
-            Methods:
-                draw image components, graphic interface
-            Arguments:
-                imgs_dict: 'dict of cv2.math' dictionary with cameras 
-                    images 
-        """
-
-        # ---------------------------------------------------------------------
-        # OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS
-        # self.draw_lateral_cams(imgs_dict)
-        if "RR" in imgs_dict.keys():
-            insert_image(
-                original_image=imgs_dict["P"], inserted_image=imgs_dict["RR"], 
-                new_width=int(imgs_dict["P"].shape[1]*0.3), 
-                new_height=int(imgs_dict["P"].shape[0]*0.3), 
-                position='ur')
-        if "LL" in imgs_dict.keys():
-            insert_image(
-                original_image=imgs_dict["P"], inserted_image=imgs_dict["LL"], 
-                new_width=int(imgs_dict["P"].shape[1]*0.3), 
-                new_height=int(imgs_dict["P"].shape[0]*0.3), 
-                position='ul')
-        if "B" in imgs_dict.keys():
-            insert_image(
-                original_image=imgs_dict["P"], inserted_image=imgs_dict["B"], 
-                new_width=int(imgs_dict["P"].shape[1]*0.4), 
-                new_height=int(imgs_dict["P"].shape[0]*0.4), 
-                position='uc')
-
-        # ---------------------------------------------------------------------
-        # DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUG
-        if self._VISUAL_DEBUGGER:
-            self.draw_visual_debugger(img=imgs_dict["P"])
-
-    def draw_extrinsic(self):
-        """ 
-            Draw extrinsic calibration components
-            Methods:
-            Arguments:
-        """
-        pass
-
-    def draw_lateral_cams(self, imgs_dict):
-        """ 
-            Draw lateral cameras components on image
-            Methods:
-            Arguments:
-        """
-        pass
-
-    def draw_rear_camera(self):
-        """ 
-            Draw rear camera component on image
-            Methods:
-            Arguments:
-        """
-        pass
-
-    def draw_compass(self):
-        """ 
-            Draw compass component on image
-            Methods:
-            Arguments:
-        """
-        pass
-
-    def draw_visual_debugger(self, img):
-        """ Draw the visual debugger message
-        Args:
-            img: `cv2.math` image to draw visual
-                debugger message
-        Returns:
-        """
-
-        if not self.visual_debugger_msg:
-            return
-
-        color = (255, 255, 255)
-        if (self.visual_debugger_type == "ERROR" or
-            self.visual_debugger_type == "ERR"):
-            color = (0, 0, 255)
-        elif (self.visual_debugger_type == "WARNING" or
-            self.visual_debugger_type == "WARN"):
-            color = (0, 255, 255)
-        elif self.visual_debugger_type == "OKGREEN":
-            color = (0, 255, 0)
-
-        print_text_list(
-            img=img, tex_list=[self.visual_debugger_msg], 
-            color=color, orig=(10, int(img.shape[0]*0.95)), 
-            fontScale=0.7)
-
-class StreamingOptimizer(object):
-
-    def __init__(self):
-        """     
-            Creates video optimizer object for third party services to get the 
-            parameters with images quality are reduced to be sent.
-        Args:
-        Returns:
-        """
-
-        # Read local variables of video streaming configuration
-        self.IDLE_TIME = int(os.environ.get("FR_STREAMING_IDLE_TIME", 120))
-        self.STREAMING_FACTOR = float(os.getenv("FR_STREAMING_FACTOR", 0.4)) 
-        self.STREAMING_IDLE_FACTOR = float(os.getenv("FR_STREAMING_IDLE_FACTOR", 0.2))  
-        
-        self.inactive_timer = 0
-        self._time_tick = time.time()
-
-    def optimize(self, img):
-        """     
-            reduces the images quality to be sent.
-        Args:
-            img: `cv2.math` image to reduce quality
-        Returns:
-        """
-
-        if self.inactive_timer < self.IDLE_TIME + 1:
-            self.inactive_timer = time.time() - self._time_tick
-
-        elif self.inactive_timer >= self.IDLE_TIME:
-            img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
-                dsize=(int(img.shape[1] * self.STREAMING_IDLE_FACTOR), 
-                       int(img.shape[0] * self.STREAMING_IDLE_FACTOR)))
-            img = cv2.cvtColor(src=img, code=cv2.COLOR_GRAY2BGR)
-
-        return img
-
-    # TODO(JOHN): Integrate robot actions to reset idle time 
-    def cb_actuator_action(self):
-        """     
-            Reset inactive timer when a action coming from actuator reference
-            control is received
-        Args:
-        Returns:
-        """
-
-        self._time_tick = time.time()
-
-class MappingNode(
-    Node, Thread,
-    GraphicInterface):
+class MappingNode(Node, Thread):
 
     def __init__(self):
         """     
@@ -229,13 +50,12 @@ class MappingNode(
 
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
-        
+        self.gui = GraphicInterface(parent_node=self)
+
         Thread.__init__(self)
-        GraphicInterface.__init__(self, parent_node=self)
 
         # ---------------------------------------------------------------------
-        self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0)) 
-        self._LOCAL_GUI = int(os.getenv(key="LOCAL_GUI", default=0)) 
+        self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0))  
         self._CONF_PATH = str(os.getenv(key="CONF_PATH", 
             default=os.path.dirname(os.path.abspath(__file__))))
 
@@ -367,7 +187,7 @@ class MappingNode(
 
         cam_label = msg.data
 
-        if cam_label not in self.cameras_supervisor.camera_handlers.keys():
+        if cam_label not in self.cams_caps.camera_handlers.keys():
             self.get_logger().error(
                 "error publishing image to calibrator, key {} no found".format(
                     cam_label))
@@ -376,7 +196,7 @@ class MappingNode(
         # Send supervisor's image message to calibrator
         try:
             img_msg = self.img_bridge.cv2_to_imgmsg(
-                cvim=self.cameras_supervisor.camera_handlers[cam_label].image, 
+                cvim=self.cams_caps.camera_handlers[cam_label].image, 
                 encoding="bgr8")
             # img_msg.header.stamp = time.time()
             self.pb_img_to_calibrate.publish(img_msg)
@@ -395,7 +215,7 @@ class MappingNode(
             _: `cv2.math` images stitched
         """
         
-        cam_keys = self.cameras_supervisor.camera_handlers.keys()
+        cam_keys = self.cams_caps.camera_handlers.keys()
         imgs = [
             None if not "RR" in cam_keys else imgs_dic["RR"].copy(),
             None if not "C" in cam_keys else imgs_dic["C"].copy(),
@@ -404,7 +224,8 @@ class MappingNode(
             if img is not None:
                 if (img.shape[0]!=self._VIDEO_HEIGHT or 
                     img.shape[1]!=self._VIDEO_WIDTH):
-                    imgs[idx] = cv2.resize(img, (self._VIDEO_WIDTH, self._VIDEO_HEIGHT), 
+                    imgs[idx] = cv2.resize(img, 
+                        (self._VIDEO_WIDTH, self._VIDEO_HEIGHT), 
                         int(cv2.INTER_NEAREST))
 
         return self.stitcher.image_resize(
@@ -429,28 +250,28 @@ class MappingNode(
                 # Show calibration if something to show
                 if self.calibrator_img is not None:
                     imgs_dic["P"] = self.calibrator_img
-                else: # Else user grapich components
-                    imgs_dic["P"] = imgs_dic["C"].copy()
-                    self.draw_components(
-                        imgs_dict=imgs_dic)
-
+                
+                # If stitch video
+                elif self.stitcher is not None and self.gui.sub_bot.stream_stitch:
+                    imgs_dic["P"] = self.img_stitch(imgs_dic=imgs_dic)
+                
+                # Else draw user grapich components
+                else: 
+                    self.gui.draw_components(imgs_dict=imgs_dic)
+                    
                     # Optimize image
                     if self._FR_STREAMING_OPTIMIZER:
                         self.img_optimizer.optimize(img=imgs_dic["P"])
-
-                # TODO: integrate stitcher
-                # if self._STITCHER and "other_condition":
-                #   self.img_stitch(imgs_dic)
-
+                
                 # -------------------------------------------------------------
                 # Publish image
                 if self.pub_streaming is not None:
                     img_msg = self.img_bridge.cv2_to_imgmsg(
                         cvim=imgs_dic["P"], encoding="bgr8")
-                    t = str(self.get_clock().now().nanoseconds)
-                    img_msg.header.stamp.sec = int(t[0:10])
-                    img_msg.header.stamp.nanosec = int(t[10:])
-                    img_msg.header.frame_id = t
+                    # t = str(self.get_clock().now().nanoseconds)
+                    # img_msg.header.stamp.sec = int(t[0:10])
+                    # img_msg.header.stamp.nanosec = int(t[10:])
+                    # img_msg.header.frame_id = t
                     self.pub_streaming.publish(img_msg)
                 
                 # -------------------------------------------------------------
@@ -465,6 +286,54 @@ class MappingNode(
             except Exception as e:
                 printlog(msg=e, msg_type="ERROR")
 
+class StreamingOptimizer():
+
+    def __init__(self):
+        """     
+            Creates video optimizer object for third party services to get the 
+            parameters with images quality are reduced to be sent.
+        Args:
+        Returns:
+        """
+
+        # Read local variables of video streaming configuration
+        self.IDLE_TIME = int(os.environ.get("FR_STREAMING_IDLE_TIME", 120))
+        self.STREAMING_FACTOR = float(os.getenv("FR_STREAMING_FACTOR", 0.4)) 
+        self.STREAMING_IDLE_FACTOR = float(os.getenv("FR_STREAMING_IDLE_FACTOR", 0.2))  
+        
+        self.inactive_timer = 0
+        self._time_tick = time.time()
+
+    def optimize(self, img):
+        """     
+            reduces the images quality to be sent.
+        Args:
+            img: `cv2.math` image to reduce quality
+        Returns:
+        """
+
+        if self.inactive_timer < self.IDLE_TIME + 1:
+            self.inactive_timer = time.time() - self._time_tick
+
+        elif self.inactive_timer >= self.IDLE_TIME:
+            img = cv2.resize(src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY), 
+                dsize=(int(img.shape[1] * self.STREAMING_IDLE_FACTOR), 
+                       int(img.shape[0] * self.STREAMING_IDLE_FACTOR)))
+            img = cv2.cvtColor(src=img, code=cv2.COLOR_GRAY2BGR)
+
+        return img
+
+    # TODO(JOHN): Integrate robot actions to reset idle time 
+    def cb_actuator_action(self):
+        """     
+            Reset inactive timer when a action coming from actuator reference
+            control is received
+        Args:
+        Returns:
+        """
+
+        self._time_tick = time.time()
+
 # =============================================================================
 def main(args=None):
 
@@ -477,7 +346,7 @@ def main(args=None):
 
     # Runs callbacks in a pool of threads.
     executor = MultiThreadedExecutor()
-  
+
     # Execute work and block until the context associated with the 
     # executor is shutdown. Callbacks will be executed by the provided 
     # executor.

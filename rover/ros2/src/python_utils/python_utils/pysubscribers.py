@@ -18,7 +18,9 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 from usr_msgs.msg import VisualMessage
 from usr_msgs.msg import Extrinsic
+from std_msgs.msg import Bool
 
+from vision.utils.vision_utils import print_text_list
 from vision.utils.vision_utils import printlog
 
 from vision.extrinsic.extrinsic_utils import ExtrinsicClass
@@ -33,9 +35,9 @@ class VisualDebuggerSubscriber():
             os.getenv(key="VISUAL_DEBUGGER_TIME", default=10))
 
         # Message to show in console
-        self.visual_debugger_msg = "" 
+        self.msg = "" 
         # Type of message "info, err, warn"
-        self.visual_debugger_type = "INFO" 
+        self.type = "INFO" 
         
         # Subscribers
         self._sub_visual_debugger = parent_node.create_subscription(
@@ -53,17 +55,45 @@ class VisualDebuggerSubscriber():
         Returns:
         """
 
-        self.visual_debugger_msg = msg.data
-        self.visual_debugger_type = msg.type
+        self.msg = msg.data
+        self.type = msg.type
         
         time.sleep(self._VISUAL_DEBUGGER_TIME)
         
-        self.visual_debugger_msg = ""
-        self.visual_debugger_type = "INFO"
+        self.msg = ""
+        self.type = "INFO"
 
-class ExtrinsicSubscriber():
+    def draw(self, img):
+        """ Draw the visual debugger message
+        Args:
+            img: `cv2.math` image to draw visual
+                debugger message
+        Returns:
+        """
+
+        if not self.msg:
+            return
+
+        color = (255, 255, 255)
+        if (self.type == "ERROR" or
+            self.type == "ERR"):
+            color = (0, 0, 255)
+        elif (self.type == "WARNING" or
+            self.type == "WARN"):
+            color = (0, 255, 255)
+        elif self.type == "OKGREEN":
+            color = (0, 255, 0)
+
+        print_text_list(
+            img=img, tex_list=[self.msg], 
+            color=color, orig=(10, int(img.shape[0]*0.95)), 
+            fontScale=0.7)
+
+class ExtrinsicSubscriber(ExtrinsicClass):
 
     def __init__(self, parent_node):
+
+        ExtrinsicClass.__init__(self)
 
         # Subscribers
         self._sub_extrinsic_params = parent_node.create_subscription(
@@ -71,8 +101,6 @@ class ExtrinsicSubscriber():
             callback=self.cb_extrinsic_params, qos_profile=2,
             callback_group=parent_node.callback_group
             )
-
-        self.extrinsic = ExtrinsicClass()
 
     def cb_extrinsic_params(self, msg):
         """ Re-assing extrinsic calibration 
@@ -84,23 +112,62 @@ class ExtrinsicSubscriber():
         """
 
         try: 
-            self.extrinsic.M = msg.projection_matrix
-            self.extrinsic.p1 = msg.p1
-            self.extrinsic.p2 = msg.p2
-            self.extrinsic.p3 = msg.p3
-            self.extrinsic.p4 = msg.p4
-            self.extrinsic.vp = msg.vp
-            self.extrinsic.dead_view = msg.dead_view
-            self.extrinsic.ppmx = msg.ppmx
-            self.extrinsic.ppmy = msg.ppmy
-            self.extrinsic.warped_size = msg.unwarped_size
-            self.extrinsic.image_size = msg.image_size
+            self.M = msg.projection_matrix
+            self.p1 = msg.p1
+            self.p2 = msg.p2
+            self.p3 = msg.p3
+            self.p4 = msg.p4
+            self.vp = msg.vp
+            self.dead_view = msg.dead_view
+            self.ppmx = msg.ppmx
+            self.ppmy = msg.ppmy
+            self.warped_size = msg.unwarped_size
+            self.image_size = msg.image_size
 
         except Exception as e:
             printlog(msg="Error getting extrinsic calibration"
                 "from topic, {}".format(e), msg_type="ERROR")
             return False
 
-        printlog(msg="Extrincid parameters updated", msg_type="INFO")
+        printlog(msg="Extrinsic parameters updated", msg_type="INFO")
+
+class WebclientControl():
+
+    def __init__(self, parent_node):
+
+        self.control_tilt = 0
+        self.control_pan = 0
+        self.control_throttle = 0
+
+class WaypointSuscriber():
+
+    def __init__(self):
+        
+        pass
+
+class Robot():
+
+    def __init__(self, parent_node):
+
+        self.stream_stitch = False
+        self.stream_rear_cam = False
+
+        # Subscribers
+        self._sub_extrinsic_params = parent_node.create_subscription(
+            msg_type=Bool, topic='video_streaming/stitch', 
+            callback=self.cb_video_streaming_stitch, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+        self._sub_extrinsic_params = parent_node.create_subscription(
+            msg_type=Bool, topic='video_streaming/rear_cam', 
+            callback=self.cb_video_streaming_rear_cam, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+    def cb_video_streaming_rear_cam(self, data):
+        self.stream_rear_cam = not self.stream_rear_cam
+
+    def cb_video_streaming_stitch(self, data):
+        self.stream_stitch = not self.stream_stitch
+
 
 # =============================================================================

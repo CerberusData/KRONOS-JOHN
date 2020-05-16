@@ -8,12 +8,14 @@ Code Information:
 
 # =============================================================================
 import numpy as np
+import datetime
 import yaml
 import math
 import cv2
 import os
 
 from vision.utils.vision_utils import line_intersection
+from vision.utils.vision_utils import discrete_contour
 from vision.utils.vision_utils import matrix_from_flat
 from vision.utils.vision_utils import overlay_image
 from vision.utils.vision_utils import printlog
@@ -54,41 +56,21 @@ class ExtrinsicClass():
             self.__Minv = np.linalg.inv(warpM)
         else:
             self.__M = None
-
     @property
     def p1(self):
         return self.__p1
-    @p1.setter
-    def p1(self, p1):
-        self.__p1 = tuple(p1)
-        
     @property
     def p2(self):
         return self.__p2
-    @p2.setter
-    def p2(self, p2):
-        self.__p2 = tuple(p2)
-
     @property
     def p3(self):
         return self.__p3
-    @p3.setter
-    def p3(self, p3):
-        self.__p3 = tuple(p3)
-
     @property
     def p4(self):
         return self.__p4
-    @p4.setter
-    def p4(self, p4):
-        self.__p4 = tuple(p4)
-
     @property
     def vp(self):
         return self.__vp
-    @vp.setter
-    def vp(self, vp):
-        self.__vp = tuple(vp)
 
     @property
     def warped_size(self):
@@ -104,8 +86,139 @@ class ExtrinsicClass():
     def image_size(self, image_size):
         self.__image_size = tuple(image_size)
 
+    # def __str__(self):
+    #     str_ = ""
+    #     for cam_label, params in self.calibration.items():
+    #         str_ += "\nCAM:{}\n".format(cam_label)
+    #         if params is not None:
+    #             for param_name, param_value in params.items():
+    #                 value = ": {}".format(param_value) if type(param_value
+    #                     ) in [float, int, tuple] else ""                        
+    #                 str_ += "\t{}: {}{}\n".format(param_name, 
+    #                     type(param_value), value)
+    #             str_ += "\tmtime_days:{}\n".format(params["mtime_days"])
+    #             str_ += "\tctime_days:{}\n".format(params["mtime_days"])
+    #         else:
+    #             str_ += "\t{}\n".format(params)
+    #     str_ += "\n"
+    #     return str_
+
+    def load(self, CONF_PATH, FILE_NAME):
+        """ 
+            Loads extrinsic camera parameters from file  
+        Args:
+            CONF_PATH: `string` path to extrinsic calibration yaml file
+            FILE_NAME: `string` extrinsic calibration yaml file name
+        Returns:
+            file_path: `dict` extrinsic camera configuration
+                dictionary
+        """
+
+        abs_path = os.path.join(CONF_PATH, FILE_NAME)
+        if os.path.isfile(abs_path):
+
+            try: 
+
+                # -----------------------------------------------------------------
+                # Read base data from file
+                with open(abs_path, 'r') as stream:
+                    extrinsic_cal = yaml.safe_load(stream)
+
+                # -----------------------------------------------------------------
+                # Get extra parameters
+                mtime = datetime.datetime.fromtimestamp(os.path.getmtime(abs_path))
+                ctime = datetime.datetime.fromtimestamp(os.path.getctime(abs_path))
+                atime = datetime.datetime.fromtimestamp(os.path.getatime(abs_path))
+                extrinsic_cal["mtime_days"] = (atime-mtime).days # Last modification date in days
+                extrinsic_cal["ctime_days"] = (atime-ctime).days # Last creation date in days
+                extrinsic_cal["out_date"]={"state":False, "days":0}
+                
+                CALIBRATION_DAYS_OUT = int(os.getenv(
+                    key="VISION_CAL_DAYS_OUT", default=10))
+                CALIBRATION_DAYS_REMOVE = int(os.getenv(
+                    key="VISION_CAL_DAYS_REMOVE", default=20))
+                if (extrinsic_cal["mtime_days"] > CALIBRATION_DAYS_OUT
+                    or extrinsic_cal["ctime_days"] > CALIBRATION_DAYS_OUT):
+
+                    extrinsic_cal["out_date"]["state"]=True
+                    extrinsic_cal["out_date"]["days"]= extrinsic_cal["mtime_days"] if (
+                        extrinsic_cal["mtime_days"] > extrinsic_cal["ctime_days"]) else extrinsic_cal["ctime_days"] 
+
+                    # Remove calibration file if it's too old and report log
+                    if extrinsic_cal["out_date"]["days"] > CALIBRATION_DAYS_REMOVE:
+                        os.remove(abs_path)
+                        printlog(msg="{} camera calibration has been removed, "
+                            "please re-calibrate cameras now".format(
+                            cam_label), msg_type="WARN")
+                    else: # Warning if calibration file is being to old    
+                        printlog(msg="{} camera calibration will be removed in {}"
+                            " days".format(cam_label, self._CALIBRATION_DAYS_REMOVE - extrinsic_cal["out_date"]["days"]), 
+                            msg_type="WARN")
+
+                # -----------------------------------------------------------------
+                # Calculate extra parameters
+                SurfacesPoints=(
+                    extrinsic_cal["p1"], 
+                    extrinsic_cal["p2"], 
+                    extrinsic_cal["p3"], 
+                    extrinsic_cal["p4"])
+
+                extrinsic_cal["M_inv"] = np.linalg.inv(extrinsic_cal["M"])
+                extrinsic_cal["M"] = np.linalg.inv(extrinsic_cal["M_inv"])
+
+                extrinsic_cal["waypoint_area"] = get_contour_dist(
+                    cnt=[(0                            , extrinsic_cal["p1"][1]), 
+                        (extrinsic_cal["image_size"][0], extrinsic_cal["p2"][1]), 
+                        (extrinsic_cal["image_size"][0], extrinsic_cal["image_size"][1]), 
+                        (0                             , extrinsic_cal["image_size"][1])], 
+                    mtx=mtx, dist=dist)
+
+                extrinsic_cal["undistord_cnt"] = get_contour_dist(
+                    cnt=[(0                            , 0), 
+                        (extrinsic_cal["image_size"][0], 0), 
+                        (extrinsic_cal["image_size"][0], extrinsic_cal["image_size"][1]), 
+                        (0                             , extrinsic_cal["image_size"][1])], 
+                    mtx=mtx, dist=dist)
+
+                extrinsic_cal["view_coord_m"] = FindBotViewCord( 
+                    M=extrinsic_cal["M"],
+                    SurfacesPoints=SurfacesPoints, 
+                    image_size=extrinsic_cal["image_size"])
+                extrinsic_cal["max_distance"] = \
+                    extrinsic_cal["unwarped_size"][1]/extrinsic_cal["ppmy"]
+
+                cam_disp_angle, cam_view_angle, cam_aper_angle = \
+                    find_angle_displacement(
+                        SurfacesPoints=SurfacesPoints,
+                        image_size=extrinsic_cal["image_size"], 
+                        M=extrinsic_cal["M"], 
+                        ppmx=extrinsic_cal["ppmx"], 
+                        ppmy=extrinsic_cal["ppmy"])
+                extrinsic_cal["cam_disp_angle"] = cam_disp_angle
+                extrinsic_cal["cam_view_angle"] = cam_view_angle
+                extrinsic_cal["cam_aper_angle"] = cam_aper_angle
+
+                extrinsic_cal["view_coord_pix"] = \
+                    extrinsic_cal["view_coord_m"][1] - extrinsic_cal["view_coord_m"][1] 
+                
+                extrinsic_cal["dead_view_m"] = \
+                    extrinsic_cal["view_coord_pix"]/extrinsic_cal["ppmy"]
+
+                # -----------------------------------------------------------------
+                return extrinsic_cal
+
+            except Exception as e:
+                printlog(msg="error while reading {}, {}".format(
+                    abs_path, e), msg_type="ERROR")
+                return None
+
+        return None
+
+    def calculate_extra_params(self):
+        pass
+
 # =============================================================================
-def read_extrinsic_params(CONF_PATH, FILE_NAME):
+def read_extrinsic_params(, mtx=None, dist=None):
     """ 
         Loads extrinsic camera parameters from file  
     Args:
@@ -119,8 +232,93 @@ def read_extrinsic_params(CONF_PATH, FILE_NAME):
     if os.path.isfile(abs_path):
 
         try: 
+
+            # -----------------------------------------------------------------
+            # Read base data from file
             with open(abs_path, 'r') as stream:
                 extrinsic_cal = yaml.safe_load(stream)
+
+            # -----------------------------------------------------------------
+            # Get extra parameters
+            mtime = datetime.datetime.fromtimestamp(os.path.getmtime(abs_path))
+            ctime = datetime.datetime.fromtimestamp(os.path.getctime(abs_path))
+            atime = datetime.datetime.fromtimestamp(os.path.getatime(abs_path))
+            extrinsic_cal["mtime_days"] = (atime-mtime).days # Last modification date in days
+            extrinsic_cal["ctime_days"] = (atime-ctime).days # Last creation date in days
+            extrinsic_cal["out_date"]={"state":False, "days":0}
+            
+            CALIBRATION_DAYS_OUT = int(os.getenv(
+                key="VISION_CAL_DAYS_OUT", default=10))
+            CALIBRATION_DAYS_REMOVE = int(os.getenv(
+                key="VISION_CAL_DAYS_REMOVE", default=20))
+            if (extrinsic_cal["mtime_days"] > CALIBRATION_DAYS_OUT
+                or extrinsic_cal["ctime_days"] > CALIBRATION_DAYS_OUT):
+
+                extrinsic_cal["out_date"]["state"]=True
+                extrinsic_cal["out_date"]["days"]= extrinsic_cal["mtime_days"] if (
+                    extrinsic_cal["mtime_days"] > extrinsic_cal["ctime_days"]) else extrinsic_cal["ctime_days"] 
+
+                # Remove calibration file if it's too old and report log
+                if extrinsic_cal["out_date"]["days"] > CALIBRATION_DAYS_REMOVE:
+                    os.remove(abs_path)
+                    printlog(msg="{} camera calibration has been removed, "
+                        "please re-calibrate cameras now".format(
+                        cam_label), msg_type="WARN")
+                else: # Warning if calibration file is being to old    
+                    printlog(msg="{} camera calibration will be removed in {}"
+                        " days".format(cam_label, self._CALIBRATION_DAYS_REMOVE - extrinsic_cal["out_date"]["days"]), 
+                        msg_type="WARN")
+
+            # -----------------------------------------------------------------
+            # Calculate extra parameters
+            SurfacesPoints=(
+                extrinsic_cal["p1"], 
+                extrinsic_cal["p2"], 
+                extrinsic_cal["p3"], 
+                extrinsic_cal["p4"])
+
+            extrinsic_cal["M_inv"] = np.linalg.inv(extrinsic_cal["M"])
+            extrinsic_cal["M"] = np.linalg.inv(extrinsic_cal["M_inv"])
+
+            extrinsic_cal["waypoint_area"] = get_contour_dist(
+                cnt=[(0                            , extrinsic_cal["p1"][1]), 
+                    (extrinsic_cal["image_size"][0], extrinsic_cal["p2"][1]), 
+                    (extrinsic_cal["image_size"][0], extrinsic_cal["image_size"][1]), 
+                    (0                             , extrinsic_cal["image_size"][1])], 
+                mtx=mtx, dist=dist)
+
+            extrinsic_cal["undistord_cnt"] = get_contour_dist(
+                cnt=[(0                            , 0), 
+                    (extrinsic_cal["image_size"][0], 0), 
+                    (extrinsic_cal["image_size"][0], extrinsic_cal["image_size"][1]), 
+                    (0                             , extrinsic_cal["image_size"][1])], 
+                mtx=mtx, dist=dist)
+
+            extrinsic_cal["view_coord_m"] = FindBotViewCord( 
+                M=extrinsic_cal["M"],
+                SurfacesPoints=SurfacesPoints, 
+                image_size=extrinsic_cal["image_size"])
+            extrinsic_cal["max_distance"] = \
+                extrinsic_cal["unwarped_size"][1]/extrinsic_cal["ppmy"]
+
+            cam_disp_angle, cam_view_angle, cam_aper_angle = \
+                find_angle_displacement(
+                    SurfacesPoints=SurfacesPoints,
+                    image_size=extrinsic_cal["image_size"], 
+                    M=extrinsic_cal["M"], 
+                    ppmx=extrinsic_cal["ppmx"], 
+                    ppmy=extrinsic_cal["ppmy"])
+            extrinsic_cal["cam_disp_angle"] = cam_disp_angle
+            extrinsic_cal["cam_view_angle"] = cam_view_angle
+            extrinsic_cal["cam_aper_angle"] = cam_aper_angle
+
+            extrinsic_cal["view_coord_pix"] = \
+                extrinsic_cal["view_coord_m"][1] - extrinsic_cal["view_coord_m"][1] 
+            
+            extrinsic_cal["dead_view_m"] = \
+                extrinsic_cal["view_coord_pix"]/extrinsic_cal["ppmy"]
+
+            # -----------------------------------------------------------------
             return extrinsic_cal
 
         except Exception as e:
@@ -1075,6 +1273,122 @@ def FindBotViewCord(image_size, M, SurfacesPoints, mtx=None, dist=None):
             pt=(x_dst, y_dst), mtx=mtx, dist=dist)
 
     return x_dst, y_dst
+
+def get_contour_dist(cnt, mtx=None, dist=None):
+    """ 
+        Calculates surface projection contour in original 
+        image with distortion         
+    Args:
+        cnt: `np.array` countour to be calculated in distortion space
+        mtx: `numpy.narray` camera's distortion matrix
+        dist: `numpy.narray` camera's distortion vector
+    Returns:
+        new_contours_dist: `np.array` surface projection contour in original 
+            image with distortion        
+    """
+ 
+    new_contours = discrete_contour(contour=cnt, Dl=5)
+
+    if mtx is None or dist is None: 
+        return new_contours
+
+    new_contours_dist = []
+    for countour in new_contours:
+        point = get_distor_point(countour, mtx, dist)
+        new_contours_dist.append(point)
+    
+    return np.array(new_contours_dist)
+
+def get_distor_point(pt, mtx, dist):
+    """ 
+        Get input point in distortion space
+    Args:
+        pt: `tuple` (x, y) coordinate to distord
+        mtx: `numpy.narray` camera's distortion matrix
+        dist: `numpy.narray` camera's distortion vector
+    Returns:
+        http://answers.opencv.org/question/148670/re-distorting-a-set-of-points-
+        after-camera-calibration/   
+    """
+
+    test = np.zeros((1,1,2), dtype=np.float32)
+    test[0,0,0]=pt[0]
+    test[0,0,1]=pt[1]
+
+    rtemp = ttemp = np.array([0, 0, 0], dtype='float32')
+
+    # Normalize the points to be independent of the camera matrix using undistortPoints with no distortion matrix
+    xy_normalized = cv2.undistortPoints(test, mtx, None)
+
+    # Convert them to 3d points 
+    ptsTemp = cv2.convertPointsToHomogeneous(xy_normalized)
+
+    # Project them back to image space using the distortion matrix
+    output = cv2.projectPoints(ptsTemp, rtemp, ttemp, mtx, dist, xy_normalized)
+
+    x_undistor = output[0][0,0,0]
+    y_undistor = output[0][0,0,1]
+
+    return int(round(x_undistor)),int(round(y_undistor))
+
+def find_angle_displacement(SurfacesPoints, image_size, M, ppmx, ppmy):
+    """ 
+        Calculates surface projection contour in original 
+        image with distortion         
+    Args:
+        image_size: `tuple` original image size
+        M: `numpy.narray` rotation matrix from geometric projection to original image
+        SurfacesPoints: `tuple` Coordinates of quadrangle vertices in the source image
+        ppmx: `int` pixels per meters in X axis in unwrapped projection
+        ppmy: `int` pixels per meters in Y axis in unwrapped projection
+    Returns:
+        cam_disp_angle: `float` camera displacement angle 
+        cam_view_angle: `float` camera view angle
+        cam_aper_angle: `float` camera aperture angle
+    """
+
+    # Re - assign surface projection points
+    p1 = SurfacesPoints[0]
+    p2 = SurfacesPoints[1]
+    p3 = SurfacesPoints[2]
+    p4 = SurfacesPoints[3]
+
+    # Declare surface projection limit lines
+    top_Line = (p1, p2)
+    bottom_line = (p3, p4)
+    left_line = ((0, 0), (0, image_size[1]))
+    right_line = ((image_size[0], 0), (image_size[0], image_size[1]))
+
+    # Find intersections of surface projection lines
+    LSInterc = line_intersection(top_Line, left_line)
+    LIInterc = line_intersection(bottom_line, left_line)
+    RSInterc = line_intersection(top_Line, right_line)
+    RIInterc = line_intersection(bottom_line, right_line)
+
+    # Project intersections in surface projection space
+    LSInterc_dst = get_projection_point_dst((LSInterc[0], LSInterc[1], 1), M)
+    LIInterc_dst = get_projection_point_dst((LIInterc[0], LIInterc[1], 1), M) 
+    RSInterc_dst = get_projection_point_dst((RSInterc[0], RSInterc[1], 1), M)
+    RIInterc_dst = get_projection_point_dst((RIInterc[0], RIInterc[1], 1), M)
+
+    BotViewCord = line_intersection((LSInterc_dst, LIInterc_dst), 
+                                    (RSInterc_dst, RIInterc_dst))
+
+    dxr = (RIInterc_dst[0] - BotViewCord[0])/ppmx
+    dyr = (BotViewCord[1] - RIInterc_dst[1])/ppmy
+    angle_r = round(math.degrees(math.atan2(dyr, dxr)), 2)
+
+    dxl = (LIInterc_dst[0] - BotViewCord[0])/ppmx
+    dyl = (BotViewCord[1] - LIInterc_dst[1])/ppmy
+    angle_l = round(math.degrees(math.atan2(dyl, dxl)), 2)
+
+    cam_aper_angle = angle_l - angle_r
+    angle_ll = 180 - angle_l
+    cam_disp_angle = angle_r - angle_ll 
+
+    cam_view_angle = cam_aper_angle/2 + angle_r
+    
+    return cam_disp_angle, cam_view_angle, cam_aper_angle
 
 # =============================================================================
 if __name__ == '__main__':

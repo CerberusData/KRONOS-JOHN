@@ -20,6 +20,7 @@ from rclpy.executors import MultiThreadedExecutor
 from threading import Thread, Event
 
 from std_msgs.msg import String
+from std_msgs.msg import Bool
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -59,7 +60,7 @@ class LocalConsoleNode(Node, Thread):
 
         # ---------------------------------------------------------------------  
         # Subscribers
-        self.sub_calibrator_img_res = self.create_subscription(
+        self.sub_streaming = self.create_subscription(
             msg_type=Image, topic=self.streaming_topic, 
             callback=self.cb_streaming_img, qos_profile=5, 
             callback_group=self.callback_group)
@@ -68,14 +69,22 @@ class LocalConsoleNode(Node, Thread):
         # Publishers
         self.pub_cam_calibrate_msg = String()
         self.pub_cam_calibrate = self.create_publisher(
-            String, 'video_calibrator/calibrate_cam', 5,
+            String, 'video_calibrator/calibrate_cam', 1,
+            callback_group=self.callback_group)
+
+        self.pub_video_streaming_stitch = self.create_publisher(
+            Bool, 'video_streaming/stitch', 1,
+            callback_group=self.callback_group)
+
+        self.pub_video_streaming_rear_cam = self.create_publisher(
+            Bool, 'video_streaming/rear_cam', 1,
             callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------  
         # Thread variables
         self.run_event = Event()
         self.run_event.set()
-        self.start()  
+        self.start()
 
     def draw_mouse_event(self, img):
         """ Draw mouse events
@@ -120,8 +129,8 @@ class LocalConsoleNode(Node, Thread):
             self.streaming_img = self.img_bridge.imgmsg_to_cv2(
                 img_msg=data, desired_encoding="bgr8")
         except CvBridgeError as e:
-            printlog(msg="subscriber for camera in topic {}, {}".format(
-                    self.streaming_topic, e), log_type="ERROR")
+            printlog(msg="Subscriber for camera in topic {}, {}".format(
+                self.streaming_topic, e), log_type="ERROR")
 
     def cb_mouse_event(self, event, x, y, flags, param):
         """
@@ -201,10 +210,12 @@ class LocalConsoleNode(Node, Thread):
             exit()
         # If pressed R key then switch to rear camera
         elif key == 114:
-            pass
+            msg = Bool(); msg.data = True
+            self.pub_video_streaming_rear_cam.publish(msg)
         # If pressed S key then activate/desactivate stitching mode
         elif key == 115:
-            pass
+            msg = Bool(); msg.data = True
+            self.pub_video_streaming_stitch.publish(msg)
         # If pressed no key defined then print message
         else:
             printlog(
@@ -219,13 +230,15 @@ class LocalConsoleNode(Node, Thread):
         """
 
         while True:
+
             try:
                 self.draw_mouse_event(img=self.streaming_img)
                 cv2.imshow(self.win_name, self.streaming_img)
                 key = cv2.waitKey(self.win_time)
                 self.cb_key_event(key=key)
+
             except Exception as e:
-                    printlog(msg=e, msg_type="ERROR")
+                printlog(msg=e, msg_type="ERROR")
 
 # =============================================================================
 def main(args=None):
@@ -243,12 +256,12 @@ def main(args=None):
     # Execute work and block until the context associated with the 
     # executor is shutdown. Callbacks will be executed by the provided 
     # executor.
-    rclpy.spin(mapping_node, executor)
+    rclpy.spin(local_console_node, executor)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-    mapping_node.destroy_node()
+    local_console_node.destroy_node()
     rclpy.shutdown()
 
 # =============================================================================

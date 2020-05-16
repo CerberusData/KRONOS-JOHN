@@ -13,6 +13,7 @@ import rclpy
 import time
 import yaml
 import cv2
+import sys
 import os
 
 from rclpy.node import Node
@@ -102,9 +103,8 @@ class CalibratorPublishers(Node):
 
         # ---------------------------------------------------------------------
         # Variables
-        self._cams_status = None
+        self._cams_status = {}
         self.cam_img = None
-        self.extrinsic = {}
         
         self._flag_image = cv2.imread(
             os.path.join(os.path.dirname(os.path.realpath(__file__)), 
@@ -159,8 +159,8 @@ class CalibratorPublishers(Node):
             self.cam_img = self.img_bridge.imgmsg_to_cv2(
                 img_msg=msg, desired_encoding="bgr8")
         except CvBridgeError as e:
-            printlog(msg="erro while getting data from video_calibrator/calibrate_img, {}".format(
-                e), msg_type="ERROR")
+            printlog(msg="erro while getting data from video_calibrator/"
+                "calibrate_img, {}".format(e), msg_type="ERROR")
 
     def cb_calibrate(self, msg):
         """ Callback function to calibration a camera
@@ -176,9 +176,9 @@ class CalibratorPublishers(Node):
 
         # ---------------------------------------------------------------------
         # Check if camera label exits
-        if cam_label not in self.extrinsic.keys():
-            printlog(msg="{} is not a camera label available in extrinsics {}".format(
-                cam_label, self.extrinsic.keys()), msg_type="ERROR")
+        if cam_label not in self._cams_status.keys():
+            printlog(msg="{} is not a camera label available in extrinsics {}"
+                "".format(cam_label, self._cams_status.keys()), msg_type="ERROR")
             time.sleep(10)
             return 
 
@@ -196,16 +196,16 @@ class CalibratorPublishers(Node):
                     break
             if self.cam_img is None:
                 printlog(msg="Timeout getting image from topic, camera no calibrated",
-                     msg_type="ERROR")
+                    msg_type="ERROR")
                 self.calibrating_stat = False
                 return False
 
             if self.intrinsic.mtx is not None and not self._LOCAL_RUN:
 
-                # Resize image if size diferento to intrinsic calibration size
+                # Resize image if size different to intrinsic calibration size
                 if (self.cam_img.shape[1] != self.intrinsic.image_width
                     and self.cam_img.shape[0] != self.intrinsic.image_height):
-                    self.cam_img = c2.resize(self.cam_img, 
+                    self.cam_img = cv2.resize(self.cam_img, 
                         (self.intrinsic.image_width, 
                         self.intrinsic.image_height))
 
@@ -242,18 +242,13 @@ class CalibratorPublishers(Node):
     def cb_cams_status(self, msg):
         """ Callback function to get cameras status
         Args:
-            msg: `String` cameras status
+        msg: `String` cameras status
         Returns:
         """  
 
-        if self._cams_status is None:
-
-            self._cams_status = {
-                cam_stat.split(":")[0] : int(cam_stat.split(":")[1])
-                for cam_stat in msg.cams_status}
-
-            self.get_logger().info("Got cameras status")
-            self.load_extrinsic()
+        self._cams_status = {
+            cam_stat.split(":")[0] : int(cam_stat.split(":")[1])
+            for cam_stat in msg.cams_status}
 
     def publish_extrinsic(self, cam_label, extrinsic_data):
         """ Publish extrinsic result
@@ -287,39 +282,6 @@ class CalibratorPublishers(Node):
             printlog(msg="Error publishing extrinsic calibration"
                 "trought topic, {}".format(e), msg_type="ERROR")
             return False
-
-    def load_extrinsic(self):
-        """     
-            load extrinsic parameters from file
-            Args:
-            Returns:
-        """
-
-        for cam_key, cam_status in self._cams_status.items():
-            
-            self.extrinsic[cam_key] = None
-
-            if not cam_status and not self._LOCAL_RUN:
-                self.get_logger().warning(
-                    "{} camera no response, no extrinsic configuration loaded".format(
-                        cam_key))
-                continue
-
-            cam_extrinsic = read_extrinsic_params(
-                    CONF_PATH=self._CONF_PATH, 
-                    FILE_NAME="Extrinsic_{}_{}_{}.yaml".format(
-                        self._VIDEO_WIDTH, self._VIDEO_HEIGHT, cam_key))
-            
-            if cam_extrinsic is None:
-                self.get_logger().warning(
-                    "No extrinsic configuration file for {} camera".format(
-                        cam_key))
-                self.extrinsic[cam_key] = None
-                continue
-            
-            self.get_logger().info(
-                "Extrinsic configuration loaded for {} camera".format(cam_key))
-            self.extrinsic[cam_key] = cam_extrinsic
 
     def pub_log(self, msg, msg_type="INFO", prompt=True):
         """
@@ -391,7 +353,7 @@ class CalibratorPublishers(Node):
                 extrinsic_vision_params={
                     "M": M.tolist(),
                     "vp": [int(ext_cal["vp"][0]), 
-                           int(ext_cal["vp"][1])], 
+                        int(ext_cal["vp"][1])], 
                     "p1": list(ext_cal["p1"]), 
                     "p2": list(ext_cal["p2"]), 
                     "p3": list(ext_cal["p3"]), 
@@ -405,7 +367,7 @@ class CalibratorPublishers(Node):
 
                 self.save_extrinsic(file_path=extrinsic_abs_path, 
                     data=extrinsic_vision_params)
-        
+
                 # Set calibration image and show it to pilots console
                 mask_pro, mask_src = create_ruler_mask(flag_img=self._flag_image, 
                     extrinsic_params=extrinsic_vision_params)
@@ -435,7 +397,7 @@ class CalibratorPublishers(Node):
                         cvim=ruler_projected, encoding="bgr8")
                     # img_msg.header.stamp = time.time()
                     self.pb_calibrator_result.publish(img_ext_result)
-                   
+
                     time.sleep(self._VISION_CAL_SHOW_TIME)
 
                     img_ext_result = self.img_bridge.cv2_to_imgmsg(
@@ -447,25 +409,26 @@ class CalibratorPublishers(Node):
 
                 except CvBridgeError as e:
                     self.get_logger().error(
-                        "publishing extrinsic result images through topic, {}".format(e))
+                        "publishing extrinsic result images through topic"
+                        ", {}".format(e))
 
                 # Publish extrinsic result trought topic
                 self.publish_extrinsic(cam_label=camera_label, 
                     extrinsic_data=extrinsic_vision_params)
 
                 # Report successfully calibration
-                self.pub_log(msg="Calibracion para la camara {} exitosa!".format(
+                self.pub_log(msg="Calibration apttern for CAM{} succeed!".format(
                     camera_label), msg_type="OKGREEN")
 
                 return True
 
             except Exception as e:
-                printlog(msg="No se pudo encontrar el patron de calibracion! ({})".format(
+                printlog(msg="Calibration apttern no found! ({})".format(
                     e), msg_type="ERROR")
                 return False
 
         else:
-            self.pub_log(msg="No se pudo encontrar el patron de calibracion!", 
+            self.pub_log(msg="Calibration pattern no found!", 
                 msg_type="ERROR")
             return False
 
