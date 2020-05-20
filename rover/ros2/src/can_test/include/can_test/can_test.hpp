@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <utility>
+#include <stdio.h>
+#include <math.h>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -43,6 +45,7 @@
 #define RIGHT_REAR_WHEEL 0x02
 #define LEFT_REAR_WHEEL 0x04
 
+#define LIGHTS_ADDRESS 0x0B
 #define LEDS_ON 0x01
 #define LEDS_OFF 0x01
 
@@ -53,23 +56,31 @@ class CANTest : public rclcpp::Node
     public:
         CANTest(const rclcpp::NodeOptions & options, CANDriver* can_driver);
         ~CANTest(){};
+        void StartCANBusRead();
     
     private:
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr leds_sub_;
-        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr battery_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr config_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr chassis_sub_;
 
+        rclcpp::TimerBase::SharedPtr sent_tmr_;
+
         void LedsCb(const std_msgs::msg::Bool::SharedPtr msg);
-        void BatteryCb(const std_msgs::msg::Bool::SharedPtr msg);
+        void ConfigurationCb(const std_msgs::msg::Bool::SharedPtr msg);
         void ChassisCb(const std_msgs::msg::Bool::SharedPtr msg);
+        void TimerCb();
 
         void Configuration();
+        void PIDConfiguration();
         void SendLeds();
         void SendBattery();
         void SendChassis();
 
         CANDriver *can_dvr_;
         
+        bool chassis_flag_ = false;
+
+        std::thread read_thread_;
 };
 
 
