@@ -143,7 +143,7 @@ class Extrinsic():
                         (0                             , extrinsic_cal["image_size"][1])], 
                     mtx=mtx, dist=dist)
 
-                extrinsic_cal["view_coord_m"] = FindBotViewCord( 
+                extrinsic_cal["view_coord"] = FindBotViewCord( 
                     M=extrinsic_cal["M"],
                     SurfacesPoints=SurfacesPoints, 
                     image_size=extrinsic_cal["image_size"])
