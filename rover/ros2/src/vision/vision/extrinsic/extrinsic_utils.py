@@ -41,6 +41,9 @@ class Extrinsic():
         # enable print logs
         self.flush = True
 
+        # Dictionary to update params
+        self.update = {}
+
         # Intrinsic parameters
         self.mtx = mtx
         self.dist = dist
