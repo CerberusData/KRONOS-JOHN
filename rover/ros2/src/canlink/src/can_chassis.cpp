@@ -55,16 +55,6 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
     /* pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&CANChassis::Pub_Cb_, this)); */
 }
 
-/*
-void CANChassis::Pub_Cb_()
-{
-    RCLCPP_WARN(this->get_logger(), "Timer Chassis! ");
-    struct can_frame* frame;
-    // can_dvr_status_pub_->publish(can_dvr_status_msg_); 
-    chassis_->PublishChassisStatus(frame);
-    chassis_->PublishTestReport(frame);
-}
-*/
 
 void CANChassis::PublishCANInfo(struct can_frame *frame)
 {
@@ -121,17 +111,20 @@ void CANChassis::StartCANBusRead()
         - Calls *ReadSocket()* (Def at socket_can.cpp) to read the Socket which returns the memory addres to a frame (Reference)
         - If the CAN Id addres matches the Kiwibot addres it calls *PublishCANInfo()* 
     */
-
+    
+    RCLCPP_INFO(this->get_logger(), "CAN Thread");
     struct can_frame *frame;
     while (true)
     {
-        // RCLCPP_WARN(this->get_logger(), "WHILE LOOP");
         // RCLCPP_WARN(this->get_logger(), "valid frame %x, id: %x", frame->can_id, frame->data[0]);
         frame = can_driver_->ReadSocket();
+        RCLCPP_WARN(this->get_logger(), "Not blocked");
+
         if (frame)
         {
             if ((frame->can_id & 0xFFF) == KIWIBOT_ADDRESS)
             {
+                RCLCPP_WARN(this->get_logger(), "ID: %x", frame->data[0]);
                 PublishCANInfo(frame);
             }
         }
@@ -160,7 +153,6 @@ int main(int argc, char * argv[])
     rclcpp::init(argc, argv);
     rclcpp::NodeOptions options;
     rclcpp::executors::SingleThreadedExecutor executor; 
-
 
     /* CAN Driver creation */
     std::string Mystr = "can0";

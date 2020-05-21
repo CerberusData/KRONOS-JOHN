@@ -14,10 +14,6 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
     if (can_driver)
     {
         can_driver_ = can_driver;
-        // rclcpp::Parameter("bar", true);
-        // this->declare_parameter("bar"); 
-        // bool bumper_1 = this->get_parameter("bar").as_bool();
-        // RCLCPP_INFO(this->get_logger(), "Data: %d", bumper_1);
 
         /* Chassis and Motors status initialization */
         motors_out_msg_.info = motors_out_msg_.DEFAULT;  /* Double check*/
@@ -42,15 +38,11 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
             for(int i = 0; i < 4; ++i)
             {
                 std::string topic_name = "/canlink/chassis/current" + std::to_string(i + 1);
-                rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr current_pub = this->create_publisher<std_msgs::msg::Float32>(topic_name, 10);
+                rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr current_pub = \
+                    this->create_publisher<std_msgs::msg::Float32>(topic_name, 10);
                 current_pub_.push_back(current_pub);
             }
         }
-
-        /* Initial Setup */
-        ConfigurePID();
-        sleep(1.0);
-        InitialConfig();
 
         /* Subscribers */
         speed_control_out_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
@@ -68,36 +60,85 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
         odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
             "/wheel_odometry/odometry", 10, std::bind(&Chassis::OdomCb, this, _1));
 
+        /* Initial chassis setup */
+        ConfigurePID();
+        sleep(1.0);
+        InitialConfig();
+
         /* Timers */
-        /*
-            rclcpp:Duration can be used as well http://docs.ros2.org/ardent/api/rclcpp/classrclcpp_1_1_duration.html
-        */
-        moon_tmr_ = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&Chassis::MoonTimerCb, this));
+        moon_tmr_ = this->create_wall_timer(
+            std::chrono::milliseconds(1000), 
+            std::bind(&Chassis::MoonTimerCb, this));
         moon_tmr_->cancel();
-        current_tmr_ = this->create_wall_timer(std::chrono::milliseconds(overcur_tmr_duration_), std::bind(&Chassis::CurrentTimerCb, this));
+        current_tmr_ = this->create_wall_timer(
+            std::chrono::milliseconds(overcur_tmr_duration_), 
+            std::bind(&Chassis::CurrentTimerCb, this));
         current_tmr_->cancel();
 
-        raw_motors_out_.resize(4);
-
-    // ============ Services ===========
-    // Motors control
-    //    arming_service_ = n_->advertiseService("/canlink/chassis/arm", &Chassis::Arm, this);
-    //    raw_motors_out_.resize(4);
-    //    inverts_.at(0) = -1; //Invert the Steering control
+        /* Services */
+        arm_srv_ = this->create_service<std_srvs::srv::SetBool>(
+            "/canlink/chassis/arm", std::bind(&Chassis::ArmCb, this, _1, _2, _3));
+        
+        raw_motors_out_.reserve(4);
     }
     else
     {
-        RCLCPP_WARN(this->get_logger(), "Chassis is not connected");
+        RCLCPP_ERROR(this->get_logger(), "Chassis is not connected");
         motors_dvr_status_.connected = false;
 
         /* Publishers */
-        motors_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::State>("/canlink/chassis/status", 10);
+        motors_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::State>(
+            "/canlink/chassis/status", 10);
         motors_dvr_status_pub_->publish(motors_dvr_status_);
     }
-
 }
 
+/* ------------------------------------------------------------------------- */
+/* Services callbacks */
+bool Chassis::ArmCb(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+    std::shared_ptr<std_srvs::srv::SetBool::Response> response)
+{
+    bool arm_req = request->data;
+    uint8_t data_arm[2];
+    data_arm[0] = ARM_CMD_ID;
 
+    if ((arm_req == true) && (motors_dvr_status_.armed == false))
+    {
+        /*
+            Arming command
+        */
+        data_arm[1] = 0x01; 
+        if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
+        {
+            RCLCPP_INFO(this->get_logger(), "----- Arming chassis -----");
+            can_driver_->CANWrite(CHASSIS_ADDRESS, 2, data_arm);
+            response->success = true;
+            response->message = "Armed";
+        }
+    }
+
+    if ((arm_req == false) && (motors_dvr_status_.armed == false))
+    {
+        /*
+            Disarming command
+        */
+        data_arm[1] = 0x00; 
+        if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
+        {
+            RCLCPP_INFO(this->get_logger(), "----- Disarming Chassis -----");
+            can_driver_->CANWrite(CHASSIS_ADDRESS, 2, data_arm);
+            response->success = true;
+            response->message = "Disarmed";
+        }
+    }        
+
+    return true;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Services callbacks */
 void Chassis::ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
     float throttle = msg->twist.linear.x;
@@ -275,6 +316,7 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 }
 
 
+/* ------------------------------------------------------------------------- */
 /* Timers Callbacks */
 void Chassis::HeartbeatTimerCb()
 {
@@ -329,6 +371,8 @@ void Chassis::CurrentTimerCb()
     RCLCPP_INFO(this->get_logger(), "------ Motor Current Stall ------");
 }
 
+
+/* ------------------------------------------------------------------------- */
 /* Functions */
 void Chassis::SendChassisConfiguration()
 {
@@ -402,27 +446,27 @@ void Chassis::InitialConfig()
     sleep(0.5);
 }
 
-uint8_t Chassis::RadsToDigital(float control)
+uint8_t Chassis::RadsToDigital(float rads)
 {
-    float rpm = control * 60.0f / (2 * M_PI);
+    float rpm = rads * 60.0f / (2 * M_PI);
     float digital_value = ((rpm / wheel_max_rpm_) * 255.0f);
-    digital_value = digital_value > 255.0 ? 255.0 : digital_value;
-    digital_value = digital_value < -255.0 ? -255.0 : digital_value;
+    digital_value = digital_value > 255.0f ? 255.0f : digital_value;
+    digital_value = digital_value < -255.0f ? -255.0f : digital_value;
     return (uint8_t)std::abs(digital_value);
 }
 
 bool Chassis::SendMotorsCmd()
 {
-
-    //n_->param<float>("/kiwibot/pwm/trim_turn", offsets_.at(0), 0.0f); //get trim turn
-
     float w_left = (2.0f * controls_.at(1) - controls_.at(0) * robot_length_) / (2.0f * radius_);
     float w_right = (2.0f * controls_.at(1) + controls_.at(0) * robot_length_) / (2.0f * radius_);
-    if(!motors_current_ok_)  /* False */
+    // float w_right = 15.0f;
+    // float w_right = 15.0f;
+    if(motors_current_ok_ == false)
     {
         w_left = 0.0f;
         w_right = 0.0f;
     }
+
     uint8_t w_left_dig = RadsToDigital(w_left);
     uint8_t w_right_dig = RadsToDigital(w_right);
     uint8_t directions = 0xAA;  /* Brake on all motors */
@@ -452,7 +496,9 @@ bool Chassis::SendMotorsCmd()
         }
     }
 
-    if (motors_dvr_status_.connected && motors_dvr_status_.armed && chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
+    if ((motors_dvr_status_.connected == true) && \
+        (motors_dvr_status_.armed == true) && \
+        (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL))
     {
         /* 
             - This conditional checks three things
@@ -460,14 +506,14 @@ bool Chassis::SendMotorsCmd()
               + If the Robot is armed
               + Current operation mode for the chassis
         */
-        if ((controls_.at(0) == 0.0f && controls_.at(1) == 0.0f))
+        if (((controls_.at(0) == 0.0f) && (controls_.at(1) == 0.0f)))
         {
             /*
                 - Controls:
                   + Position 0: Angular speed (Steering)
                   + Position 1: Linear speed (Throttle)
             */
-            if (moving_)
+            if (moving_ == true)
             {
                 uint8_t data[1] = {RESET_CMD_ID};
                 can_driver_->CANWrite(CHASSIS_ADDRESS, 1, data);
@@ -476,22 +522,25 @@ bool Chassis::SendMotorsCmd()
                 return true;
             }
         }
+
         else
         {
-            moving_=true;
+            moving_ = true;
         }
 
         /* Decceleration checking */
-        if(((throttle_prev_ < 0.0f && throttle_current_ - throttle_prev_ > 0.1f ) || (throttle_prev_ > 0.0f && throttle_current_ - throttle_prev_ < -0.1f )))
+        if((((throttle_prev_ < 0.0f) && (throttle_current_ - throttle_prev_ > 0.1f)) || \
+            ((throttle_prev_ > 0.0f) && (throttle_current_ - throttle_prev_ < -0.1f))))
         {
-            if (accelerating_)  /* True */
+            if (accelerating_ == true)
             {
                 accelerating_ = false;
             }
         }
+
         else
         {
-            if (!accelerating_)  /* False */
+            if (accelerating_ == false)
             {
                 accelerating_ = true;
             }      
@@ -502,20 +551,37 @@ bool Chassis::SendMotorsCmd()
         uint8_t w_dig_2 = motors_status_.error_status[1] != 0 ? 0 : w_right_dig;
         uint8_t w_dig_3 = motors_status_.error_status[2] != 0 ? 0 : w_left_dig;
         uint8_t w_dig_4 = motors_status_.error_status[3] != 0 ? 0 : w_left_dig;
+        
         raw_motors_out_ = {w_dig_1, w_dig_2, w_dig_3, w_dig_4};
 
         /* Checking the current chassis wheel control mode */
         if (chassis_cfg_.wheel_control_mode == WHEEL_CONTROL_MODE_RPM)
         {
-            uint8_t data[6] = {WHEELS_CONTROL_RPM_ID, directions, w_dig_1, w_dig_2, w_dig_3, w_dig_4};
-            can_driver_->CANWrite(CHASSIS_ADDRESS, 6, data);
+            uint8_t data_cmd[6] = {
+                WHEELS_CONTROL_RPM_ID, 
+                directions, 
+                w_dig_1, 
+                w_dig_2, 
+                w_dig_3, 
+                w_dig_4};
+            
+            can_driver_->CANWrite(CHASSIS_ADDRESS, 6, data_cmd);
         }
+
         else if (chassis_cfg_.wheel_control_mode == WHEEL_CONTROL_MODE_RAW)
         {
-            uint8_t data[6] = {MOTORS_CONTROL_RAW_ID, directions, w_dig_1, w_dig_2, w_dig_3, w_dig_4};
-            can_driver_->CANWrite(CHASSIS_ADDRESS, 6, data);
+            uint8_t data_cmd[6] = {
+                MOTORS_CONTROL_RAW_ID, 
+                directions, 
+                w_dig_1, 
+                w_dig_2, 
+                w_dig_3, 
+                w_dig_4};
+            
+            can_driver_->CANWrite(CHASSIS_ADDRESS, 6, data_cmd);
         }
     }
+
     /* Publishing wheels velocities */
     motors_out_msg_.channels = raw_motors_out_;
     motors_out_pub_->publish(motors_out_msg_);
@@ -537,6 +603,7 @@ void Chassis::SetMotorsCurrent(struct can_frame* frame)
         uint16_t motor_current = msbs;
         motors_status_.current[i] = (float)((motor_current << 8) | (lsbs));
     }
+
     uint8_t lsbs = frame->data[5];
     uint8_t msbs = (frame->data[6]) & 0x0F;
     uint16_t motor_current = msbs;
@@ -573,11 +640,14 @@ void Chassis::SetMotorsCurrent(struct can_frame* frame)
            motor_error_state_ -= 1;
         }
         /* No problem at all */
-        else if((motors_status_.current[i] < max_allowed_current_) && (std::abs(motors_status_.rpm[i]) > 3.0f) && (motors_status_.current[i] >= min_current_) )
+        else if((motors_status_.current[i] < max_allowed_current_) && \
+            (std::abs(motors_status_.rpm[i]) > 3.0f) && \
+            (motors_status_.current[i] >= min_current_))
         {
            motor_error_[i] = 0;
         }
     }
+
     if (motor_error_state_ == 0)  /* Case: Current is OK */
     {
         current_tmr_->cancel();
@@ -587,6 +657,7 @@ void Chassis::SetMotorsCurrent(struct can_frame* frame)
             motors_current_ok_ = true;
         }
     }
+
     else  /* Case: Current errors */
     {
         if(!current_timer_started_)
@@ -609,7 +680,7 @@ void Chassis::PublishMotorStatus(struct can_frame* frame)
 {
     if (!motors_dvr_status_.connected) /* True */
     {
-        RCLCPP_INFO(this->get_logger(), "----- Chassis Restarted -----");
+        RCLCPP_INFO(this->get_logger(), "----- Chassis restarted -----");
         InitialConfig();
     }
     uint8_t dir_b = frame->data[1];
@@ -665,17 +736,20 @@ void Chassis::PublishChassisStatus(struct can_frame* frame)
     /* Check for Microcontroller status to restart and send the initial configuration */
     if (!motors_dvr_status_.connected)  /* False - Disconnected */
     {
-        RCLCPP_INFO(this->get_logger(), "----- Chassis Restarted -----");
+        RCLCPP_INFO(this->get_logger(), "----- Chassis restarted -----");
         InitialConfig();
     }
+
     if (frame->data[1] == 0x01)  /* Status: Armed */
     {
         motors_dvr_status_.armed = true;
     }
+
     else if (frame->data[1] == 0x00)  /* Status: Disarmed */
     {
         motors_dvr_status_.armed = false;
     }
+
     motors_dvr_status_.connected = true;
     motors_dvr_status_pub_->publish(motors_dvr_status_);
     heartbeat_tmr_->reset();

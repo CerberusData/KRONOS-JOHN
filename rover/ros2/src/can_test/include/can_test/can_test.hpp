@@ -6,10 +6,15 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "rclcpp/rclcpp.hpp"
+/* ROS2 Default */
+#include <rclcpp/rclcpp.hpp>
+
+/* ROS2 Messages */
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "std_srvs/srv/set_bool.hpp"
 
+/* ROS2 Services */
 #include "can_test/socketCAN.hpp"
 
 #define CHASSIS_ADDRESS 0x45A
@@ -50,25 +55,43 @@
 #define LEDS_OFF 0x01
 
 using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
+
 
 class CANTest : public rclcpp::Node
 {
     public:
-        CANTest(const rclcpp::NodeOptions & options, CANDriver* can_driver);
+        // CANTest(const rclcpp::NodeOptions & options, CANDriver* can_driver);
+        CANTest(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver> can_driver);
+
         ~CANTest(){};
+
+        /* Public functions */
         void StartCANBusRead();
     
     private:
+        /* Subscribers */
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr leds_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr config_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr chassis_sub_;
 
+        /* Services */
+        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr arm_srv_;
+
+        /* Timers */
         rclcpp::TimerBase::SharedPtr sent_tmr_;
 
+        /* Member functions */
         void LedsCb(const std_msgs::msg::Bool::SharedPtr msg);
-        void ConfigurationCb(const std_msgs::msg::Bool::SharedPtr msg);
         void ChassisCb(const std_msgs::msg::Bool::SharedPtr msg);
+        void ConfigurationCb(const std_msgs::msg::Bool::SharedPtr msg);
+        bool ArmCb(
+            const std::shared_ptr<rmw_request_id_t> request_header,
+            const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+            std::shared_ptr<std_srvs::srv::SetBool::Response> response);
         void TimerCb();
+
 
         void Configuration();
         void PIDConfiguration();
@@ -76,13 +99,16 @@ class CANTest : public rclcpp::Node
         void SendBattery();
         void SendChassis();
 
-        CANDriver *can_dvr_;
+        // CANDriver *can_dvr_;
+        std::shared_ptr<CANDriver> can_dvr_;
+
+        // std::shared_ptr<CANDriver> driver_can;
         
+        /* Variables */
         bool chassis_flag_ = false;
 
+        /* Socket CAN thread */
         std::thread read_thread_;
 };
-
-
 
 #endif

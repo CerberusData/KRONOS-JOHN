@@ -1,8 +1,10 @@
 #include "can_test/can_test.hpp"
 
-CANTest::CANTest(const rclcpp::NodeOptions & options, CANDriver* can_driver)
+// CANTest::CANTest(const rclcpp::NodeOptions & options, CANDriver* can_driver)
+CANTest::CANTest(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver> can_driver)
 : Node("can_test", options)
 {
+    // can_dvr_ = can_driver;
     can_dvr_ = can_driver;
 
     leds_sub_ = this->create_subscription<std_msgs::msg::Bool>(
@@ -15,6 +17,9 @@ CANTest::CANTest(const rclcpp::NodeOptions & options, CANDriver* can_driver)
     sent_tmr_ = this->create_wall_timer(
         std::chrono::milliseconds(200), std::bind(&CANTest::TimerCb, this));
 
+    arm_srv_ = this->create_service<std_srvs::srv::SetBool>(
+        "/test/arm", std::bind(&CANTest::ArmCb, this, _1, _2, _3));
+
     PIDConfiguration();
     sleep(0.5);
     Configuration();
@@ -24,7 +29,6 @@ CANTest::CANTest(const rclcpp::NodeOptions & options, CANDriver* can_driver)
 
 void CANTest::TimerCb()
 {
-    // RCLCPP_WARN(this->get_logger(), "Publisher Callback");
     SendChassis();
 }
 
@@ -95,6 +99,33 @@ void CANTest::Configuration()
     sleep(0.1);
 
 }
+
+bool CANTest::ArmCb(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+    std::shared_ptr<std_srvs::srv::SetBool::Response> response)
+{
+    bool arm_req = request->data;
+
+    if (arm_req == true)
+    {
+        RCLCPP_INFO(this->get_logger(), "Armed");
+        /* Service response */
+        response->success = true;
+        response->message = "Armed";
+    }
+
+    else
+    {
+        RCLCPP_INFO(this->get_logger(), "Disarmed");
+        /* Service response */
+        response->success = true;
+        response->message = "Disarmed";
+    }
+
+    return true;
+}
+
 
 void CANTest::PIDConfiguration()
 {
@@ -168,7 +199,7 @@ void CANTest::StartCANBusRead()
     while (true)
     {
         frame = can_dvr_->ReadSocket();
-        RCLCPP_WARN(this->get_logger(), "Not blocked");
+        // RCLCPP_WARN(this->get_logger(), "Not blocked");
 
         if (frame)
         {

@@ -19,6 +19,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+
 
 include_directories(include)
 
@@ -29,6 +31,7 @@ add_library(${PROJECT_NAME}
 set(DEPENDENCIES
   rclcpp
   std_msgs
+  std_srvs
 )
 
 add_executable(test_node

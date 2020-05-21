@@ -12,10 +12,11 @@
   <build_depend>usr_msgs</build_depend>
 
   <depend>rclcpp</depend>
-  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>utils</depend>
 
   <exec_depend>usr_msgs</exec_depend>
