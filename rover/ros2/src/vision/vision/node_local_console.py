@@ -27,6 +27,8 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from vision.utils.vision_utils import printlog
 
+from usr_msgs.msg import Waypoint
+
 # =============================================================================
 class LocalConsoleNode(Node, Thread):
 
@@ -78,6 +80,11 @@ class LocalConsoleNode(Node, Thread):
 
         self.pub_video_streaming_rear_cam = self.create_publisher(
             Bool, 'video_streaming/rear_cam', 1,
+            callback_group=self.callback_group)
+
+        self.waypoint_msg = Waypoint()
+        self.pub_video_streaming_waypoint = self.create_publisher(
+            Waypoint, 'video_streaming/waypoint_pt', 1,
             callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------  
@@ -150,6 +157,17 @@ class LocalConsoleNode(Node, Thread):
         # Add point 
         if event == cv2.EVENT_LBUTTONDOWN:
             self.win_mouse_click = (x, y)
+
+            try:
+                # Publish waypoint
+                self.waypoint_msg.x = x
+                self.waypoint_msg.y = y
+                self.pub_video_streaming_waypoint.publish(
+                    self.waypoint_msg)
+
+            except Exception as e:
+                printlog(msg="Error publishing waypoint coord "
+                    "trought topic, {}".format(e), msg_type="ERROR")
 
     def cb_key_event(self, key):
         """
