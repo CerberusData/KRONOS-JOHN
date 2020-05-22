@@ -180,15 +180,17 @@ class WaypointSuscriber():
         self.intrinsic = intrinsic
 
         self.cam_label = "C" # Camera label to get extrinsic
-        self.x_norm = None # Normalized X axis Waypoint coordinate 
-        self.y_norm = None # Normalized Y axis Waypoint coordinate
-        self.x_img = None # X axis Waypoint coordinate 
-        self.y_img = None # Y axis Waypoint coordinate 
-        self.x_warp = None # X axis Waypoint coordinate in warped space
-        self.y_warp = None # Y axis Waypoint coordinate in warped space
-        self.x_m = 0.0 # X axis Waypoint coordinate in warped space
-        self.y_m = 0.0 # Y axis Waypoint coordinate in warped space
-        self.incnt = False
+        self.x_norm = None  # Normalized X axis Waypoint coordinate 
+        self.y_norm = None  # Normalized Y axis Waypoint coordinate
+        self.x_img = None   # X axis Waypoint coordinate 
+        self.y_img = None   # Y axis Waypoint coordinate 
+        self.x_warp = None  # X axis Waypoint coordinate in warped space
+        self.y_warp = None  # Y axis Waypoint coordinate in warped space
+        self.x_m = 0.0      # X axis Waypoint coordinate in warped space
+        self.y_m = 0.0      # Y axis Waypoint coordinate in warped space
+        self.abs_m = 0.0    # Absolute distance from origiton to waypoint
+        self.angle = 0.0    # Angle of coordinate
+        self.incnt = False  # Current waypoint is inside contour
 
         # Subscribers
         self._sub_screen_point = parent_node.create_subscription(
@@ -225,7 +227,7 @@ class WaypointSuscriber():
         self._proj_m = None
         self._cnt_line = None
         self.y_limit = None
-
+        
         self.curvature = 1.0
         self.new_curvature = 0.0
         self.distord_lines = True   # Enable/Disable distord bot projection
@@ -266,8 +268,14 @@ class WaypointSuscriber():
                 view_coord = self.extrinsic.cams[self.cam_label]["view_coord"]
                 ppmx = self.extrinsic.cams[self.cam_label]["ppmx"]
                 ppmy = self.extrinsic.cams[self.cam_label]["ppmy"]
-                self.x_m = abs(self.x_warp-view_coord[0])/ppmx
-                self.y_m = abs(self.y_warp-view_coord[1])/ppmy
+
+                self.x_m = (self.x_warp-view_coord[0])/ppmx
+                self.y_m = (view_coord[1]-self.y_warp)/ppmy
+                self.abs_m = np.sqrt(self.x_m**2 + self.y_m**2)
+                self.angle = np.rad2deg(np.arctan2(self.x_m, self.y_m))
+
+                self.new_curvature = (self.x_warp - view_coord[0] )/(
+                    0.01*(abs(view_coord[1] - self.y_warp) **2))
 
             else:
                 self.incnt = False
@@ -275,6 +283,8 @@ class WaypointSuscriber():
                 self.y_warp = None
                 self.x_m = 0.0
                 self.y_m = 0.0
+                self.abs_m = 0.0
+                self.angle = 0.0
 
         except Exception as e:
             printlog(msg="error processing waypoint, {}".format(e), 
@@ -287,6 +297,8 @@ class WaypointSuscriber():
             self.y_warp = None # Y axis Waypoint coordinate in warped space
             self.x_m = 0.0 # X axis Waypoint coordinate in warped space
             self.y_m = 0.0 # Y axis Waypoint coordinate in warped space
+            self.abs_m = 0.0
+            self.angle = 0.0
         
     def update_params(self):
 
@@ -344,8 +356,8 @@ class WaypointSuscriber():
         self.AL = 0.01*self.curvature
         self.CR = self.extrinsic.cams[self.cam_label]["view_coord"][0] + ct_dist
         self.CL = self.extrinsic.cams[self.cam_label]["view_coord"][0] - ct_dist
-        self.AL = 0.01*self.curvature
-        self.BL = 0.0
+        # self.BL = 0.0
+        # self.BR = 0.0
 
         # ---------------------------------------------------------------------
         # Get Left and right line points
@@ -511,20 +523,23 @@ class WaypointSuscriber():
                         int(self.x_norm*img.shape[1]), 
                         int(self.y_norm*img.shape[0])), 
                     pt2=(
-                        int(self.x_norm*img.shape[1]+70), 
+                        int(self.x_norm*img.shape[1]+100), 
                         int(self.y_norm*img.shape[0])), 
                     color=(255, 255, 255), thickness=1)
                 print_text_list(
                     img=img, 
                     tex_list=[
-                        f"xm:{round(self.x_m, 2)}",
-                        f"ym:{round(self.y_m, 2)}"],
+                        f"absm: {round(self.abs_m, 2)}",
+                        f"deg: {round(self.angle, 2)}",
+                        f"xm: {round(self.x_m, 2)}",
+                        f"ym: {round(self.y_m, 2)}",
+                        ],
                     color=(255, 255, 255), 
                     orig=(
-                        int(self.x_norm*img.shape[1]+20), 
-                        int(self.y_norm*img.shape[0]+13)), 
+                        int(self.x_norm*img.shape[1]+18), 
+                        int(self.y_norm*img.shape[0]+15)), 
                     fontScale=0.4, 
-                    y_jump=15)
+                    y_jump=16)
 
     def draw_in_proj(self, img_src, win_name="LOCAL_LAUNCH_IMG_PROJ"):
 
@@ -624,7 +639,6 @@ class Robot():
             msg_type=Bool, topic='video_streaming/stitch', 
             callback=self.cb_video_streaming_stitch, qos_profile=1,
             callback_group=parent_node.callback_group)
-
         self._sub_extrinsic_params = parent_node.create_subscription(
             msg_type=Bool, topic='video_streaming/rear_cam', 
             callback=self.cb_video_streaming_rear_cam, qos_profile=1,
