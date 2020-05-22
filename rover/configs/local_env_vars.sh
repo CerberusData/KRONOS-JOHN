@@ -41,7 +41,7 @@ export GUI_WAYPOINT_DESCRIPTION=1   # [int-bolean](1):Enable/(0):Disable - Waypo
 export GUI_UNDISTORD_AREA=0         # [int-bolean](1):Enable/(0):Disable - Undistord drawings
 export GUI_PROJECTION_BOT_WIDTH=0.5 # [float] [m] robot's width to draw its projection
 export GUI_PROJECTION_BOT_MARGI=0.3 # [float] [m] margin to add to robots projection
-export GUI_PROJECTION_SHOW_LOCAL=1  # [int-bolean] (1):Enable/(0):Disable show image projection
+export GUI_PROJECTION_SHOW_LOCAL=0  # [int-bolean]  with LOCAL_LAUNCH=1 (1):Enable/(0):Disable show image projection
 
 # -----------------------------------------------------------------------------
 # Extrinsic calibration - Mono-vision
