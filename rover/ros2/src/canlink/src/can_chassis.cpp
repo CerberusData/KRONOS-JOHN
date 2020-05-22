@@ -30,9 +30,8 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
         /* Module instantiation */
         battery_ = std::make_shared<Battery>(options, can_driver_);
         lights_ = std::make_shared<Lights>(options, can_driver_);
-
-
     }
+    
     /* Nullptr instantiation when CAN not found*/
     catch (const std::system_error &error)
     {
@@ -111,7 +110,7 @@ void CANChassis::StartCANBusRead()
         - Calls *ReadSocket()* (Def at socket_can.cpp) to read the Socket which returns the memory addres to a frame (Reference)
         - If the CAN Id addres matches the Kiwibot addres it calls *PublishCANInfo()* 
     */
-    
+
     RCLCPP_INFO(this->get_logger(), "CAN Thread");
     struct can_frame *frame;
     while (true)

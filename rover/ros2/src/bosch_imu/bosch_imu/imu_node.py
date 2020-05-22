@@ -261,45 +261,33 @@ class ImuNode(Node):
 
         # Roll angle
         sinr_cosp = 2 * ((w * x) + (y * z))
-        cosr_cosp = 1 - (2 * ((x ** 2) + (y ** 2)))
+        cosr_cosp = 1 - (2 * ((x * x) + (y * y)))
         roll = math.atan2(sinr_cosp, cosr_cosp)
+        print("Roll: %0.4f" % roll)
 
         # Pitch angle
         sinp = 2 * ((w * y) - (z * x))
         if (abs(sinp) >= 1.0):
+            print("Check 1 Pitch")
             pitch = math.copysign(math.pi / 2, sinp)
         
         else:
+            print("Check 2 Pitch")
+
             pitch = math.asin(sinp)
+
+        print("Pitch: %0.4f" % pitch)
+
+
         # Yaw angle
         siny_cosp = 2 * ((w * z) + (x * y))
-        cosy_cosp = 1 - (2 * ((y ** 2) + (z **2)))
+        cosy_cosp = 1 - (2 * ((y * y) + (z * z)))
         yaw = math.atan2(siny_cosp, cosy_cosp)
+        
+        print("Yaw: %0.4f" % yaw)
+
 
         return roll, pitch, yaw
-
-    def _quaternion_from_euler(self, roll, pitch, yaw):
-        """
-            Desc: Returns the quaternion from the given euler angles
-            Args: Quaterion (roll, pitch, yaw)
-            Returns: quaternion (x, y, z, w)
-        """
-
-        cy = math.cos(yaw * 0.5)
-        sy = math.sin(yaw * 0.5)
-        cp = math.cos(pitch * 0.5)
-        sp = math.sin(pitch * 0.5)
-        cr = math.cos(roll * 0.5)
-        sr = math.sin(roll * 0.5)
-
-        x = (cr * cp * cy) + (sr * sp * sy)
-        y = (sr * cp * cy) - (cr * sp * sy)
-        z = (cr * sp * cy) + (sr * cp * sy)
-        w = (cr * cp * sy) - (sr * sp * cy)
-
-        quaternion = [x, y, z, w]
-
-        return quaternion
         
     def _read_from_dev(self, reg_addr, length):
         """
@@ -367,19 +355,12 @@ class ImuNode(Node):
         buf = self._read_from_dev(ACCEL_DATA, 45)
 
         if buf != 0:
+
             # ------------------------------------------------------------ #
-            # Raw data
-            self.imu_raw_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
-            self.imu_raw_msg.header.frame_id = self.frame_id
-            self.imu_raw_msg.orientation_covariance[0] = -1
-            self.imu_raw_msg.linear_acceleration.x = float(st.unpack('h', st.pack('BB', buf[0], buf[1]))[0]) / self.acc_fact_
-            self.imu_raw_msg.linear_acceleration.y = float(st.unpack('h', st.pack('BB', buf[2], buf[3]))[0]) / self.acc_fact_
-            self.imu_raw_msg.linear_acceleration.z = float(st.unpack('h', st.pack('BB', buf[4], buf[5]))[0]) / self.acc_fact_
-            self.imu_raw_msg.linear_acceleration_covariance[0] = -1
-            self.imu_raw_msg.angular_velocity.x = float(st.unpack('h', st.pack('BB', buf[12], buf[13]))[0]) / self.gyr_fact_
-            self.imu_raw_msg.angular_velocity.y = float(st.unpack('h', st.pack('BB', buf[14], buf[15]))[0]) / self.gyr_fact_
-            self.imu_raw_msg.angular_velocity.z = float(st.unpack('h', st.pack('BB', buf[16], buf[17]))[0]) / self.gyr_fact_
-            self.imu_raw_msg.angular_velocity_covariance[0] = -1
+            # Gravity values from the IMU buffer
+            gravity_x = float(st.unpack('h', st.pack('BB', buf[38], buf[39]))[0]) / 100.0
+            gravity_y = float(st.unpack('h', st.pack('BB', buf[40], buf[41]))[0]) / 100.0
+            gravity_z = float(st.unpack('h', st.pack('BB', buf[42], buf[43]))[0]) / 100.0
 
             # ------------------------------------------------------------ #
             # Filtered data
@@ -389,39 +370,30 @@ class ImuNode(Node):
             self.imu_msg.orientation.x = float(st.unpack('h', st.pack('BB', buf[26], buf[27]))[0])
             self.imu_msg.orientation.y = float(st.unpack('h', st.pack('BB', buf[28], buf[29]))[0])
             self.imu_msg.orientation.z = float(st.unpack('h', st.pack('BB', buf[30], buf[31]))[0])
-            self.imu_msg.linear_acceleration.x = float(st.unpack('h', st.pack('BB', buf[32], buf[33]))[0]) / self.acc_fact_
-            self.imu_msg.linear_acceleration.y = float(st.unpack('h', st.pack('BB', buf[34], buf[35]))[0]) / self.acc_fact_
-            self.imu_msg.linear_acceleration.z = float(st.unpack('h', st.pack('BB', buf[36], buf[37]))[0]) / self.acc_fact_
+
+            self.imu_msg.linear_acceleration.x = float(st.unpack('h', st.pack('BB', buf[32], buf[33]))[0]) / self.acc_fact_ + gravity_x
+            self.imu_msg.linear_acceleration.y = float(st.unpack('h', st.pack('BB', buf[34], buf[35]))[0]) / self.acc_fact_ + gravity_y
+            self.imu_msg.linear_acceleration.z = float(st.unpack('h', st.pack('BB', buf[36], buf[37]))[0]) / self.acc_fact_ + gravity_z
             self.imu_msg.linear_acceleration_covariance[0] = -1
+
             self.imu_msg.angular_velocity.x = float(st.unpack('h', st.pack('BB', buf[12], buf[13]))[0]) / self.gyr_fact_
             self.imu_msg.angular_velocity.y = float(st.unpack('h', st.pack('BB', buf[14], buf[15]))[0]) / self.gyr_fact_
             self.imu_msg.angular_velocity.z = float(st.unpack('h', st.pack('BB', buf[16], buf[17]))[0]) / self.gyr_fact_
             self.imu_msg.angular_velocity_covariance[0] = -1
 
+            # print("X: %0.4f" % self.imu_msg.orientation.x, \
+            #     "Y: %0.4f" % self.imu_msg.orientation.y, \
+            #     "Z: %0.4f" % self.imu_msg.orientation.z, \
+            #     "W: %0.4f" % self.imu_msg.orientation.w)
+
             # ------------------------------------------------------------ #
-            # Quaternioin value allocation
+            # Quaternion value allocation
             quaternion_orig = [
                 self.imu_msg.orientation.x,
                 self.imu_msg.orientation.y,
                 self.imu_msg.orientation.z,
                 self.imu_msg.orientation.w
-            ] 
-
-            # Gravity values from the IMU buffer
-            gravity_x = float(st.unpack('h', st.pack('BB', buf[38], buf[39]))[0]) / 100.0
-            gravity_y = float(st.unpack('h', st.pack('BB', buf[40], buf[41]))[0]) / 100.0
-            gravity_z = float(st.unpack('h', st.pack('BB', buf[42], buf[43]))[0]) / 100.0
-
-            # ------------------------------------------------------------ #
-            # Magnetometer data
-            self.mag_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
-            self.mag_msg.header.frame_id = self.frame_id
-            self.mag_msg.magnetic_field.x = float(st.unpack('h', st.pack('BB', buf[6], buf[7]))[0]) / self.mag_fact_
-            self.mag_msg.magnetic_field.y = float(st.unpack('h', st.pack('BB', buf[8], buf[9]))[0]) / self.mag_fact_
-            self.mag_msg.magnetic_field.z = float(st.unpack('h', st.pack('BB', buf[10], buf[11]))[0]) / self.mag_fact_
-
-            # ------------------------------------------------------------ #
-            # Kiwibot filtered data
+            ]
             """
                 For kiwibot the axes are reassigned as follows due to the
                 orientation of the IMU in the robot.
@@ -446,100 +418,8 @@ class ImuNode(Node):
             roll, pitch, yaw = self._euler_from_quaternion(
                 quaternion_orig[0], quaternion_orig[1], quaternion_orig[2], quaternion_orig[3]
                 )
+            print("Roll: %0.4f" % roll, "Pitch: %0.4f" % pitch, "Yaw: %0.4f" % yaw)
 
-            # ------------------------------------------------------------ #
-            # Finding the current azimuth (Yaw)
-            """
-                Azimuth is the angle (Betweem the current heading and the magnetic north) 
-                in the horizontal plane 
-            """
-
-            current_azimuth = \
-                (math.atan2(self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z) - (math.pi / 2))
-
-            if (self._azimuth != 0.0):
-                current_azimuth = \
-                    ((current_azimuth - self._azimuth) + math.pi) % (2.0 * math.pi) - math.pi + self._azimuth
-                self._azimuth = ((1.0 - self._alpha) * current_azimuth) + (self._alpha * self._azimuth)
-
-                if (self._counter < 305):
-                    self._counter += 1
-            else:
-
-                if (self.mag_msg.magnetic_field.x != 0.0):
-                    self._azimuth = current_azimuth
-                
-                # Else condition to handle an error in the IMU when calculating the orientation
-            
-            if ((not self._first_orient) and (self._azimuth != 0.0) and (self._counter > 300)):
-                self._initial_orient  = -self._azimuth + self._mgn_decl - (self._yaw - math.pi)
-                self._alpha = 0.75
-                self._first_orient = True
-
-            # ------------------------------------------------------------ #
-            # Quaternion bot 
-            """
-                This quaternion us created from the current euler angles. It is performed
-                after the orientation correction.
-            """
-
-            quaternion_bot = self._quaternion_from_euler(
-                -pitch, roll - (math.pi / 2), yaw - math.pi + self._initial_orient 
-                )
-
-            # Kiwibot filtered data
-            self.imu_bot_msg.orientation.x = quaternion_bot[0]
-            self.imu_bot_msg.orientation.y = quaternion_bot[1]
-            self.imu_bot_msg.orientation.z = quaternion_bot[2]
-            self.imu_bot_msg.orientation.w = quaternion_bot[3]
-            self.imu_bot_msg.orientation_covariance = [1e-5, 0.0, 0.0, 0.0, 1e-5, 0.0, 0.0, 0.0, 1e-3]
-
-            # ------------------------------------------------------------ #
-            # Quaternion bot for EKF
-            quaternion_bot_ekf = self._quaternion_from_euler(
-                -pitch, roll - (math.pi / 2), -self._azimuth + self._mgn_decl 
-                )
-
-            # Kiwibot filtered data for EKF
-            self.imu_ekf_msg.header.stamp =rclpy.clock.Clock().now().to_msg()
-            self.imu_ekf_msg.header.frame_id = self.frame_id
-            self.imu_ekf_msg.orientation.x = quaternion_bot_ekf[0]
-            self.imu_ekf_msg.orientation.y = quaternion_bot_ekf[1]
-            self.imu_ekf_msg.orientation.z = quaternion_bot_ekf[2]
-            self.imu_ekf_msg.orientation.w = quaternion_bot_ekf[3]
-            self.imu_ekf_msg.orientation_covariance = [1e-3, 0.0, 0.0, 0.0, 1e-3, 0.0, 0.0, 0.0, 1e-2]
-
-            # ------------------------------------------------------------ #
-            # Publish IMU motion status
-
-            self._acc_values = np.append(
-                self._acc_values,  abs(self.imu_bot_msg.linear_acceleration.x))
-
-            self._move_counter += 1
-            if (self._move_counter == 50):
-
-                # Check if the average linear acceletarion was greater than the motion factor
-                moving_now = np.mean(self._acc_values) > self._move_factor
-
-                if (moving_now != self._moving_old):
-                    self.move_msg.data = bool(moving_now)
-                    self._move_pub = True
-                
-                self._moving_old = moving_now
-                self._move_pub = False   	        
-                self._acc_values = np.array([])
-                self._move_counter = 0	
-
-            # ------------------------------------------------------------ #
-            # Temperature data
-            self.tmp_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
-            self.tmp_msg.header.frame_id = self.frame_id
-            self.tmp_msg.temperature = float(buf[44])
-
-            self.status_msg.data = "IMU Ok"
-
-        else:
-            self.status_msg.data = "Unavailable data"
 
     def cb_publish_imu(self):
         """
@@ -549,26 +429,6 @@ class ImuNode(Node):
         # Function for updating IMU values
         self._update_imu_data()
         
-        # Raw data publisher
-        self.pub_imu_raw.publish(self.imu_raw_msg)
-
-        # Filtered data publisher
-        if (self._counter > 300):
-            self.pub_bot_data.publish(self.imu_bot_msg)
-            self.pub_bot_ekf.publish(self.imu_ekf_msg)
-
-        # Movement publisher
-        if (self._move_pub == True):
-            self.pub_bot_move.publish(self.move_msg)
-
-        # Magnetometer data publisher
-        self.pub_imu_mag.publish(self.mag_msg)
-
-        # Temperature data publisher
-        self.pub_imu_temp.publish(self.tmp_msg)
-
-        # IMU status publisher
-        self.pub_imu_status.publish(self.status_msg)
         
 
 def main(args = None):

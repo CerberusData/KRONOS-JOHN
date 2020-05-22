@@ -13,13 +13,26 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
     driving_cmd_fr_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
         "/freedom_client/reference_commands", 10, std::bind(&SpeedController::CommandsCb, this, _1));
 
-    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 2.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.8}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.8}}}"
+    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 1.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: -1.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}"
+    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -1.0}}"
+    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -1.0}}"
+
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}}"
     // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: -1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -1.0}}}"
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+
     // ros2 topic pub --once /test/leds std_msgs/msg/Bool "{data: true}"
     // ros2 topic pub --once /test/config std_msgs/msg/Bool "{data: true}"
     // ros2 topic pub --once /test/chassis std_msgs/msg/Bool "{data: true}"
-    // ros2 service call /test/arm std_srvs/srv/SetBool "{data: false}"
+    // ros2 service call /test/arm std_srvs/srv/SetBool "{data: true}"
+    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: true}"
+    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: false}"
+
+
 }
 
 void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
