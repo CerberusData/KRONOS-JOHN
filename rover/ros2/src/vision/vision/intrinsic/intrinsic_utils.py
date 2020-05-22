@@ -58,7 +58,7 @@ class IntrinsicClass():
                     data = yaml.safe_load(stream)
             else:
                 printlog(
-                    msg="No instrinsic configuration file {}".format(
+                    msg="No intrinsic configuration file {}".format(
                         self.file_name), msg_type="ERROR")
                 return
             
@@ -99,7 +99,7 @@ class IntrinsicClass():
             self.map1 = map1
             self.map2 = map2
 
-            printlog(msg="{} instrinsic configuration loaded".format(
+            printlog(msg="{} intrinsic configuration loaded".format(
                 self.file_name), msg_type="INFO")
 
         except Exception as e:
@@ -115,7 +115,7 @@ class IntrinsicClass():
             self.map2 = None
             
             printlog(
-                msg="instrinsic file {} error, {}".format(
+                msg="intrinsic file {} error, {}".format(
                 self.file_name, e), msg_type="ERROR")
 
 # =============================================================================

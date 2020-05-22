@@ -57,7 +57,7 @@ def printlog(msg, msg_type="INFO", flush=True):
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=True)
     
 def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), 
-    fontScale=0.7):
+    fontScale=0.7, y_jump=30):
     """
         Print a text list on image in desending order
         Args:
@@ -70,7 +70,6 @@ def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25),
         returns:
     """
 
-    y_jump = 30
     for idx, text in enumerate(tex_list):
         cv2.putText(img=img, text=text, 
             org = (orig[0], int(orig[1] + y_jump*idx)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, 

@@ -43,7 +43,7 @@ class Stitcher():
 			time stitching or video streaming of result image
 		Args:
 			super_stitcher: `boolean`  Enables or disables super stitching mode 
-							 this means smooth changes and application of ROI
+				this means smooth changes and application of ROI
 		Returns:
 		"""
 
@@ -162,7 +162,7 @@ class Stitcher():
 			reprojThresh: 'float' correlation value for desired matched points 
 		Returns:
 			result_CAB: 'cv2.mat' result of stitching A, B, and C images into a 
-								  panoramic image
+			panoramic image
 		"""
 
 		# --------------------------------------------------------------------
@@ -184,17 +184,19 @@ class Stitcher():
 			save_file = True
 
 			# Size of first stitching
-			self.warp_LC_size = (int(imageL.shape[1] + imageL.shape[1]), 
-					   			 int(imageL.shape[0] + imageL.shape[0]))
+			self.warp_LC_size = (
+				int(imageL.shape[1] + imageL.shape[1]), 
+				int(imageL.shape[0] + imageL.shape[0]))
 
 			# detect key-points and extract
 			(kpsA, featuresA) = self.detectAndDescribe(image = imageC)
 			(kpsB, featuresB) = self.detectAndDescribe(image = imageL)
 			
 			# match features between the two images
-			MLC = self.matchKeypoints(kpsA = kpsA, kpsB = kpsB,
-									  featuresA = featuresA, featuresB = featuresB, 
-									  ratio = ratio, reprojThresh = reprojThresh)
+			MLC = self.matchKeypoints(
+				kpsA = kpsA, kpsB = kpsB,
+				featuresA = featuresA, featuresB = featuresB, 
+				ratio = ratio, reprojThresh = reprojThresh)
 
 			# if the match is None, then there aren't enough matched
 			# key-points to create a panorama
@@ -254,22 +256,23 @@ class Stitcher():
 		# Process super mode
 		if self.super_mode:
 			Ca = imageL[:, self.x_coord_LC_limit:]/255.
-			Cb = result_LC[self.source_L_LC_corners[0][1]: self.source_L_LC_corners[2][1], 
-						   self.x_coord_LC_limit  	     : imageL.shape[1]]/255. 
+			Cb = result_LC[
+				self.source_L_LC_corners[0][1]: self.source_L_LC_corners[2][1], 
+				self.x_coord_LC_limit  	     : imageL.shape[1]]/255. 
 			Cr = (Ca*self.alpha_mask_LC + Cb*self.alpha_mask_LC2)*255
 
 		# Overlay the center image to match
 		result_LC[self.source_L_LC_corners[0][1]: self.source_L_LC_corners[2][1], 
-				  0					            : self.source_L_LC_corners[1][0]] = imageL
+			0					            : self.source_L_LC_corners[1][0]] = imageL
 
 		# Process super mode
 		if self.super_mode:
 			result_LC[self.source_L_LC_corners[0][1]: self.source_L_LC_corners[2][1], 
-				      self.x_coord_LC_limit         : imageL.shape[1]] = Cr
+					self.x_coord_LC_limit         : imageL.shape[1]] = Cr
 
 		# Select ROI of first panoramic stitching 
 		result_LC = result_LC[0:self.out_limitsLC[1] - self.y_offsetLC, 
-							  0:self.out_limitsLC[3]]
+							0:self.out_limitsLC[3]]
 
 		# Assign panoramic size
 		self.pano_size_LC = (result_LC.shape[1], result_LC.shape[0])
@@ -280,9 +283,9 @@ class Stitcher():
 			# projected four points surfaces
 			src_points = np.array( corners, dtype=np.float32) 
 			dst_points = np.array([[0                , 0               ], 
-								  [result_LC.shape[1] , 0               ], 
-								  [0                , result_LC.shape[0]],
-								  [result_LC.shape[1] , result_LC.shape[0]]],dtype=np.float32)
+								[result_LC.shape[1] , 0               ], 
+								[0                , result_LC.shape[0]],
+								[result_LC.shape[1] , result_LC.shape[0]]],dtype=np.float32)
 			self.cachedMLC = cv2.getPerspectiveTransform(src_points, dst_points)
 			self.cachedMLC_INV = np.linalg.inv(self.cachedMLC)
 
@@ -301,17 +304,19 @@ class Stitcher():
 			save_file = True
 
 			# Size of first stitching
-			self.warp_CR_size = (int(imageR.shape[1] + imageC.shape[1]), 
-					   			 int(imageR.shape[0] + imageC.shape[0]))
+			self.warp_CR_size = (
+				int(imageR.shape[1] + imageC.shape[1]), 
+				int(imageR.shape[0] + imageC.shape[0]))
 
 			# detect key-points and extract
 			(kpsA, featuresA) = self.detectAndDescribe(image = imageR)
 			(kpsB, featuresB) = self.detectAndDescribe(image = imageC)
 			
 			# match features between the two images
-			MCR = self.matchKeypoints(kpsA = kpsA, kpsB = kpsB,
-									  featuresA = featuresA, featuresB = featuresB, 
-									  ratio = ratio, reprojThresh = reprojThresh)
+			MCR = self.matchKeypoints(
+				kpsA = kpsA, kpsB = kpsB,
+				featuresA = featuresA, featuresB = featuresB, 
+				ratio = ratio, reprojThresh = reprojThresh)
 
 			# if the match is None, then there aren't enough matched
 			# key-points to create a panorama
@@ -479,18 +484,21 @@ class Stitcher():
 		# Process with super mode
 		if self.super_mode:
 			Ca = imageL[:, self.x_coord_LCR_limit:]/255.
-			Cb = result_LCR[self.source_L_corners[0][1]: self.source_L_corners[2][1], 
-						    self.x_coord_LCR_limit      : imageL.shape[1]]/255. 
+			Cb = result_LCR[
+				self.source_L_corners[0][1]: self.source_L_corners[2][1], 
+				self.x_coord_LCR_limit      : imageL.shape[1]]/255. 
 			Cr = (Ca*self.alpha_mask_LCR + Cb*self.alpha_mask_LCR2)*255
 		
 		# Overlay the left image to match
-		result_LCR[self.source_L_corners[0][1]: self.source_L_corners[1][1], 
-				   self.source_L_corners[0][0]: self.source_L_corners[1][0]] = imageL
+		result_LCR[
+			self.source_L_corners[0][1]: self.source_L_corners[1][1], 
+			self.source_L_corners[0][0]: self.source_L_corners[1][0]] = imageL
 		
 		# Process with super mode
 		if self.super_mode:
-			result_LCR[self.source_L_corners[0][1]: self.source_L_corners[1][1], 
-				       self.x_coord_LCR_limit : imageL.shape[1]] = Cr
+			result_LCR[
+			self.source_L_corners[0][1]: self.source_L_corners[1][1], 
+			self.x_coord_LCR_limit : imageL.shape[1]] = Cr
 		
 		# Select ROI of first panoramic stitching 
 		result_LCR = result_LCR[0 : self.out_limitsLCR[1] - self.y_offsetLCR, 
@@ -522,9 +530,10 @@ class Stitcher():
 
 		# --------------------------------------------------------------------
 		# Process with super mode
-		result_LCR = cv2.warpPerspective(src = result_LCR, 
-										 M = self.cachedMLCR, 
-										 dsize = self.pano_size)
+		result_LCR = cv2.warpPerspective(
+			src = result_LCR, 
+			M = self.cachedMLCR, 
+			dsize = self.pano_size)
 		
 		# Final warp to get final panoramic stitching		
 		result_LCR = result_LCR[self.in_limitsLCR[0]:self.in_limitsLCR[1], :]
@@ -610,11 +619,12 @@ class Stitcher():
 				# Process super mode
 				if self.super_mode:
 					Ca = imageL[:, self.x_coord_LC_limit:]/255.
-					Cb = result_LC[self.source_L_LC_corners[0][1]: self.source_L_LC_corners[2][1], 
-								   self.x_coord_LC_limit  	     : imageL.shape[1]]/255. 
+					Cb = result_LC[
+						self.source_L_LC_corners[0][1]: self.source_L_LC_corners[2][1], 
+						self.x_coord_LC_limit  	     : imageL.shape[1]]/255. 
 
 					if (self.alpha_mask_LC.shape[1] != Ca.shape[1] or 
-					    self.alpha_mask_LC.shape[0] != Ca.shape[0] ):
+						self.alpha_mask_LC.shape[0] != Ca.shape[0] ):
 						new_size = (int(Ca.shape[1]),
 									int(Ca.shape[0]))
 						self.alpha_mask_LC = cv2.resize(self.alpha_mask_LC, new_size)
@@ -624,7 +634,7 @@ class Stitcher():
 
 				# Overlay the center image to match
 				result_LC[self.source_L_LC_corners[0][1]: self.source_L_LC_corners[2][1], 
-						 0					            : self.source_L_LC_corners[1][0]] = imageL
+						0					            : self.source_L_LC_corners[1][0]] = imageL
 
 				# Process super mode
 				if self.super_mode:
@@ -632,8 +642,9 @@ class Stitcher():
 							self.x_coord_LC_limit           : imageL.shape[1]] = Cr
 
 				# Select ROI of first panoramic stitching 
-				result_LC = result_LC[0:self.out_limitsLC[1] - self.y_offsetLC, 
-									  0:self.out_limitsLC[3]]
+				result_LC = result_LC[
+					0:self.out_limitsLC[1] - self.y_offsetLC, 
+					0:self.out_limitsLC[3]]
 
 				# Adjust perpective
 				result_LC = cv2.warpPerspective(src = result_LC, 
@@ -666,8 +677,9 @@ class Stitcher():
 				Cr = (Ca*self.alpha_mask_CR + Cb*self.alpha_mask_CR2)*255
 			
 			# Overlay the center image to match
-			result_CR[self.source_C_corners[0][1]: self.source_C_corners[2][1], 
-					  0							 : self.source_C_corners[1][0]] = imageC
+			result_CR[
+				self.source_C_corners[0][1]: self.source_C_corners[2][1], 
+				0							 : self.source_C_corners[1][0]] = imageC
 			
 			# Process super mode
 			if self.super_mode:
@@ -675,15 +687,17 @@ class Stitcher():
 						self.x_coord_CR_limit : imageC.shape[1]] = Cr
 			
 			# Select ROI of first panoramic stitching 
-			result_CR = result_CR[0:self.out_limitsCR[1] - self.y_offsetCR, 
-								  0:self.out_limitsCR[3]]
+			result_CR = result_CR[
+				0:self.out_limitsCR[1] - self.y_offsetCR, 
+				0:self.out_limitsCR[3]]
 
 			if imageL is None:
 
-				result_CR = cv2.warpPerspective(src = result_CR, 
-												M = self.cachedMCR, 
-												dsize = self.pano_size_CR,
-												flags = self.warp_flags)
+				result_CR = cv2.warpPerspective(
+					src = result_CR, 
+					M = self.cachedMCR, 
+					dsize = self.pano_size_CR,
+					flags = self.warp_flags)
 				self.stitch_mode = [0, 1, 1]
 				return result_CR
 
@@ -691,10 +705,11 @@ class Stitcher():
 			# LEFT (L) + CENTER&RIGHT (C&R)= (LC&R)
 
 			# apply a perspective transform to stitch the images together
-			result_LCR = cv2.warpPerspective(src   = result_CR, 
-											 M	   = self.cachedHLCR, 
-											 dsize = self.warp_size_LCR,
-											 flags = self.warp_flags)
+			result_LCR = cv2.warpPerspective(
+				src   = result_CR, 
+				M	  = self.cachedHLCR, 
+				dsize = self.warp_size_LCR,
+				flags = self.warp_flags)
 
 			# Process with super mode
 			if self.super_mode:
@@ -704,8 +719,9 @@ class Stitcher():
 				Cr = (Ca*self.alpha_mask_LCR + Cb*self.alpha_mask_LCR2)*255
 			
 			# Overlay the left image to match
-			result_LCR[self.source_L_corners[0][1]: self.source_L_corners[1][1], 
-					   self.source_L_corners[0][0]: self.source_L_corners[1][0]] = imageL
+			result_LCR[
+				self.source_L_corners[0][1]: self.source_L_corners[1][1], 
+				self.source_L_corners[0][0]: self.source_L_corners[1][0]] = imageL
 			
 			# Process with super mode
 			if self.super_mode:
@@ -718,10 +734,11 @@ class Stitcher():
 
 			# --------------------------------------------------------------------
 			# Process with super mode
-			result_LCR = cv2.warpPerspective(src = result_LCR, 
-											 M = self.cachedMLCR, 
-											 dsize = self.pano_size,
-											 flags = self.warp_flags)
+			result_LCR = cv2.warpPerspective(
+				src = result_LCR, 
+				M = self.cachedMLCR, 
+				dsize = self.pano_size,
+				flags = self.warp_flags)
 			
 			# Final warp to get final panoramic stitching		
 			result_LCR = result_LCR[self.in_limitsLCR[0]:self.in_limitsLCR[1], :]
@@ -1009,14 +1026,14 @@ class Stitcher():
 			image: `cv2.math` input image to find descriptors and features
 		Returns:
 			kps: `numpy.ndarray` collection of key-points. Key-points for which a
-				  descriptor cannot be computed are removed. Sometimes new 
-				  key-points can be added, for example: SIFT duplicates key-point 
-				  with several dominant orientations (for each orientation).
+				descriptor cannot be computed are removed. Sometimes new 
+				key-points can be added, for example: SIFT duplicates key-point 
+				with several dominant orientations (for each orientation).
 			features: `numpy.ndarray`  Computed descriptors. In the second 
-					   variant of the method descriptors[i] are descriptors 
-					   computed for a key-points[i]. Row j is the key-points 
-					   (or key-points[i]) is the descriptor for key-point j-th 
-					   key-point.
+				variant of the method descriptors[i] are descriptors 
+				computed for a key-points[i]. Row j is the key-points 
+				(or key-points[i]) is the descriptor for key-point j-th 
+				key-point.
 		"""
 
 		# convert the image to gray scale
@@ -1060,7 +1077,7 @@ class Stitcher():
 		Returns:
 			matches: `list` description
 			H: `numpy.ndarray` perspective transformation between the source 
-							   and the destination planes
+				and the destination planes
 			status: `numpy.ndarray` list of correlation state for each feature paired
 		"""
 
@@ -1132,8 +1149,6 @@ class Stitcher():
 			cv2.putText(img_src, "RR", (self.LCR_Rc[0], 20 + y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, lineType=cv2.LINE_AA)
 			cv2.drawContours(img_src, [pts_rr], -1, (0, 0, 255), -1)
 
-			
-
 		# ---------------------------------------------------------------------
 		# For stitching mode Left Camera + Center Camera = "LC"
 		elif (self.stitch_mode[0] == 1 and self.stitch_mode[1] == 1 and self.stitch_mode[2] == 0): 
@@ -1186,7 +1201,7 @@ class Stitcher():
 		Coord_stitch = None
 
 		# ---------------------------------------------------------------------
-		# For stitching mode Left Camera + Center Camera + Righ Camera = "LCR"
+		# For stitching mode Left Camera + Center Camera + Right Camera = "LCR"
 		if (self.stitch_mode[0] == 1 and self.stitch_mode[1] == 1 and self.stitch_mode[2] == 1): 
 			
 			if self.vir_pan_val > 100 or self.vir_pan_val < -100:
@@ -1686,11 +1701,11 @@ class Stitcher():
 def get_projection_point_dst(coords_src, M):
 
     """  Gets the coordinate equivalent in surface projection space from original 
-         view space 
+		view space 
     Args:
         coords_src: `tuple`  coordinate in the original image space
         M: `cv2.math` rotation matrix from original image to surface
-                      projection space
+			projection space
     Returns:
         coords_src: `tuple`  projected coordinate in original view space
     """

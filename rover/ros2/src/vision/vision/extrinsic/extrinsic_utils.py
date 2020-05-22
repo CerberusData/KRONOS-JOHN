@@ -56,7 +56,7 @@ class Extrinsic():
 
         # Disable print logs
         printlog(msg=str(self), msg_type="INFO", flush=self.flush)
-        self.flush = False
+        # self.flush = False
 
     def __str__(self):
         str_ = "\n"
@@ -78,8 +78,8 @@ class Extrinsic():
             Loads extrinsic camera parameters from file  
         Args:
             FILE_NAME: `string` extrinsic calibration yaml file name
-            mtx: 'numpy.darray' matrix distortion coeficients
-            dist: 'numpy.darray' vector distortion coeficients
+            mtx: 'numpy.darray' matrix distortion coefficients
+            dist: 'numpy.darray' vector distortion coefficients
         Returns:
         """
 
@@ -285,7 +285,7 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
                 cnt_cy = int(cnt_M['m01'] / cnt_M['m00'])
             else:
                 cv2.drawContours(image=img_scr_hsv_gui, contours=[cnt], 
-                   contourIdx=-1, color=(0, 0, 255), thickness=-1)
+                    contourIdx=-1, color=(0, 0, 255), thickness=-1)
                 continue
 
             # Evaluate contour
@@ -447,8 +447,8 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
                                          ((0, int(IMG_SIZE[1] * 0.5)),
                                          (IMG_SIZE[0], int(IMG_SIZE[1] * 0.5))))[0])
             LLI.append(line_intersection(((x1, y1),(x2, y2)), 
-                                         ((0, IMG_SIZE[1]),
-                                         (IMG_SIZE[0], IMG_SIZE[1])))[0])
+                                        ((0, IMG_SIZE[1]),
+                                        (IMG_SIZE[0], IMG_SIZE[1])))[0])
 
     # Compute and append low and superior intersections with limits for right lines
     for line in Right_Lines:
@@ -457,8 +457,8 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
                                          ((0,int(IMG_SIZE[1] * 0.5)),
                                          (IMG_SIZE[0], int(IMG_SIZE[1] * 0.5))))[0] )
             LRI.append(line_intersection(((x1, y1),(x2, y2)), 
-                                         ((0,IMG_SIZE[1]),
-                                         (IMG_SIZE[0], IMG_SIZE[1])))[0] )
+                                        ((0,IMG_SIZE[1]),
+                                        (IMG_SIZE[0], IMG_SIZE[1])))[0] )
 
     if LOCAL_CALIBRATION:
         for point in LLI:
@@ -559,9 +559,9 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
 
     # Draw detected left and right 
     LLI_2 = line_intersection(((TLI, int(IMG_SIZE[1] * 0.5)),(LLI, IMG_SIZE[1])), 
-                              ((0, top[0]),(IMG_SIZE[0], top[0])))
+        ((0, top[0]),(IMG_SIZE[0], top[0])))
     LRI_2 = line_intersection(((TRI, int(IMG_SIZE[1] * 0.5)),(LRI, IMG_SIZE[1])), 
-                              ((0, top[0]),(IMG_SIZE[0], top[0])))
+        ((0, top[0]),(IMG_SIZE[0], top[0])))
     
     Left_Line  = ((LLI, IMG_SIZE[1] ), LLI_2)
     Right_Line = ((LRI, IMG_SIZE[1] ), LRI_2)
@@ -687,11 +687,11 @@ def pixel_relation(img_src, M, mtx, dist, p1, p2 , p3 , p4, Left_Line,
     Right_Line, Hy, Dx_lines, Dy_lines, UNWARPED_SIZE, HSVI, HSVS, 
     PATTERN_ITERATION_TRIES=20, LOCAL_CALIBRATION=False):
     """  Calculates the pixel relation in 'X' and 'Y' axis from surface 
-         projection space and Rotation Matrix and others
+        projection space and Rotation Matrix and others
     Args:
         img_src: `cv2.mat` original image source
         M: `cv2.math` rotation matrix from original image to surface
-                      projection space
+            projection space
         mtx: `numpy.narray` camera's distortion matrix
         dist: `numpy.narray` camera's distortion vector
         p1: `tuple` point 1 of quadrangle vertices's Coordinates in source image
@@ -722,18 +722,18 @@ def pixel_relation(img_src, M, mtx, dist, p1, p2 , p3 , p4, Left_Line,
     # -------------------------------------------------------------------------
     # Get intersection of geometric projection lines 
     inters_L1 = line_intersection(((0, 0), (0, IMG_SIZE[1])), 
-                                 ((p1[0], p1[1]), (p4[0], p4[1])))
+        ((p1[0], p1[1]), (p4[0], p4[1])))
 
     inters_L2 = line_intersection(((0, 0), (0, IMG_SIZE[1])), 
-                                  ((p4[0], p4[1]), (p3[0], p3[1])))
+        ((p4[0], p4[1]), (p3[0], p3[1])))
 
     inters_R1 = line_intersection(((IMG_SIZE[0], 0) ,
-                                   (IMG_SIZE[0], IMG_SIZE[1])), 
-                                  ((p2[0],p2[1]),(p3[0],p3[1])))
+        (IMG_SIZE[0], IMG_SIZE[1])), 
+        ((p2[0],p2[1]),(p3[0],p3[1])))
 
     inters_R2 = line_intersection(((IMG_SIZE[0], 0),
-                                   (IMG_SIZE[0], IMG_SIZE[1])), 
-                                  ((p4[0], p4[1]), (p3[0], p3[1])))
+        (IMG_SIZE[0], IMG_SIZE[1])), 
+        ((p4[0], p4[1]), (p3[0], p3[1])))
 
     # Get projection of intersection of geometric projection lines
     inters_L1 = get_projection_point_dst(coords_src=(inters_L1[0], inters_L1[1], 1), M=M)
@@ -742,8 +742,9 @@ def pixel_relation(img_src, M, mtx, dist, p1, p2 , p3 , p4, Left_Line,
     inters_R2 = get_projection_point_dst(coords_src=(inters_R2[0], inters_R2[1], 1), M=M)
 
     # Calculate camera position with intersection between previous lines
-    cam_view_coord = line_intersection((inters_L1, inters_L2), 
-                                       (inters_R1, inters_R2))
+    cam_view_coord = line_intersection(
+        (inters_L1, inters_L2), 
+        (inters_R1, inters_R2))
     cam_view_pix = abs(cam_view_coord[1]-UNWARPED_SIZE[1])
 
     # -------------------------------------------------------------------------
@@ -1139,7 +1140,7 @@ def get_contour_dist(cnt, mtx=None, dist=None):
         new_contours_dist: `np.array` surface projection contour in original 
             image with distortion        
     """
- 
+
     new_contours = discrete_contour(contour=cnt, Dl=5)
 
     if mtx is None or dist is None: 
@@ -1183,6 +1184,28 @@ def get_distor_point(pt, mtx, dist):
     y_undistor = output[0][0,0,1]
 
     return int(round(x_undistor)),int(round(y_undistor))
+
+def get_undistor_point(pt, mtx, dist):
+    """ 
+        get undistorted point    
+    Args:
+        pt: `tuple` (x, y) coordinate to undistort
+        mtx: `numpy.narray` camera's distortion matrix
+        dist: `numpy.narray` camera's distortion vector
+    Returns:
+        _: `tuple` input point undistorted
+    """
+
+    test = np.zeros((1,1,2), dtype=np.float32)
+    test[0,0,0]=pt[0]
+    test[0,0,1]=pt[1]
+
+    xy_undistorted = cv2.undistortPoints(test, mtx, dist)
+
+    x_undistor = xy_undistorted[0,0,0]* mtx[0,0] + mtx[0,2]
+    y_undistor = xy_undistorted[0,0,1]* mtx[1,1] + mtx[1,2]  
+
+    return int(round(x_undistor)), int(round(y_undistor))
 
 def find_angle_displacement(SurfacesPoints, image_size, M, ppmx, ppmy):
     """ 

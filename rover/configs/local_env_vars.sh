@@ -9,12 +9,12 @@
 
 # -----------------------------------------------------------------------------
 # DO NOT DEFINE IN ROBOT - DO NOT DEFINE IN ROBOT - DO NOT DEFINE IN ROBOT
-export ROBOBOT_ID=666      # [int] Robot ID
-                           # NOTE: Should be undefined in the robot
-export LOCAL_LAUNCH=1      # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
-                           # NOTE: Should be zero in the robot
-export LOCAL_GUI=1         # [int-bolean] Disable(1)/Enable(0) - Local GUI launch
-                           # NOTE: Should be zero in the robot
+export ROBOBOT_ID=666       # [int] Robot ID
+                            # NOTE: Should be undefined in the robot
+export LOCAL_LAUNCH=1       # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
+                            # NOTE: Should be zero in the robot
+export LOCAL_GUI=1          # [int-bolean] Disable(1)/Enable(0) - Local GUI launch
+                            # NOTE: Should be zero in the robot
 export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
 
 # -----------------------------------------------------------------------------
@@ -34,10 +34,14 @@ export VISUAL_DEBUGGER_TIME=10  # [int][sec] visual debugger message time
 export VISUAL_OVERLAY_CAMS=1    # [int][sec] enable/disable overlay cameras over main video streaming
 export VISUAL_WAYPOINT=1        # [int][sec] enable/disable waypoint components drawings
 
-export GUI_GAME_OVER_SCREEN=1   # [int-bolean](1):Enable/(0):Disable - Game over screen drawings
-export GUI_STOP_SCREEN=1        # [int-bolean](1):Enable/(0):Disable - Stop screen drawings
-export GUI_WAYPOINT_AREA=1      # [int-bolean](1):Enable/(0):Disable - Waypoint drawings
-export GUI_UNDISTORD_AREA=1     # [int-bolean](1):Enable/(0):Disable - Undistord drawings
+export GUI_GAME_OVER_SCREEN=1       # [int-bolean](1):Enable/(0):Disable - Game over screen drawings
+export GUI_STOP_SCREEN=1            # [int-bolean](1):Enable/(0):Disable - Stop screen drawings
+export GUI_WAYPOINT_AREA=1          # [int-bolean](1):Enable/(0):Disable - Waypoint drawings
+export GUI_WAYPOINT_DESCRIPTION=1   # [int-bolean](1):Enable/(0):Disable - Waypoint drawings
+export GUI_UNDISTORD_AREA=0         # [int-bolean](1):Enable/(0):Disable - Undistord drawings
+export GUI_PROJECTION_BOT_WIDTH=0.5 # [float] [m] robot's width to draw its projection
+export GUI_PROJECTION_BOT_MARGI=0.3 # [float] [m] margin to add to robots projection
+export GUI_PROJECTION_SHOW_LOCAL=1  # [int-bolean] (1):Enable/(0):Disable show image projection
 
 # -----------------------------------------------------------------------------
 # Extrinsic calibration - Mono-vision

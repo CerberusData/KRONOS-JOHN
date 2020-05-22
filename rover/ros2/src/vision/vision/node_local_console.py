@@ -36,7 +36,7 @@ class LocalConsoleNode(Node, Thread):
         """ Object class constructor
         Args:
             streaming_topic: `string` topic of video streaming
-            win_rate: `flota` window rate 
+            win_rate: `float` window rate 
         Returns:
         """  
 
@@ -167,7 +167,7 @@ class LocalConsoleNode(Node, Thread):
 
             except Exception as e:
                 printlog(msg="Error publishing waypoint coord "
-                    "trought topic, {}".format(e), msg_type="ERROR")
+                    "trough topic, {}".format(e), msg_type="ERROR")
 
     def cb_key_event(self, key):
         """
@@ -214,7 +214,7 @@ class LocalConsoleNode(Node, Thread):
         # If pressed A key then switch to left camera
         elif key == 97:
             pass
-        # If pressed M key then stiwch between manual and waypoint mode
+        # If pressed M key then switch between manual and waypoint mode
         elif key == 109:
             pass
         # If pressed D key then switch to right camera
@@ -242,7 +242,7 @@ class LocalConsoleNode(Node, Thread):
 
     def run(self):
         """
-            Run cicle of threadh
+            Run cycle of threads
             Args:
             returns:
         """

@@ -51,7 +51,7 @@ def hsv_tunner(img_src, hsv_i, hsv_s):
                 cv2.getTrackbarPos('HS', WIN_NAME), 
                 cv2.getTrackbarPos('SS', WIN_NAME), 
                 cv2.getTrackbarPos('VS', WIN_NAME)))
-        cv2.imshow(WIN_NAME, img_scr_hsv); 
+        cv2.imshow(WIN_NAME, img_scr_hsv)
         key = cv2.waitKey(100)
         if key==113 or key==81: # (Q) If press q then quit
             exit()

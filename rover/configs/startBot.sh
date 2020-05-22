@@ -55,7 +55,7 @@ case "$1" in
       colcon build --symlink-install
       echo  "[INFO]: ROS2 Build successful ... "
       sleep 2 && clear && cd ..
-       
+
       #  ----------------------------------------------------------------------
       #  Source ROS2 and local enviroment variables
       echo  "[INFO]: ROS2 Sourcing ... "
@@ -84,3 +84,16 @@ case "$1" in
 esac
 
 exit 0
+
+# # Topic pub
+# ros2 topic pub --once /video_streaming/visual_debugger usr_msgs/msg/vision/VisualMessage '{data: "message_text", type: "INFO"}'
+# ros2 topic pub --once /video_calibrator/calibrate_cam std_msgs/msg/String '{data: "C"}'
+# ros2 topic pub --once /video_streaming/idle_timer_reset std_msgs/msg/Bool '{data: True}'
+# ros2 topic pub --once /video_streaming/waypoint_pt usr_msgs/msg/vision/Waypoint '{x: 0.5, y:0.5}'
+
+# # Kill a node
+# ros2 lifecycle set <nodename> shutdown
+
+# # Source ROS2 enviroment
+# sudo bash configs/startBot.sh start
+# source /opt/ros/dashing/setup.sh && source /workspace/rover/ros2/install/setup.sh && clear

@@ -26,6 +26,8 @@ from vision.intrinsic.intrinsic_utils import IntrinsicClass
 
 from vision.extrinsic.extrinsic_utils import Extrinsic
 from vision.extrinsic.extrinsic_utils import get_projection_point_src
+from vision.extrinsic.extrinsic_utils import get_projection_point_dst
+from vision.extrinsic.extrinsic_utils import get_undistor_point
 from vision.extrinsic.extrinsic_utils import get_distor_point
 
 # =============================================================================
@@ -49,6 +51,8 @@ class VisualDebuggerSubscriber():
             callback=self.cb_visual_debugger, qos_profile=5,
             callback_group=parent_node.callback_group
             )
+
+        self.font_scale = 0.5
 
     def cb_visual_debugger(self, msg):
         """ Draws the visual debugger message
@@ -81,17 +85,17 @@ class VisualDebuggerSubscriber():
         color = (255, 255, 255)
         if (self.type == "ERROR" or
             self.type == "ERR"):
-            color = (0, 0, 255)
+            color = (153, 153, 255)
         elif (self.type == "WARNING" or
             self.type == "WARN"):
             color = (0, 255, 255)
         elif self.type == "OKGREEN":
-            color = (0, 255, 0)
+            color = (153, 255, 51)
 
         print_text_list(
             img=img, tex_list=[self.msg], 
             color=color, orig=(10, int(img.shape[0]*0.95)), 
-            fontScale=0.7)
+            fontScale=self.font_scale)
 
 class ExtrinsicSubscriber():
 
@@ -129,7 +133,7 @@ class ExtrinsicSubscriber():
 
         try: 
             if msg.cam_label in self.extrinsic.cams.keys():
-                self.extrinsic.load(
+                self.extrinsic.cams[msg.cam_label] = self.extrinsic.load(
                     mtx=self.intrinsic.mtx, 
                     dist=self.intrinsic.distortion_coefficients,
                     FILE_NAME="Extrinsic_{}_{}_{}.yaml".format(
@@ -138,16 +142,17 @@ class ExtrinsicSubscriber():
                         msg.cam_label)
                         )
 
-                for key, val in self.update.items():
-                    val = True
+                for key, val in self.extrinsic.update.items():
+                    self.extrinsic.update[key] = True
+
+            printlog(msg="Extrinsic parameters for CAM{} updated".format(
+                msg.cam_label), msg_type="INFO")
 
         except Exception as e:
             printlog(msg="Error getting extrinsic calibration"
                 "from topic, {}".format(e), msg_type="ERROR")
             return False
-        printlog(msg="Extrinsic parameters for CAM{} updated".format(
-            msg.cam_label), msg_type="INFO")
-
+        
 class WebclientControl():
 
     def __init__(self, parent_node):
@@ -164,6 +169,10 @@ class WaypointSuscriber():
         # Enviroment variables
         self._GUI_WAYPOINT_AREA = int(os.getenv(
             key="GUI_WAYPOINT_AREA", default=1))
+        self._LOCAL_LAUNCH = int(os.getenv(
+            key="LOCAL_LAUNCH", default=1))
+        self._GUI_WAYPOINT_DESCRIPTION = int(os.getenv(
+            key="GUI_WAYPOINT_DESCRIPTION", default=1))
 
         # ---------------------------------------------------------------------
         self.extrinsic = extrinsic
@@ -175,7 +184,11 @@ class WaypointSuscriber():
         self.y_norm = None # Normalized Y axis Waypoint coordinate
         self.x_img = None # X axis Waypoint coordinate 
         self.y_img = None # Y axis Waypoint coordinate 
-        self.incnt = False # Waypoint coordinate is inside contour
+        self.x_warp = None # X axis Waypoint coordinate in warped space
+        self.y_warp = None # Y axis Waypoint coordinate in warped space
+        self.x_m = 0.0 # X axis Waypoint coordinate in warped space
+        self.y_m = 0.0 # Y axis Waypoint coordinate in warped space
+        self.incnt = False
 
         # Subscribers
         self._sub_screen_point = parent_node.create_subscription(
@@ -188,7 +201,7 @@ class WaypointSuscriber():
         # ---------------------------------------------------------------------
         # Boot projection
         self._CURV_OFFSET = float(os.getenv("GUI_PROJECTION_BOT_CURV_OFFSET", 0.003))
-        self._BOT_MARGI = float(os.getenv("GUI_PROJECTION_BOT_MARGI", 0.08))
+        self._BOT_MARGI = float(os.getenv("GUI_PROJECTION_BOT_MARGI", 0.3))
         self._BOT_WIDTH = float(os.getenv("GUI_PROJECTION_BOT_WIDTH", 0.5))
         self._HORZL_LEN = int(os.getenv("GUI_PROJECTION_BOT_HORZL_LEN", 10))
         self._VER_THICK = int(os.getenv("GUI_PROJECTION_BOT_VER_THICK", 2))
@@ -206,12 +219,16 @@ class WaypointSuscriber():
         self.BL = 0.0
         self.CL = 0.0
         
+        self.left_proj = []
+        self.right_proj = []
+
         self._proj_m = None
         self._cnt_line = None
         self.y_limit = None
 
-        self.curvature = 0.0
-        self.distord_lines = True
+        self.curvature = 1.0
+        self.new_curvature = 0.0
+        self.distord_lines = True   # Enable/Disable distord bot projection
 
     def cb_screen_point(self, msg):
 
@@ -235,41 +252,45 @@ class WaypointSuscriber():
                 pt=(self.x_img, self.y_img), 
                 measureDist=True)
 
+            if ValidPoint>0:
+                self.incnt = True
+                x, y = get_undistor_point(
+                    pt=(self.x_img, self.y_img), 
+                    mtx=self.extrinsic.mtx, 
+                    dist=self.extrinsic.dist)
+                warped_coord = get_projection_point_dst(
+                    M=self.extrinsic.cams[self.cam_label]["M"],
+                    coords_src=(x, y, 1))
+                self.x_warp, self.y_warp = warped_coord[0], warped_coord[1]
+
+                view_coord = self.extrinsic.cams[self.cam_label]["view_coord"]
+                ppmx = self.extrinsic.cams[self.cam_label]["ppmx"]
+                ppmy = self.extrinsic.cams[self.cam_label]["ppmy"]
+                self.x_m = abs(self.x_warp-view_coord[0])/ppmx
+                self.y_m = abs(self.y_warp-view_coord[1])/ppmy
+
+            else:
+                self.incnt = False
+                self.x_warp = None
+                self.y_warp = None
+                self.x_m = 0.0
+                self.y_m = 0.0
+
         except Exception as e:
-            printlog(msg="error procesing waypoint {}".format(e), 
+            printlog(msg="error processing waypoint, {}".format(e), 
                 msg_type="ERROR")
+            self.x_norm = None # Normalized X axis Waypoint coordinate 
+            self.y_norm = None # Normalized Y axis Waypoint coordinate
+            self.x_img = None # X axis Waypoint coordinate 
+            self.y_img = None # Y axis Waypoint coordinate 
+            self.x_warp = None # X axis Waypoint coordinate in warped space
+            self.y_warp = None # Y axis Waypoint coordinate in warped space
+            self.x_m = 0.0 # X axis Waypoint coordinate in warped space
+            self.y_m = 0.0 # Y axis Waypoint coordinate in warped space
         
-    def draw(self, img):
-        
-        # Draw waypoint coordinate
-        if self.x_norm is not None and self.y_norm is not None:
-            cv2.circle(img=img, 
-                center=(
-                    int(self.x_norm*img.shape[1]), 
-                    int(self.y_norm*img.shape[0])), 
-                radius=10, color=(255, 255, 255), thickness=1)
-            cv2.circle(img=img, 
-                center=(
-                    int(self.x_norm*img.shape[1]), 
-                    int(self.y_norm*img.shape[0])), 
-                radius=2, color=(0, 0, 255), thickness=-1)
-        
-        # ---------------------------------------------------------------------
-        # If not extrinsic calibration then continue
-        if self.extrinsic.cams[self.cam_label] is None:
-            return
-        elif self.extrinsic.mtx is None:
-            return
-
-        #  Draw waypoint area contour
-        if self._GUI_WAYPOINT_AREA:
-            cv2.drawContours(
-                image=img, 
-                contours=[self.extrinsic.cams[self.cam_label]["waypoint_area"]], 
-                contourIdx=0, color=(0, 200, 0), thickness=2)
+    def update_params(self):
 
         # ---------------------------------------------------------------------
-        # Update params
         if self.extrinsic.update["WaypointSuscriber"]:
             self.y_limit = int(
                 self.extrinsic.cams[self.cam_label]["view_coord"][1] - \
@@ -289,10 +310,12 @@ class WaypointSuscriber():
                     self.extrinsic.cams[self.cam_label]["view_coord"][0], 
                     self.extrinsic.cams[self.cam_label]["unwarped_size"][1], 1), 
                 INVM=self.extrinsic.cams[self.cam_label]["M_inv"])
+            
             ip = get_distor_point(
                 pt=ip, 
                 mtx=self.extrinsic.mtx, 
                 dist=self.extrinsic.dist)
+
             self._cnt_line = (sp, ip)
             self._proj_m = []; increment = 1
         
@@ -305,13 +328,19 @@ class WaypointSuscriber():
 
             self.extrinsic.update["WaypointSuscriber"] = False
 
+        if self.new_curvature != self.curvature:
+            self.curvature = self.new_curvature
+        else:
+            return
+
         # ---------------------------------------------------------------------
         # Variables for polynomial
         # Lines Distance from center or bot's view coordinate
         ct_dist = int(np.ceil((self._BOT_WIDTH*0.5 + \
             self._BOT_MARGI)*self.extrinsic.cams[self.cam_label]["ppmy"])) 
-        self.AR = (0.01 + self._CURV_OFFSET)*self.curvature if self.curvature > 0. else (
-                   0.01 - self._CURV_OFFSET)*self.curvature
+        self.AR = (
+            0.01 + self._CURV_OFFSET)*self.curvature if self.curvature > 0. else (
+            0.01 - self._CURV_OFFSET)*self.curvature
         self.AL = 0.01*self.curvature
         self.CR = self.extrinsic.cams[self.cam_label]["view_coord"][0] + ct_dist
         self.CL = self.extrinsic.cams[self.cam_label]["view_coord"][0] - ct_dist
@@ -377,8 +406,33 @@ class WaypointSuscriber():
             
             idx_y -= increment; increment += 1
 
-        left_proj = np.array(left_proj)
-        right_proj = np.array(right_proj)
+        self.left_proj = np.array(left_proj)
+        self.right_proj = np.array(right_proj)
+
+    def draw(self, img):
+        
+        # ---------------------------------------------------------------------
+        # If not extrinsic calibration then continue
+        if (self.extrinsic.cams[self.cam_label] is None or 
+            (self.extrinsic.mtx is None and self.distord_lines)):
+            return
+
+        # ---------------------------------------------------------------------
+        # Update params
+        self.update_params()
+
+        # ---------------------------------------------------------------------
+        # Draw warped space
+        if self._LOCAL_LAUNCH and self._SHOW_PROJ:
+            self.draw_in_proj(img_src=img.copy())
+
+        # ---------------------------------------------------------------------
+        #  Draw waypoint area contour
+        if self._GUI_WAYPOINT_AREA:
+            cv2.drawContours(
+                image=img, 
+                contours=[self.extrinsic.cams[self.cam_label]["waypoint_area"]], 
+                contourIdx=0, color=(0, 200, 0), thickness=2)
 
         # ---------------------------------------------------------------------
         # Draw robots projection lines
@@ -386,28 +440,31 @@ class WaypointSuscriber():
         # Left side
         color_idx = 0
         thickness_idx = len(self._COLORS)
-        for idx in range(len(left_proj) - 1):
+        for idx in range(len(self.left_proj) - 1):
             if self._proj_m[idx] > self._DISTAN_M[-1]:
                 break
+            
             # Draw horizontal lines in body projection
             while self._proj_m[idx] > self._DISTAN_M[color_idx]:
                 color_idx += 1 # Change Color
                 thickness_idx -= 1 if thickness_idx > 0 else thickness_idx
                 cv2.line(img=img, 
-                    pt1=(left_proj[idx][0], left_proj[idx][1]), 
-                    pt2=(left_proj[idx][0] + self._HORZL_LEN, left_proj[idx][1]), 
+                    pt1=(self.left_proj[idx][0], self.left_proj[idx][1]), 
+                    pt2=(self.left_proj[idx][0] + self._HORZL_LEN, self.left_proj[idx][1]), 
                     color=self._COLORS[color_idx], 
                     thickness=self._HOZ_THICK + thickness_idx)
+
             # Draw vertical lines in body projection
             cv2.line(img=img, 
-                pt1=tuple(left_proj[idx]), pt2=tuple(left_proj[idx + 1]), 
+                pt1=tuple(self.left_proj[idx]), 
+                pt2=tuple(self.left_proj[idx + 1]), 
                 color=self._COLORS[color_idx], 
                 thickness=self._VER_THICK + thickness_idx)
 
         # right side
         color_idx = 0
         thickness_idx = len(self._COLORS)
-        for idx in range(len(right_proj) - 1):
+        for idx in range(len(self.right_proj) - 1):
             if self._proj_m[idx] > self._DISTAN_M[-1]:
                 break
             # Draw horizontal lines in body projection
@@ -415,14 +472,15 @@ class WaypointSuscriber():
                 color_idx += 1 # Change Color
                 thickness_idx -= 1 if thickness_idx > 0 else thickness_idx
                 cv2.line(img=img, 
-                    pt1=(right_proj[idx][0], right_proj[idx][1]), 
-                    pt2=(right_proj[idx][0] - self._HORZL_LEN, right_proj[idx][1]), 
+                    pt1=(self.right_proj[idx][0], self.right_proj[idx][1]), 
+                    pt2=(self.right_proj[idx][0] - self._HORZL_LEN, self.right_proj[idx][1]), 
                     color=self._COLORS[color_idx], 
                     thickness=self._HOZ_THICK + thickness_idx)  
 
             # Draw vertical lines in body projection
             cv2.line(img=img, 
-                pt1=tuple(right_proj[idx]), pt2=tuple(right_proj[idx + 1]), 
+                pt1=tuple(self.right_proj[idx]), 
+                pt2=tuple(self.right_proj[idx + 1]), 
                 color=self._COLORS[color_idx], 
                 thickness=self._VER_THICK + thickness_idx)
 
@@ -431,35 +489,92 @@ class WaypointSuscriber():
         dotline(src=img, p1=self._cnt_line[0], p2=self._cnt_line[1],
             color=(255, 255, 255), thickness=self._VER_THICK, Dl=10)
 
-    def draw_in_proj(self, img_src, curvature=0.0, 
-        win_name="LOCAL_LAUNCH_IMG_PROJ"):
+                # ---------------------------------------------------------------------
+
+        # ---------------------------------------------------------------------
+        # Draw waypoint coordinate
+        if self.x_norm is not None and self.y_norm is not None:
+            cv2.circle(img=img, 
+                center=(
+                    int(self.x_norm*img.shape[1]), 
+                    int(self.y_norm*img.shape[0])), 
+                radius=10, color=(255, 255, 255) if self.incnt else (0, 0, 255), 
+                thickness=1)
+            cv2.circle(img=img, 
+                center=(
+                    int(self.x_norm*img.shape[1]), 
+                    int(self.y_norm*img.shape[0])), 
+                radius=2, color=(0, 0, 255), thickness=-1)
+            if self._GUI_WAYPOINT_DESCRIPTION and self.incnt:
+                cv2.line(img=img, 
+                    pt1=(
+                        int(self.x_norm*img.shape[1]), 
+                        int(self.y_norm*img.shape[0])), 
+                    pt2=(
+                        int(self.x_norm*img.shape[1]+70), 
+                        int(self.y_norm*img.shape[0])), 
+                    color=(255, 255, 255), thickness=1)
+                print_text_list(
+                    img=img, 
+                    tex_list=[
+                        f"xm:{round(self.x_m, 2)}",
+                        f"ym:{round(self.y_m, 2)}"],
+                    color=(255, 255, 255), 
+                    orig=(
+                        int(self.x_norm*img.shape[1]+20), 
+                        int(self.y_norm*img.shape[0]+13)), 
+                    fontScale=0.4, 
+                    y_jump=15)
+
+    def draw_in_proj(self, img_src, win_name="LOCAL_LAUNCH_IMG_PROJ"):
+
+        view_coord = self.extrinsic.cams[self.cam_label]["view_coord"]
+        unwarped_size = self.extrinsic.cams[self.cam_label]["unwarped_size"]
 
         # ---------------------------------------------------------------------
         # Get bird view image
-        img_src = cv2.undistort(img_src, self._mtx, self._dist, None, 
-            None) if img_src is not None else np.zeros((self.mono("image_size")[1], 
-                self.mono("image_size")[0], 3), np.uint8)
-        img_dst = cv2.warpPerspective(img_src, self._M, 
-            (self._UNWARPED_SIZE[0], self._view_cord[1]))
-        
+        img_src = cv2.undistort(img_src, self.extrinsic.mtx, self.extrinsic.dist, None, 
+            None) if img_src is not None else np.zeros(
+                (self.extrinsic.intrinsic.image_width, 
+                self.extrinsic.intrinsic.image_height, 3), 
+                dtype=np.uint8)
+        img_dst = cv2.warpPerspective(img_src, 
+            self.extrinsic.cams[self.cam_label]["M"], 
+            (unwarped_size[0], view_coord[1]))
+
+        # ---------------------------------------------------------------------
+        # Draw waypoint coordinate
+        if self.x_warp is not None and self.y_warp is not None:
+            cv2.circle(img=img_dst, 
+                center=(self.x_warp, self.y_warp), 
+                radius=10, color=(255, 255, 255), thickness=1)
+            cv2.circle(img=img_dst, 
+                center=(self.x_warp, self.y_warp),
+                radius=2, color=(0, 0, 255), thickness=-1)
+
         # ---------------------------------------------------------------------
         # Draw some geometries
-        cv2.line(img_dst, (0, self._UNWARPED_SIZE[1]), 
-            (self._UNWARPED_SIZE[0], self._UNWARPED_SIZE[1]), (0, 0, 255), 1)
-        cv2.line(img_dst, (self._view_cord[0], 0), (self._view_cord[0], 
-            self._view_cord[1]), (0, 255, 255), 1)
-        cv2.circle(img=img_dst, center=self.mono("bot_view_cord"), radius=5, 
-            color=(0, 0, 255), thickness=-1)
+        cv2.line(img_dst, 
+            (0, unwarped_size[1]),(unwarped_size[0], unwarped_size[1]), 
+            (0, 0, 255), 1)
+        cv2.line(img_dst, 
+            (view_coord[0], 0), 
+            (view_coord[0], view_coord[1]), 
+            (0, 255, 255), 1)
+        cv2.circle(img=img_dst, center=view_coord, 
+            radius=5, color=(0, 0, 255), thickness=-1)
 
         # ---------------------------------------------------------------------
         # Get Left and right line points
         right_proj = []; left_proj = []; increment = 1
-        idx_y = - (self._view_cord[1] - self._UNWARPED_SIZE[1])
-        while idx_y >= -self._view_cord[1] + self.y_limit:
-            left_proj.append((int(self.AL*(idx_y**2) + self.BL*idx_y + self.CL), 
-                self._view_cord[1] + idx_y))
-            right_proj.append((int(self.AR*(idx_y**2) + self.BR*idx_y + self.CR), 
-                self._view_cord[1] + idx_y))
+        idx_y = - (view_coord[1] - unwarped_size[1])
+        while idx_y >= -view_coord[1] + self.y_limit:
+            left_proj.append(
+                (int(self.AL*(idx_y**2) + self.BL*idx_y + self.CL), 
+                view_coord[1] + idx_y))
+            right_proj.append(
+                (int(self.AR*(idx_y**2) + self.BR*idx_y + self.CR), 
+                view_coord[1] + idx_y))
             idx_y -= increment; increment += 1            
         left_proj = np.array(left_proj)
         right_proj = np.array(right_proj)

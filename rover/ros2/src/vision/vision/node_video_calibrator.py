@@ -158,7 +158,7 @@ class CalibratorPublishers(Node):
             self.cam_img = self.img_bridge.imgmsg_to_cv2(
                 img_msg=msg, desired_encoding="bgr8")
         except CvBridgeError as e:
-            printlog(msg="erro while getting data from video_calibrator/"
+            printlog(msg="error while getting data from video_calibrator/"
                 "calibrate_img, {}".format(e), msg_type="ERROR")
 
     def cb_calibrate(self, msg):
@@ -176,7 +176,7 @@ class CalibratorPublishers(Node):
         # ---------------------------------------------------------------------
         # Check if camera label exits
         if cam_label not in self._cams_status.keys():
-            printlog(msg="{} is not a camera label available in extrinsics {}"
+            printlog(msg="{} is not a camera label available in extrinsic {}"
                 "".format(cam_label, self._cams_status.keys()), msg_type="ERROR")
             time.sleep(10)
             return 
@@ -415,13 +415,13 @@ class CalibratorPublishers(Node):
                     extrinsic_data=extrinsic_vision_params)
 
                 # Report successfully calibration
-                self.pub_log(msg="Calibration apttern for CAM{} succeed!".format(
+                self.pub_log(msg="Calibration pattern for CAM{} succeed!".format(
                     camera_label), msg_type="OKGREEN")
 
                 return True
 
             except Exception as e:
-                printlog(msg="Calibration apttern no found! ({})".format(
+                printlog(msg="Calibration pattern no found! ({})".format(
                     e), msg_type="ERROR")
                 return False
 

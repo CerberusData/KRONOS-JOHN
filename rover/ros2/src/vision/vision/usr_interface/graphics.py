@@ -44,7 +44,7 @@ class GraphicInterface():
             parent_node=parent_node)
 
         # ---------------------------------------------------------------------
-        # User enviroment variables
+        # User environment variables
         self._VISUAL_DEBUGGER = int(os.getenv(
             key="VISUAL_DEBUGGER", default=1))
         self._VISUAL_OVERLAY_CAMS = int(os.getenv(
@@ -81,15 +81,14 @@ class GraphicInterface():
                     images 
         """
 
-        imgs_dict["C"] = cv2.imread("/workspace/rover/ros2/src/vision/vision/extrinsic/calibration_default.jpg")
-
         # ---------------------------------------------------------------------
-        rcam = False
+        # SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - S       
         if self.sub_bot.stream_rear_cam:
-            imgs_dict["P"] = imgs_dict["B"].copy()
+            imgs_dict["P"], imgs_dict["B"] = imgs_dict["B"].copy(), imgs_dict["C"]
             rcam = True
         else:
             imgs_dict["P"] = imgs_dict["C"].copy()
+            rcam = False
 
         # ---------------------------------------------------------------------
         # OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS
@@ -97,18 +96,13 @@ class GraphicInterface():
             self.draw_lateral_cams(imgs_dict, rcam=rcam)
         
         # ---------------------------------------------------------------------
-        # DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUG
-        if self._VISUAL_DEBUGGER:
-            self.sub_visual_debugger.draw(img=imgs_dict["P"])
-
-        # ---------------------------------------------------------------------
         # INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC
         if self._GUI_UNDISTORD_AREA:
             self.draw_intrinsic(img=imgs_dict["P"])
 
         # ---------------------------------------------------------------------
         # WAYPOINT - WAYPOINT - WAYPOINT - WAYPOINT - WAYPOINT - WAYPOINT - WAY
-        if self._VISUAL_WAYPOINT:
+        if self._VISUAL_WAYPOINT and not rcam:
             self.sub_waypoint.draw(img=imgs_dict["P"])
 
         # ---------------------------------------------------------------------
@@ -132,6 +126,11 @@ class GraphicInterface():
         # GAMEOVER SCREEN - GAMEOVER SCREEN - GAMEOVER SCREEN - GAMEOVER SCREEN
         if self._GUI_GAME_OVER_SCREEN:
             pass
+
+        # ---------------------------------------------------------------------
+        # DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUG
+        if self._VISUAL_DEBUGGER:
+            self.sub_visual_debugger.draw(img=imgs_dict["P"])
 
         # ---------------------------------------------------------------------
 

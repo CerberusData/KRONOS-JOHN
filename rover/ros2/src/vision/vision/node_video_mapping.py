@@ -172,7 +172,7 @@ class MappingNode(Node, Thread):
             self.calibrator_img = self.img_bridge.imgmsg_to_cv2(
                 img_msg=msg, desired_encoding="bgr8")
         except CvBridgeError as e:
-            printlog(msg="erro while getting data from video_calibrator/"
+            printlog(msg="error while getting data from video_calibrator/"
                 "calibrate_img_result, {}".format(e), msg_type="ERROR")
 
         time.sleep(int(os.getenv(
