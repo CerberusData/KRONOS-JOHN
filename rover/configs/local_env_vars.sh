@@ -34,8 +34,11 @@ export VISUAL_DEBUGGER_TIME=10  # [int][sec] visual debugger message time
 export VISUAL_OVERLAY_CAMS=1    # [int][sec] enable/disable overlay cameras over main video streaming
 export VISUAL_WAYPOINT=1        # [int][sec] enable/disable waypoint components drawings
 export VISUAL_ZOOM=1            # [int][sec] enable/disable zoom by waypoint
+export VISUAL_OBJECT_DETECTOR=1 # [int][sec] enable/disable Object detection drawings
+export VISUAL_COMPASS=1         # [int][sec] enable/disable Compass drawings
 
 export GUI_GAME_OVER_SCREEN=1       # [int-bolean](1):Enable/(0):Disable - Game over screen drawings
+export GUI_NO_CALIBRATION_SCREEN=1  # [int-bolean](1):Enable/(0):Disable - No calibration scrren
 export GUI_STOP_SCREEN=1            # [int-bolean](1):Enable/(0):Disable - Stop screen drawings
 export GUI_WAYPOINT_AREA=1          # [int-bolean](1):Enable/(0):Disable - Waypoint drawings
 export GUI_WAYPOINT_DESCRIPTION=1   # [int-bolean](1):Enable/(0):Disable - Waypoint drawings

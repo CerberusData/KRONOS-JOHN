@@ -5,6 +5,8 @@ import cv2
 import os
 
 from vision.utils.vision_utils import insert_image
+from vision.utils.vision_utils import overlay_image
+from vision.utils.vision_utils import printlog
 
 from python_utils.pysubscribers import VisualDebuggerSubscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
@@ -53,23 +55,29 @@ class GraphicInterface():
             key="VISUAL_WAYPOINT", default=1))
         self._VISUAL_ZOOM = int(os.getenv(
             key="VISUAL_ZOOM", default=1))  
+        self._VISUAL_OBJECT_DETECTOR = int(os.getenv(
+            key="VISUAL_OBJECT_DETECTOR", default=1))
+        self._VISUAL_COMPASS = int(os.getenv(
+            key="VISUAL_COMPASS", default=1))
         self._GUI_GAME_OVER_SCREEN = int(os.getenv(
             key="GUI_GAME_OVER_SCREEN", default=1))
         self._GUI_STOP_SCREEN = int(os.getenv(
             key="GUI_STOP_SCREEN", default=1))
         self._GUI_UNDISTORD_AREA = int(os.getenv(
             key="GUI_UNDISTORD_AREA", default=1))
+        self._GUI_NO_CALIBRATION_SCREEN = int(os.getenv(
+            key="GUI_NO_CALIBRATION_SCREEN", default=1))
 
         self._IMGS_PATH = os.path.join(os.path.dirname(__file__), "resources")
 
         # ---------------------------------------------------------------------
         # Graphics Images
-        self.stop_sing = cv2.imread(filename=os.path.join(
-            self._IMGS_PATH, "stop_sing.png"), 
-            flags=cv2.IMREAD_UNCHANGED)
-        self.game_over = cv2.imread(filename=os.path.join(
-            self._IMGS_PATH, "game_over.png"), 
-            flags=cv2.IMREAD_UNCHANGED)
+        self.comp_img_stop_sing = gui_image_overlayed(img_path=os.path.join(
+            self._IMGS_PATH, "stop_sing.png"))
+        self.comp_img_game_over = gui_image_overlayed(img_path=os.path.join(
+            self._IMGS_PATH, "game_over.png"), sc_fc=0.3)
+        self.comp_img_no_calibration = gui_image_overlayed(img_path=os.path.join(
+            self._IMGS_PATH, "no_calibration.png"))
 
         # ---------------------------------------------------------------------
 
@@ -79,8 +87,7 @@ class GraphicInterface():
             Methods:
                 draw image components, graphic interface
             Arguments:
-                imgs_dict: 'dict of cv2.math' dictionary with cameras 
-                    images 
+                imgs_dict: 'dict of cv2.math' dictionary with cameras images 
         """
 
         # ---------------------------------------------------------------------
@@ -114,22 +121,29 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # OBJECT DETECTION - OBJECT DETECTION - OBJECT DETECTION - OBJECT DETEC
-
-        # ---------------------------------------------------------------------
-        # NO CALIBRATION SCREEN - NO CALIBRATION SCREEN - NO CALIBRATION SCREEN
+        if self._VISUAL_OBJECT_DETECTOR:
+            pass
 
         # ---------------------------------------------------------------------
         # COMPASS - COMPASS - COMPASS - COMPASS - COMPASS - COMPASS - COMPASS -
+        if self._VISUAL_COMPASS:
+            pass
+
+        # ---------------------------------------------------------------------
+        # NO CALIBRATION SCREEN - NO CALIBRATION SCREEN - NO CALIBRATION SCREEN
+        if (self._GUI_NO_CALIBRATION_SCREEN and 
+            self.sub_extrinsic.extrinsic.cams["C"] is None):
+            self.comp_img_no_calibration.draw(imgs_dict["P"])
 
         # ---------------------------------------------------------------------
         # STOP SCREEN - STOP SCREEN - STOP SCREEN - STOP SCREEN - STOP SCREEN -
         if self._GUI_STOP_SCREEN:
-            pass
+            self.comp_img_stop_sing.draw(imgs_dict["P"])
 
         # ---------------------------------------------------------------------          
         # GAMEOVER SCREEN - GAMEOVER SCREEN - GAMEOVER SCREEN - GAMEOVER SCREEN
         if self._GUI_GAME_OVER_SCREEN:
-            pass
+            self.comp_img_game_over.draw(imgs_dict["P"])
 
         # ---------------------------------------------------------------------
         # DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUG
@@ -213,5 +227,102 @@ class GraphicInterface():
 
         # Draw rectangle of zoom in pilots image
         cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (255, 255, 255), 2)
+
+class gui_image_overlayed():
+
+    def __init__(self, img_path, transparency=0.5, sc_fc=0.5, x=0, y=0, flip=False): 
+        """ Initialize class components
+        Args:
+            img_path: `string` image path to overlay
+            transparency: `float` transparency of image
+            sc_fc: `float` image sacling factor
+            bgr_bleeding: `list` with rgb bleeding values
+        Returns:
+        """
+
+        self._overlayed_mask = None 
+        self.transparency = transparency # Transparency of image
+        self.sc_fc = sc_fc  # image scaling factor
+        self.x_pos = 0
+        self.y_pos = 0
+        
+        # If file exits then load image icon
+        if os.path.isfile(img_path):
+            self._overlayed_mask = cv2.imread(
+                filename=img_path, flags=cv2.IMREAD_UNCHANGED)
+            self._overlayed_mask = cv2.resize(src=self._overlayed_mask, 
+                dsize=(int(self.x_pos + self._overlayed_mask.shape[1]*self.sc_fc), 
+                       int(self.y_pos + self._overlayed_mask.shape[0]*self.sc_fc)))
+            if flip:
+                self._overlayed_mask = cv2.flip(
+                    src=self._overlayed_mask, flipCode=-1) 
+        else:
+            printlog(msg="No file to load image at {}".format(img_path),
+                msg_type="ERROR")
+
+    def draw(self, img_src, position="cc", x_off=0.0, y_off=0.0):
+        """ Draw class components
+        Args:
+            img_src: `cv2.math` input image to draw components
+            position: `string` position to draw component component
+                sl: superior left side
+                sc: superior center side
+                sr: superior right side
+                cl: center left side
+                cc: centered in center
+                cr: center right side
+                il: inferior left side
+                ic: inferior center side
+                ir: inferior right side
+        Returns:
+            img_src: `cv2.math` input image with components drawn
+        """
+
+        if self._overlayed_mask is None:
+            return img_src
+        
+        margin = 10
+        if position == "cc":
+            pos_coord = (
+                int(img_src.shape[1]*0.5 - self._overlayed_mask.shape[1]*0.5), 
+                int(img_src.shape[0]*0.5 - self._overlayed_mask.shape[0]*0.5))
+        elif position == "sl": 
+            pos_coord =  (margin, margin)
+        elif position == "sc": 
+            pos_coord = (
+                int(img_src.shape[1]*0.5 - self._overlayed_mask.shape[1]*0.5), 
+                margin)
+        elif position == "sr": 
+            pos_coord = (
+                int(img_src.shape[1] - self._overlayed_mask.shape[1]-margin), 
+                margin) 
+        elif position == "cl": 
+            pos_coord = (
+                margin, 
+                int(img_src.shape[0]*0.5 - self._overlayed_mask.shape[0]*0.5))
+        elif position == "cr": 
+            pos_coord = (
+                int(img_src.shape[1] - self._overlayed_mask.shape[1]-margin), 
+                int(img_src.shape[0]*0.5 - self._overlayed_mask.shape[0]*0.5)) 
+        elif position == "il": 
+            pos_coord = (
+                margin, 
+                int(img_src.shape[0] - self._overlayed_mask.shape[0]-margin))    
+        elif position == "ic": 
+            pos_coord = (
+                int(img_src.shape[1]*0.5 - self._overlayed_mask.shape[1]*0.5), 
+                int(img_src.shape[0] - self._overlayed_mask.shape[0]-margin))   
+        elif position == "ir": 
+            pos_coord = (
+                int(img_src.shape[1] - self._overlayed_mask.shape[1]-margin), 
+                int(img_src.shape[0] - self._overlayed_mask.shape[0]-margin))  
+        else:
+            pos_coord = (
+                int(img_src.shape[1]*(0.5 + x_off) - self._overlayed_mask.shape[1]*(0.5 + x_off)), 
+                int(img_src.shape[0]*(0.5 + y_off) - self._overlayed_mask.shape[0]*(0.5 + y_off)))
+
+        # Overlay game over image text
+        img_src = overlay_image(l_img=img_src, s_img=self._overlayed_mask, 
+            pos=pos_coord, transparency=self.transparency)
 
 # =============================================================================
