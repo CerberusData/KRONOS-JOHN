@@ -33,6 +33,7 @@ export VISUAL_DEBUGGER=1        # [int-bolean] (1):Enable/(0):Disable visual deb
 export VISUAL_DEBUGGER_TIME=10  # [int][sec] visual debugger message time
 export VISUAL_OVERLAY_CAMS=1    # [int][sec] enable/disable overlay cameras over main video streaming
 export VISUAL_WAYPOINT=1        # [int][sec] enable/disable waypoint components drawings
+export VISUAL_ZOOM=1            # [int][sec] enable/disable zoom by waypoint
 
 export GUI_GAME_OVER_SCREEN=1       # [int-bolean](1):Enable/(0):Disable - Game over screen drawings
 export GUI_STOP_SCREEN=1            # [int-bolean](1):Enable/(0):Disable - Stop screen drawings

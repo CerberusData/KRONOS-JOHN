@@ -200,6 +200,10 @@ class WaypointSuscriber():
             callback_group=parent_node.callback_group
             )
 
+        self.WaypointZoom_msg = Waypoint()
+        self.pub_waypoint_zoom = parent_node.create_publisher(
+            Waypoint, 'video_streaming/zoom', 1)
+
         # ---------------------------------------------------------------------
         # Boot projection
         self._CURV_OFFSET = float(os.getenv("GUI_PROJECTION_BOT_CURV_OFFSET", 0.003))
@@ -285,6 +289,11 @@ class WaypointSuscriber():
                 self.y_m = 0.0
                 self.abs_m = 0.0
                 self.angle = 0.0
+
+                # Publish for zoom
+                self.WaypointZoom_msg.x = msg.x
+                self.WaypointZoom_msg.y = msg.y
+                self.pub_waypoint_zoom.publish(self.WaypointZoom_msg)
 
         except Exception as e:
             printlog(msg="error processing waypoint, {}".format(e), 
@@ -631,17 +640,30 @@ class Robot():
 
     def __init__(self, parent_node):
 
+        # Stitcher
         self.stream_stitch = False
-        self.stream_rear_cam = False
-
-        # Subscribers
-        self._sub_extrinsic_params = parent_node.create_subscription(
+        self._sub_stitch = parent_node.create_subscription(
             msg_type=Bool, topic='video_streaming/stitch', 
             callback=self.cb_video_streaming_stitch, qos_profile=1,
             callback_group=parent_node.callback_group)
-        self._sub_extrinsic_params = parent_node.create_subscription(
+
+        # Rear camera
+        self.stream_rear_cam = False
+        self._sub_rear_cam = parent_node.create_subscription(
             msg_type=Bool, topic='video_streaming/rear_cam', 
             callback=self.cb_video_streaming_rear_cam, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+        # Zoom variables
+        self.zoom = False
+        self.zoom_width = 0.1
+        self.zoom_height = 0.25
+        self.zoom_factor = 3.0
+        # [%]xmin, [%]ymin, [%]xmax, [%]ymax
+        self.zoom_roi = (0.0, 0.0, self.zoom_width, self.zoom_height) 
+        self._sub_zoom = parent_node.create_subscription(
+            msg_type=Waypoint, topic='video_streaming/zoom', 
+            callback=self.cb_zoom, qos_profile=1,
             callback_group=parent_node.callback_group)
 
     def cb_video_streaming_rear_cam(self, data):
@@ -649,5 +671,24 @@ class Robot():
 
     def cb_video_streaming_stitch(self, data):
         self.stream_stitch = not self.stream_stitch
+
+    def cb_zoom(self, data):
+
+        self.zoom = True
+
+        x = data.x - self.zoom_width*0.5
+        y = data.y - self.zoom_height*0.5
+
+        if x + self.zoom_width > 1.0:
+            x = 1.0 - self.zoom_width
+        elif x < 0.0:
+            x = 0.0
+        
+        if y + self.zoom_height > 1.0:
+            y = 1.0 - self.zoom_height
+        elif y < 0.0:
+            y = 0.0
+
+        self.zoom_roi = (x, y, x + self.zoom_width, y + self.zoom_height)
 
 # =============================================================================

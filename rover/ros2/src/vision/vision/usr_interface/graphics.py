@@ -51,6 +51,8 @@ class GraphicInterface():
             key="VISUAL_OVERLAY_CAMS", default=1))
         self._VISUAL_WAYPOINT = int(os.getenv(
             key="VISUAL_WAYPOINT", default=1))
+        self._VISUAL_ZOOM = int(os.getenv(
+            key="VISUAL_ZOOM", default=1))  
         self._GUI_GAME_OVER_SCREEN = int(os.getenv(
             key="GUI_GAME_OVER_SCREEN", default=1))
         self._GUI_STOP_SCREEN = int(os.getenv(
@@ -107,6 +109,8 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM -
+        if self._VISUAL_ZOOM and not rcam and self.sub_bot.zoom:
+            self.draw_zoom(img=imgs_dict["P"], src_img=imgs_dict["C"])
 
         # ---------------------------------------------------------------------
         # OBJECT DETECTION - OBJECT DETECTION - OBJECT DETECTION - OBJECT DETEC
@@ -183,20 +187,31 @@ class GraphicInterface():
                 new_height=int(imgs_dict["P"].shape[0]*0.4), 
                 position='uc')
 
-    def draw_rear_camera(self):
-        """ 
-            Draw rear camera component on image
-            Methods:
-            Arguments:
-        """
-        pass
-
-    def draw_compass(self):
+    def draw_compass(self, img):
         """ 
             Draw compass component on image
             Methods:
             Arguments:
         """
         pass
+
+    def draw_zoom(self, img, src_img):
+
+        x_min = int(self.sub_bot.zoom_roi[0]*src_img.shape[1])
+        x_max = int(self.sub_bot.zoom_roi[2]*src_img.shape[1])
+        y_min = int(self.sub_bot.zoom_roi[1]*src_img.shape[0])
+        y_max = int(self.sub_bot.zoom_roi[3]*src_img.shape[0])
+
+        # Get zoom image
+        zoom_image = src_img[y_min:y_max, x_min:x_max, :]
+
+        # Insert zoom over pilots image
+        insert_image(original_image=img, inserted_image=zoom_image, 
+            new_width=int(zoom_image.shape[1]*self.sub_bot.zoom_factor), 
+            new_height=int(zoom_image.shape[0]*self.sub_bot.zoom_factor), 
+            position='ll')
+
+        # Draw rectangle of zoom in pilots image
+        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (255, 255, 255), 2)
 
 # =============================================================================
