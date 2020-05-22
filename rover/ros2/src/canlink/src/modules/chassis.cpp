@@ -240,7 +240,7 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
     m.getRPY(roll, pitch_, yaw);  /* Only pitch is a global variable */
 
     if (std::abs(pitch_) > 0.3f && std::abs(pitch_) <= max_allowed_pitch_)  /* Normal */
-    {
+    { /* Check 1 */
         speed_pitch_factor_ = (1.0 - std::abs(pitch_) * 2.5f);
         speed_pitch_factor_ = speed_pitch_factor_ < 0.0f ? (1.5 * speed_pitch_factor_ - 0.7) : speed_pitch_factor_;
         if (speed_pitch_factor_ < 0.0)
@@ -259,7 +259,7 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
     else if ((pitch_) < -max_allowed_pitch_)  /* Normal */
-    {
+    { /* Check 2 */
         moon_view_ = 1;
         moon_tmr_->reset();
         /* Deploying warning message to the console */
@@ -273,7 +273,7 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
     else if ((pitch_) > (max_allowed_pitch_))  /* Upwards */
-    {  
+    {  /* Check 3 */
         moon_view_ = -1;
         moon_tmr_->reset();
         /* Deploying warning message to the console */
@@ -287,7 +287,7 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
     else
-    {
+    { /* Check 4 */
         speed_pitch_factor_ = 100.0f;
         /* Strong inclination */
         if (std::abs(pitch_) > 0.15f)

@@ -8,8 +8,6 @@ import os
 import numpy as np
 
 from rclpy.node import Node
-# from rclpy.logging import get_logger
-# from rclpy.parameter import get_parameter
 
 from time import time
 from std_msgs.msg import Bool
@@ -18,10 +16,11 @@ from sensor_msgs.msg import Imu
 from sensor_msgs.msg import Temperature
 from sensor_msgs.msg import MagneticField
 
-# from dynamic_reconfigure.server import Server
 from diagnostic_msgs.msg import DiagnosticArray
 from diagnostic_msgs.msg import DiagnosticStatus
 from diagnostic_msgs.msg import KeyValue
+
+from bosch_imu.utils.transformations import euler_from_quaternion
 
 
 # BOSCH BNO055 IMU Registers map and other information
@@ -219,6 +218,7 @@ class ImuNode(Node):
             timer_period_sec=self.pub_rate,
             callback=self.cb_publish_imu
         )
+    
 
     def _set_process_name(self, name):
         """
@@ -263,20 +263,20 @@ class ImuNode(Node):
         sinr_cosp = 2 * ((w * x) + (y * z))
         cosr_cosp = 1 - (2 * ((x * x) + (y * y)))
         roll = math.atan2(sinr_cosp, cosr_cosp)
-        print("Roll: %0.4f" % roll)
+        #print("Roll: %0.4f" % roll)
 
         # Pitch angle
         sinp = 2 * ((w * y) - (z * x))
         if (abs(sinp) >= 1.0):
-            print("Check 1 Pitch")
+            # print("Check 1 Pitch")
             pitch = math.copysign(math.pi / 2, sinp)
         
         else:
-            print("Check 2 Pitch")
+            #print("Check 2 Pitch")
 
             pitch = math.asin(sinp)
 
-        print("Pitch: %0.4f" % pitch)
+        #print("Pitch: %0.4f" % pitch)
 
 
         # Yaw angle
@@ -284,8 +284,7 @@ class ImuNode(Node):
         cosy_cosp = 1 - (2 * ((y * y) + (z * z)))
         yaw = math.atan2(siny_cosp, cosy_cosp)
         
-        print("Yaw: %0.4f" % yaw)
-
+        # print("Yaw: %0.4f" % yaw)
 
         return roll, pitch, yaw
         
@@ -418,7 +417,14 @@ class ImuNode(Node):
             roll, pitch, yaw = self._euler_from_quaternion(
                 quaternion_orig[0], quaternion_orig[1], quaternion_orig[2], quaternion_orig[3]
                 )
-            print("Roll: %0.4f" % roll, "Pitch: %0.4f" % pitch, "Yaw: %0.4f" % yaw)
+            #print("Roll: %0.4f" % roll, "Pitch: %0.4f" % pitch, "Yaw: %0.4f" % yaw)
+
+            angles = euler_from_quaternion(quaternion=quaternion_orig, axes='rxyz')
+            
+            print("Roll 1: %0.4f" % roll, "Roll 2: %0.4f" % angles[0]) 
+            print("Pitch 1: %0.4f" % pitch, "Pitch 2: %0.4f" % angles[1]) 
+            print("Yaw 1: %0.4f" % yaw, "Yaw 2: %0.4f" % angles[2]) 
+            print("# ========== #")
 
 
     def cb_publish_imu(self):
