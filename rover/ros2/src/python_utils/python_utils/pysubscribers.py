@@ -13,11 +13,13 @@ import time
 import cv2
 import os
 
+from usr_msgs.msg import Extrinsic as Extrinsic_msg
 from usr_msgs.msg import Control as WebControl
-from usr_msgs.msg import PWMOut
 from usr_msgs.msg import VisualMessage
 from usr_msgs.msg import Waypoint
-from usr_msgs.msg import Extrinsic as Extrinsic_msg
+from usr_msgs.msg import PWMOut
+from usr_msgs.msg import Motors
+from usr_msgs.msg import State
 from std_msgs.msg import Bool
 from geometry_msgs.msg import TwistStamped
 
@@ -727,5 +729,33 @@ class RobotSubscriber():
             y = 0.0
 
         self.zoom_roi = (x, y, x + self.zoom_width, y + self.zoom_height)
+
+# TODO:(john) define cahssis subscriber
+class ChassisSuscriber():
+
+    def __init__(self, parent_node):
+        
+        self.error = [False, False, False, False, False]
+        self.armed = False
+
+        self._sub_motors_status = parent_node.create_subscription(
+            msg_type=Motors, topic='/canlink/chassis/motors_status', 
+            callback=self.cb_chassis_motors, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+        self._sub_chassis_status = parent_node.create_subscription(
+            msg_type=State, topic='/canlink/chassis/status', 
+            callback=self.cb_chassis_module, qos_profile=1,
+            callback_group=parent_node.callback_group)
+        
+    def cb_chassis_motors(self, data):
+        motor_errors = data.error_status
+        for idx, status in enumerate(motor_errors):
+            self.error[idx] = True if status > 0 else False
+         
+    def cb_chassis_module(self, data):
+        self.error[-1] = not data.connected
+        self.armed = data.armed
+
 
 # =============================================================================

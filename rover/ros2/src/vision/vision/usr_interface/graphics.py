@@ -13,6 +13,7 @@ from python_utils.pysubscribers import ExtrinsicSubscriber
 from python_utils.pysubscribers import WaypointSubscriber
 from python_utils.pysubscribers import WebclientControl
 from python_utils.pysubscribers import RobotSubscriber
+from python_utils.pysubscribers import ChassisSuscriber
 
 import time
 
@@ -49,6 +50,8 @@ class GraphicInterface():
             parent_node=parent_node)
         self.sub_webclient_control = WebclientControl(
             parent_node=parent_node)
+        self.sub_chassis = ChassisSuscriber(
+            parent_node=parent_node)
 
         # ---------------------------------------------------------------------
         # User environment variables
@@ -80,13 +83,16 @@ class GraphicInterface():
         self._IMGS_PATH = os.path.join(os.path.dirname(__file__), "resources")
 
         # ---------------------------------------------------------------------
-        # Graphics Images
+        # Graphics components
         self.comp_img_stop_sing = gui_image_overlayed(img_path=os.path.join(
             self._IMGS_PATH, "stop_sing.png"))
         self.comp_img_game_over = gui_image_overlayed(img_path=os.path.join(
             self._IMGS_PATH, "game_over.png"), sc_fc=0.3)
         self.comp_img_no_calibration = gui_image_overlayed(img_path=os.path.join(
             self._IMGS_PATH, "no_calibration.png"))
+
+        self.comp_chassis = gui_chassi_report(
+            subs_chassis=self.sub_chassis)
 
         # ---------------------------------------------------------------------
         self.timer_tick_lateral_cam = time.time()
@@ -191,6 +197,10 @@ class GraphicInterface():
         # DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUGGER - DRAW MESSAGES DEBUG
         if self._VISUAL_DEBUGGER:
             self.sub_visual_debugger.draw(img=imgs_dict["P"])
+
+        # ---------------------------------------------------------------------
+        # DRAW CHASSIS ISSUES - DRAW CHASSIS ISSUES - DRAW CHASSIS ISSUES - DRA
+        self.comp_chassis.draw(img_src=imgs_dict["P"])
 
         # ---------------------------------------------------------------------
 
@@ -547,41 +557,41 @@ class gui_distance_sensors():
         cv2.putText(img=img, text=text, org=org, fontFace=self._font, 
             fontScale=self._font_scale, color=color, thickness=self._font_thickness) 
 
-class gui_chassi_report(gui_component_base):
+class gui_chassi_report():
     
-    def __init__(self):
+    def __init__(self, subs_chassis):
         """ Initialize class components
         Args:
         Returns:
         """
 
-        super(gui_chassi_report, self).__init__()
+        self._IMGS_PATH = os.path.join(os.path.dirname(__file__), "resources")
 
         self.robot_chassi = gui_image_overlayed(
-            img_path=os.path.join(figures_path, "robot_chassi.png"),
+            img_path=os.path.join(self._IMGS_PATH, "robot_chassi.png"),
             sc_fc=1., transparency=1.0)
 
         # 4 - 1
         # 3 - 2
         self.wheel_1 = gui_image_overlayed(
-            img_path=os.path.join(figures_path, "wheel_error.png"),
+            img_path=os.path.join(self._IMGS_PATH, "wheel_error.png"),
             sc_fc=1., transparency=1.0, flip=1)
         self.wheel_2 = gui_image_overlayed(
-            img_path=os.path.join(figures_path, "wheel_error.png"),
+            img_path=os.path.join(self._IMGS_PATH, "wheel_error.png"),
             sc_fc=1., transparency=1.0, flip=1)
         self.wheel_3 = gui_image_overlayed(
-            img_path=os.path.join(figures_path, "wheel_error.png"),
+            img_path=os.path.join(self._IMGS_PATH, "wheel_error.png"),
             sc_fc=1., transparency=1.0)
         self.wheel_4 = gui_image_overlayed(
-            img_path=os.path.join(figures_path, "wheel_error.png"),
+            img_path=os.path.join(self._IMGS_PATH, "wheel_error.png"),
             sc_fc=1., transparency=1.0)
         self.module = gui_image_overlayed(
-            img_path=os.path.join(figures_path, "module_error.png"),
+            img_path=os.path.join(self._IMGS_PATH, "module_error.png"),
             sc_fc=1., transparency=1.0)
 
         self.transp=0.01
-        self.subs_chassis = ChassisSuscriber()
-
+        self.subs_chassis = subs_chassis
+        
     def draw(self, img_src):
 
         if True in self.subs_chassis.error:

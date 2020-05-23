@@ -20,10 +20,12 @@ from rclpy.executors import MultiThreadedExecutor
 from threading import Thread, Event
 
 from sensor_msgs.msg import Image
-from std_msgs.msg import String
-from std_msgs.msg import Bool
 from usr_msgs.msg import Control as WebControl
 from usr_msgs.msg import PWMOut
+from usr_msgs.msg import Motors
+from usr_msgs.msg import State
+from std_msgs.msg import String
+from std_msgs.msg import Bool
 
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -98,6 +100,13 @@ class LocalConsoleNode(Node, Thread):
         self.pwm_msg.channels = [0, 0, 0, 0, 0]
         self.pub_pwm = self.create_publisher(
             PWMOut, 'pwm/output', 1,
+            callback_group=self.callback_group)
+
+        self.motors_msg = Motors()
+        self.motors_msg.error_status = [0, 0, 0, 0, 0]
+        self.sim_motros_report = False
+        self.pub_motors = self.create_publisher(
+            Motors, '/canlink/chassis/motors_status', 1,
             callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------  
@@ -243,7 +252,8 @@ class LocalConsoleNode(Node, Thread):
                 f"\n\tD - Show right camera"
                 f"\n\tM - Activate/deactivate waypoint"
                 f"\n\tP - Open lid"
-                f"\n\tR - Switch to rear camera\n"
+                f"\n\tR - Switch to rear camera"
+                f"\n\tR - Simulate motor and chassis error\n"
                 f"\n\tLeft row - Move left"
                 f"\n\tRight row - Move right"
                 f"\n\tUp row - Move forward"
@@ -271,6 +281,16 @@ class LocalConsoleNode(Node, Thread):
         elif key == 115:
             msg = Bool(); msg.data = True
             self.pub_video_streaming_stitch.publish(msg)
+            return
+        # If pressed Z key then simulate cahsis errros
+        elif key == 122:
+            self.sim_motros_report = not self.sim_motros_report
+            if self.sim_motros_report:
+                self.motors_msg.error_status = [1, 1, 1, 1, 1]
+                self.pub_motors.publish(self.motors_msg)
+            else:
+                self.motors_msg.error_status = [0, 0, 0, 0, 0]
+                self.pub_motors.publish(self.motors_msg)
             return
         # If pressed no key defined then print message
         else:
