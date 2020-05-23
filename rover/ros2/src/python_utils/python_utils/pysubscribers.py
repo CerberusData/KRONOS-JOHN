@@ -13,10 +13,13 @@ import time
 import cv2
 import os
 
+from usr_msgs.msg import Control as WebControl
+from usr_msgs.msg import PWMOut
 from usr_msgs.msg import VisualMessage
 from usr_msgs.msg import Waypoint
 from usr_msgs.msg import Extrinsic as Extrinsic_msg
 from std_msgs.msg import Bool
+from geometry_msgs.msg import TwistStamped
 
 from vision.utils.vision_utils import print_text_list
 from vision.utils.vision_utils import printlog
@@ -157,9 +160,27 @@ class WebclientControl():
 
     def __init__(self, parent_node):
 
-        self.control_tilt = 0
-        self.control_pan = 0
-        self.control_throttle = 0
+        self._sub_freedom_control = parent_node.create_subscription(
+            topic="freedom_client/cmd_vel", msg_type=TwistStamped, 
+            callback=self.cb_sub_freedom_control, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+        self._sub_web_client_control = parent_node.create_subscription(
+            topic="web_client/control", msg_type=WebControl, 
+            callback=self.cb_sub_web_client_control, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+        self.tilt = 0
+        self.pan = 0
+        self.throttle = 0
+
+    def cb_sub_freedom_control(self, data):
+        self.throttle = int(data.twist.linear.x*(100./1.5))
+
+    def cb_sub_web_client_control(self, data):
+        self.pan = data.pan
+        self.throttle = data.speed
+        self.tilt = -data.tilt
 
 class WaypointSuscriber():
 
@@ -666,6 +687,16 @@ class Robot():
             callback=self.cb_zoom, qos_profile=1,
             callback_group=parent_node.callback_group)
 
+        # Door variables
+        self._sub_pwm = parent_node.create_subscription(
+            msg_type=PWMOut, topic='pwm/output', 
+            callback=self.cb_sub_pwm, qos_profile=1,
+            callback_group=parent_node.callback_group)
+        self.door_open = False
+
+    def cb_sub_pwm(self, data):
+        self.door_open = int(data.channels[2])>1435
+
     def cb_video_streaming_rear_cam(self, data):
         self.stream_rear_cam = not self.stream_rear_cam
 
@@ -674,7 +705,13 @@ class Robot():
 
     def cb_zoom(self, data):
 
-        self.zoom = True
+        if ((self.zoom_roi[0] < data.x < self.zoom_roi[2]) and 
+            (self.zoom_roi[1] < data.y < self.zoom_roi[3])):
+            self.zoom_roi = (0, 0, 0, 0) 
+            self.zoom = False
+            return
+        else:
+            self.zoom = True
 
         x = data.x - self.zoom_width*0.5
         y = data.y - self.zoom_height*0.5

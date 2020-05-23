@@ -11,6 +11,7 @@ from vision.utils.vision_utils import printlog
 from python_utils.pysubscribers import VisualDebuggerSubscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
 from python_utils.pysubscribers import WaypointSuscriber
+from python_utils.pysubscribers import WebclientControl
 from python_utils.pysubscribers import Robot
 
 # =============================================================================
@@ -43,6 +44,8 @@ class GraphicInterface():
             extrinsic=self.sub_extrinsic.extrinsic,
             intrinsic=self.sub_extrinsic.intrinsic)
         self.sub_bot = Robot(
+            parent_node=parent_node)
+        self.sub_webclient_control = WebclientControl(
             parent_node=parent_node)
 
         # ---------------------------------------------------------------------
@@ -91,14 +94,31 @@ class GraphicInterface():
         """
 
         # ---------------------------------------------------------------------
-        # SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - S       
-        if self.sub_bot.stream_rear_cam:
+        # Robot properties
+        throttle = self.sub_webclient_control.throttle
+        pan = self.sub_webclient_control.pan
+        tilt = self.sub_webclient_control.tilt
+        rcam = False
+
+        # ---------------------------------------------------------------------
+        # Conditionals and logic
+        if throttle:
+            self.sub_bot.zoom = False
+
+        # ---------------------------------------------------------------------
+        # SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - S              
+        elif self.sub_bot.stream_rear_cam:
             imgs_dict["P"], imgs_dict["B"] = imgs_dict["B"].copy(), imgs_dict["C"]
             rcam = True
+        elif pan > 0:
+            imgs_dict["P"] = imgs_dict["RR"]
+            return
+        elif pan < 0:
+            imgs_dict["P"] = imgs_dict["LL"]
+            return
         else:
             imgs_dict["P"] = imgs_dict["C"].copy()
-            rcam = False
-
+            
         # ---------------------------------------------------------------------
         # OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS
         if self._VISUAL_OVERLAY_CAMS:
@@ -116,7 +136,7 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM - ZOOM -
-        if self._VISUAL_ZOOM and not rcam and self.sub_bot.zoom:
+        if (self._VISUAL_ZOOM and self.sub_bot.zoom and not rcam):
             self.draw_zoom(img=imgs_dict["P"], src_img=imgs_dict["C"])
 
         # ---------------------------------------------------------------------
@@ -137,7 +157,7 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # STOP SCREEN - STOP SCREEN - STOP SCREEN - STOP SCREEN - STOP SCREEN -
-        if self._GUI_STOP_SCREEN:
+        if self._GUI_STOP_SCREEN and self.sub_bot.door_open:
             self.comp_img_stop_sing.draw(imgs_dict["P"])
 
         # ---------------------------------------------------------------------          
@@ -187,13 +207,17 @@ class GraphicInterface():
                 original_image=imgs_dict["P"], inserted_image=imgs_dict["RR"], 
                 new_width=int(imgs_dict["P"].shape[1]*0.3), 
                 new_height=int(imgs_dict["P"].shape[0]*0.3), 
-                position='ur')
+                position='ur',
+                border_color=(255,255,255) if self.sub_extrinsic.extrinsic.cams[
+                    "RR"] is not None else (0, 0, 255))
         if "LL" in imgs_dict.keys():
             insert_image(
                 original_image=imgs_dict["P"], inserted_image=imgs_dict["LL"], 
                 new_width=int(imgs_dict["P"].shape[1]*0.3), 
                 new_height=int(imgs_dict["P"].shape[0]*0.3), 
-                position='ul')
+                position='ul',
+                border_color=(255,255,255) if self.sub_extrinsic.extrinsic.cams[
+                    "LL"] is not None else (0, 0, 255))
         if "B" in imgs_dict.keys():
             insert_image(
                 original_image=imgs_dict["P"], inserted_image=imgs_dict["B"], 

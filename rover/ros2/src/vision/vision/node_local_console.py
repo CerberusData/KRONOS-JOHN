@@ -19,10 +19,12 @@ from rclpy.executors import MultiThreadedExecutor
 
 from threading import Thread, Event
 
+from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from std_msgs.msg import Bool
+from usr_msgs.msg import Control as WebControl
+from usr_msgs.msg import PWMOut
 
-from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 from vision.utils.vision_utils import printlog
@@ -85,6 +87,17 @@ class LocalConsoleNode(Node, Thread):
         self.waypoint_msg = Waypoint()
         self.pub_video_streaming_waypoint = self.create_publisher(
             Waypoint, 'video_streaming/waypoint_pt', 1,
+            callback_group=self.callback_group)
+
+        self.web_client_control_msg = WebControl()
+        self.pub_web_client_control = self.create_publisher(
+            WebControl, 'web_client/control', 1,
+            callback_group=self.callback_group)
+
+        self.pwm_msg = PWMOut()
+        self.pwm_msg.channels = [0, 0, 0, 0, 0]
+        self.pub_pwm = self.create_publisher(
+            PWMOut, 'pwm/output', 1,
             callback_group=self.callback_group)
 
         # ---------------------------------------------------------------------  
@@ -177,68 +190,96 @@ class LocalConsoleNode(Node, Thread):
             returns:
         """
 
+        self.web_client_control_msg.pan = 0.
+        self.web_client_control_msg.speed = 0.
+        self.web_client_control_msg.tilt = 0.
+
         # If pressed No key then continue
         if key == -1:
-            pass
-        # If pressed TAB key then open show help/menu options
-        elif key == 9:
             pass
         # If pressed 1 Key then calibrate camera LL
         elif key == 49:
             self.pub_cam_calibrate_msg.data = "LL"
             self.pub_cam_calibrate.publish(self.pub_cam_calibrate_msg)
+            return
         # If pressed 2 Key then calibrate camera C
         elif key == 50:
             self.pub_cam_calibrate_msg.data = "C"
             self.pub_cam_calibrate.publish(self.pub_cam_calibrate_msg)
+            return
         # If pressed 3 Key then calibrate camera RR
         elif key == 51:
             self.pub_cam_calibrate_msg.data = "RR"
             self.pub_cam_calibrate.publish(self.pub_cam_calibrate_msg)
+            return
         # If pressed 4 key then calibrate camera B
         elif key == 52:
             self.pub_cam_calibrate_msg.data = "B"
             self.pub_cam_calibrate.publish(self.pub_cam_calibrate_msg)
+            return
         # If pressed right key then move to right
         elif key == 81:
-            pass
+            self.web_client_control_msg.tilt = 100.
         # If pressed up key then move to forward
         elif key == 82:
-            pass
+            self.web_client_control_msg.speed = 100.
         # If pressed left key then move to left
         elif key == 83:
-            pass
+            self.web_client_control_msg.tilt = -100.
         # If pressed down key then move to backwards
         elif key == 84:
-            pass
+            self.web_client_control_msg.speed = -100.
         # If pressed A key then switch to left camera
         elif key == 97:
-            pass
+            self.web_client_control_msg.pan = -100.
+        # If pressed H key then print help
+        elif key == 104:
+            print(
+                f"\n\t1 - Calibrate camera LL"
+                f"\n\t2 - Calibrate camera C"
+                f"\n\t3 - Calibrate camera RR"
+                f"\n\t4 - Calibrate camera B\n"
+                f"\n\tA - Show left camera"
+                f"\n\tD - Show right camera"
+                f"\n\tM - Activate/deactivate waypoint"
+                f"\n\tP - Open lid"
+                f"\n\tR - Switch to rear camera\n"
+                f"\n\tLeft row - Move left"
+                f"\n\tRight row - Move right"
+                f"\n\tUp row - Move forward"
+                f"\n\tDown row - Move backwards\n", 
+                flush=True)
+            return
         # If pressed M key then switch between manual and waypoint mode
         elif key == 109:
             pass
+            return
         # If pressed D key then switch to right camera
-        elif key == 100:
-            pass
+        elif key == 100.:
+            self.web_client_control_msg.pan = 100.
         # If pressed P key then open the lid
         elif key == 112:
-            pass
-        # If pressed Q key then quit
-        elif key == 113:
-            exit()
+            self.pwm_msg.channels[2]=2000 if self.pwm_msg.channels[2]<300 else 0
+            self.pub_pwm.publish(self.pwm_msg)
+            return
         # If pressed R key then switch to rear camera
         elif key == 114:
             msg = Bool(); msg.data = True
             self.pub_video_streaming_rear_cam.publish(msg)
+            return
         # If pressed S key then activate/desactivate stitching mode
         elif key == 115:
             msg = Bool(); msg.data = True
             self.pub_video_streaming_stitch.publish(msg)
+            return
         # If pressed no key defined then print message
         else:
             printlog(
                 msg=f"{key} key action no defined", 
                 msg_type="WARN")
+            return
+  
+        self.pub_web_client_control.publish(self.web_client_control_msg)
 
     def run(self):
         """
@@ -270,7 +311,8 @@ def main(args=None):
 
     # Runs callbacks in a pool of threads.
     executor = MultiThreadedExecutor()
-
+    printlog(msg="press H Key for help", msg_type="INFO")
+    
     # Execute work and block until the context associated with the 
     # executor is shutdown. Callbacks will be executed by the provided 
     # executor.
