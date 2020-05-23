@@ -1,13 +1,28 @@
+#!/usr/bin/env python3
+# --------------------------------------------------------------------------- #
+"""
+Code Information:
+    Programmer: Camilo Alvis B.
+	Mail: camiloalvis@kiwicampus.com
+	Kiwibot AI Team
+
+Note:
+    This is an implementation of the ROS Transformation module for two functions 
+    euler_from_quaternion and quaternion_from_euler
+
+Sources:
+    http://docs.ros.org/jade/api/tf/html/python/transformations.html
+"""
+
+# --------------------------------------------------------------------------- #
 import numpy as np
 import math
 
-# epsilon for testing whether a number is close to zero
+# Aspsilon for testing whether a number is close to zero
 _EPS = np.finfo(float).eps * 4.0
-
-# axis sequences for Euler angles
+# Axis sequences for Euler angles
 _NEXT_AXIS = [1, 2, 0, 1]
-
-# map axes strings to/from tuples of inner axis, parity, repetition, frame
+# Map axes strings to/from tuples of inner axis, parity, repetition, frame
 _AXES2TUPLE = {
     'sxyz': (0, 0, 0, 0), 'sxyx': (0, 0, 1, 0), 'sxzy': (0, 1, 0, 0),
     'sxzx': (0, 1, 1, 0), 'syzx': (1, 0, 0, 0), 'syzy': (1, 0, 1, 0),
@@ -18,7 +33,10 @@ _AXES2TUPLE = {
     'rzxy': (1, 1, 0, 1), 'ryxy': (1, 1, 1, 1), 'ryxz': (2, 0, 0, 1),
     'rzxz': (2, 0, 1, 1), 'rxyz': (2, 1, 0, 1), 'rzyz': (2, 1, 1, 1)}
 
-def euler_from_quaternion(quaternion, axes='rxyz'):
+# --------------------------------------------------------------------------- #
+## Functions 
+
+def euler_from_quaternion(quaternion, axes='sxyz'):
     """
     Return Euler angles from quaternion for specified axis sequence.
     >>> angles = euler_from_quaternion([0.06146124, 0, 0, 0.99810947])
@@ -27,23 +45,15 @@ def euler_from_quaternion(quaternion, axes='rxyz'):
     """
     return euler_from_matrix(quaternion_matrix(quaternion), axes)
 
-
 def euler_from_matrix(matrix, axes='rxyz'):
     """
-    Return Euler angles from rotation matrix for specified axis sequence.
-    axes : One of 24 axis sequences as string or encoded tuple
-    Note that many Euler angle triplets can describe one matrix.
-    >>> R0 = euler_matrix(1, 2, 3, 'syxz')
-    >>> al, be, ga = euler_from_matrix(R0, 'syxz')
-    >>> R1 = euler_matrix(al, be, ga, 'syxz')
-    >>> numpy.allclose(R0, R1)
-    True
-    >>> angles = (4.0*math.pi) * (numpy.random.random(3) - 0.5)
-    >>> for axes in _AXES2TUPLE.keys():
-    ...    R0 = euler_matrix(axes=axes, *angles)
-    ...    R1 = euler_matrix(axes=axes, *euler_from_matrix(R0, axes))
-    ...    if not numpy.allclose(R0, R1): print axes, "failed"
+    Desc: Calculates the homogenerus rotations matrix from a given quaternion.
+    Args: 
+        matrix - Homogeneus rotation matrix
+        axes : One of 24 axis sequences as string or encoded tuple
+    Returns: Euler angles from rotation matrix for specified axis sequence.
     """
+
     try:
         firstaxis, parity, repetition, frame = _AXES2TUPLE[axes.lower()]
     except (AttributeError, KeyError):
@@ -83,22 +93,46 @@ def euler_from_matrix(matrix, axes='rxyz'):
     return ax, ay, az
 
 def quaternion_matrix(quaternion):
+    """
+    Desc: Calculates the homogenerus rotations matrix from a given quaternion.
+    Args: quaternion - [X, Y, Z, W]
+    Returns: Homogeneous rotation matrix from quaternion.
+    """
 
-    """
-    Return homogeneous rotation matrix from quaternion.
-    >>> R = quaternion_matrix([0.06146124, 0, 0, 0.99810947])
-    >>> numpy.allclose(R, rotation_matrix(0.123, (1, 0, 0)))
-    True
-    """
     q = np.array(quaternion[:4], dtype=np.float64, copy=True)
     nq = np.dot(q, q)
     if nq < _EPS:
         return np.identity(4)
+    
     q *= math.sqrt(2.0 / nq)
     q = np.outer(q, q)
+    
     return np.array((
         (1.0-q[1, 1]-q[2, 2],     q[0, 1]-q[2, 3],     q[0, 2]+q[1, 3], 0.0),
         (    q[0, 1]+q[2, 3], 1.0-q[0, 0]-q[2, 2],     q[1, 2]-q[0, 3], 0.0),
         (    q[0, 2]-q[1, 3],     q[1, 2]+q[0, 3], 1.0-q[0, 0]-q[1, 1], 0.0),
-        (                0.0,                 0.0,                 0.0, 1.0)
-        ), dtype=np.float64)
+        (                0.0,                 0.0,                 0.0, 1.0)), 
+        dtype=np.float64)
+
+def quaternion_from_euler(pitch, roll, yaw):
+    """
+        Desc: Returns the quaternion from the given euler angles
+        Args: Euler angles - (pitch, roll, yaw)
+        Returns: Quaternion - [X, Y, Z, W]
+    """
+
+    cy = math.cos(yaw * 0.5)
+    sy = math.sin(yaw * 0.5)
+    cp = math.cos(pitch * 0.5)
+    sp = math.sin(pitch * 0.5)
+    cr = math.cos(roll * 0.5)
+    sr = math.sin(roll * 0.5)
+
+    w = (cr * cp * cy) + (sr * sp * sy)
+    x = (sr * cp * cy) - (cr * sp * sy)
+    y = (cr * sp * cy) + (sr * cp * sy)
+    z = (cr * cp * sy) - (sr * sp * cy)
+
+    quaternion = [x, y, z, w]
+
+    return quaternion

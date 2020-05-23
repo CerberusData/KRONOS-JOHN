@@ -16,10 +16,6 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
     /* Publishers */
     can_dvr_status_pub_ = this->create_publisher<std_msgs::msg::String>(
         "/canlink/chassis/connection_status", 10);
-
-    // auto msgstring = std::make_unique<std_msgs::msg::String>();
-    // msgstring->data = "NOT OK";
-    // can_dvr_status_pub_->publish(std::move(msgstring));
     
     /* CAN Driver Instantiation - Open socket */
     try
@@ -50,8 +46,6 @@ CANChassis::CANChassis(const rclcpp::NodeOptions & options, CANDriver* can_drive
 
     /* Start a new thread to read continuously the CAN Socket data */
     read_thread_ = std::thread(&CANChassis::StartCANBusRead, this);  
-
-    /* pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&CANChassis::Pub_Cb_, this)); */
 }
 
 
@@ -117,13 +111,11 @@ void CANChassis::StartCANBusRead()
     {
         // RCLCPP_WARN(this->get_logger(), "valid frame %x, id: %x", frame->can_id, frame->data[0]);
         frame = can_driver_->ReadSocket();
-        RCLCPP_WARN(this->get_logger(), "Not blocked");
-
+        
         if (frame)
         {
             if ((frame->can_id & 0xFFF) == KIWIBOT_ADDRESS)
             {
-                RCLCPP_WARN(this->get_logger(), "ID: %x", frame->data[0]);
                 PublishCANInfo(frame);
             }
         }

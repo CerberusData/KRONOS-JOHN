@@ -230,8 +230,9 @@ void Chassis::ChassisRestartCb(const std_msgs::msg::Bool::SharedPtr msg)
 void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     
-    RCLCPP_INFO(this->get_logger(), "Odometry Callback");
-    double roll = 0.0f, yaw = 0;
+    double roll = 0.0f;
+    double yaw = 0.0f;
+
     tf2::Quaternion q(msg->pose.pose.orientation.x, 
                     msg->pose.pose.orientation.y, 
                     msg->pose.pose.orientation.z, 

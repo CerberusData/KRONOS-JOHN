@@ -1,3 +1,21 @@
+#!/usr/bin/env python3
+# --------------------------------------------------------------------------- #
+"""
+Code Information:
+    Programmer: Camilo Alvis B.
+	Mail: camiloalvis@kiwicampus.com
+	Kiwibot AI Team
+
+Note:
+    Wrapper for the IMU Bosch BNO055 in ROS 2. Wrapper implemented for UART 
+    communication.
+
+Sources:
+    Original version: https://github.com/mdrwiega/bosch_imu_driver
+"""
+
+# --------------------------------------------------------------------------- #
+
 import rclpy 
 import serial
 import sys
@@ -6,23 +24,20 @@ import binascii
 import math
 import os
 import numpy as np
+from time import time
 
 from rclpy.node import Node
 
-from time import time
 from std_msgs.msg import Bool
 from std_msgs.msg import String
 from sensor_msgs.msg import Imu
 from sensor_msgs.msg import Temperature
 from sensor_msgs.msg import MagneticField
 
-from diagnostic_msgs.msg import DiagnosticArray
-from diagnostic_msgs.msg import DiagnosticStatus
-from diagnostic_msgs.msg import KeyValue
+from .utils.transformations import euler_from_quaternion
+from .utils.transformations import quaternion_from_euler
 
-from bosch_imu.utils.transformations import euler_from_quaternion
-
-
+# --------------------------------------------------------------------------- #
 # BOSCH BNO055 IMU Registers map and other information
 # Page 0 registers
 CHIP_ID = 0x00
@@ -58,7 +73,7 @@ MAG_CONFIG = 0x09
 GYR_CONFIG0 = 0x0a
 GYR_CONFIG1 = 0x0b
 
-#  Operation modes
+# Operation modes
 OPER_MODE_CONFIG = 0x00
 OPER_MODE_ACCONLY = 0x01
 OPER_MODE_MAGONLY = 0x02
@@ -94,8 +109,6 @@ class ImuNode(Node):
         self._set_process_name(name="imu_node")
 
         # Publishers
-        self.pub_imu_raw = self.create_publisher(
-            Imu, 'imu/raw', 1)              # Raw data - imu_raw_msg
         self.pub_imu_data = self.create_publisher(
             Imu, 'imu/data', 1)             # Filtered data - imu_msg
         self.pub_imu_mag = self.create_publisher(
@@ -112,6 +125,10 @@ class ImuNode(Node):
             String, 'imu/status', 1)        # Kiwibot IMU status - status_msg 
         self.pub_radio_check = self.create_publisher(
             String, 'imu/radio_check', 1)
+        """
+        self.pub_imu_raw = self.create_publisher(
+            Imu, 'imu/raw_data', 1)         # Raw data - imu_raw_msg
+        """
 
         # Publisher flags
         self._counter = 0
@@ -123,12 +140,6 @@ class ImuNode(Node):
         self._initial_orient = 0.0
         self._alpha = 0.995
         self._azimuth = 0.0
-
-        # # Get parameters
-        # self.port = self.get_parameter("port").value 
-        # self.frame_id = self.get_parameter("frame_id").value
-        # self.frequency_ = self.get_parameter("frequency").value
-        # self.opr_mode_ = self.get_parameter("operation_mode").value
 
         # Parameters setup
         self.port = '/dev/ttyTHS2'
@@ -148,15 +159,14 @@ class ImuNode(Node):
         self.status_msg = String()      # IMU status data
 
         # IMU factors
-        self.seq_ = 0
         self.acc_fact_ = 1000.0
         self.mag_fact_ = 16.0
         self.gyr_fact_ = 900.0
 
         # Angles initialization
-        self._roll = 0.0
-        self._pitch = 0.0
-        self._yaw = 0.0
+        self._pitch_bot = 0.0
+        self._roll_bot = 0.0
+        self._yaw_bot = 0.0
 
         # Magnetic field for Berkeley - For Medellin it is -8.2 , -14.3
         self._mgn_decl = float(
@@ -216,10 +226,10 @@ class ImuNode(Node):
         # Timers
         self.pub_timer_ = self.create_timer(
             timer_period_sec=self.pub_rate,
-            callback=self.cb_publish_imu
-        )
-    
+            callback=self.cb_publish_imu)
 
+# --------------------------------------------------------------------------- #   
+## Member functions 
     def _set_process_name(self, name):
         """
             Desc: Kills all the processes
@@ -232,15 +242,17 @@ class ImuNode(Node):
             libc = ctypes.cdll.LoadLibrary('libc.so.6')
             libc.prctl(15, name, 0, 0, 0)
         else:
-            raise Exception("Can not set the process name on non-linux systems: " + str(sys.platform))
-
+            raise Exception(
+                "Can not set the process name on non-linux systems: " + \
+                str(sys.platform))
 
     def _check_id(self):
         """
             Desc: Checks if the IMU ID is correct
             Args: NaN
-            Returns: Buffer ID if succesfully identifies the ID
-                    False if the ID is not correct (Bool)
+            Returns: 
+                Buffer ID if succesfully identifies the ID. False if the ID is 
+                not correct (Bool)
         """
 
         buf = self._read_from_dev(CHIP_ID, 1)
@@ -249,43 +261,6 @@ class ImuNode(Node):
             return False
         
         return buf[0] == BNO055_ID
-
-    def _euler_from_quaternion(self, quat_x, quat_y, quat_z, quat_w):
-        """
-            Desc: Returns the euler angles from a given quaternion
-            Args: Quaterion (X, Y, Z, W)
-            Returns: Euler angles (Roll, Ptich, Yaw)
-        """
-
-        x, y, z, w = quat_x, quat_y, quat_z, quat_w
-
-        # Roll angle
-        sinr_cosp = 2 * ((w * x) + (y * z))
-        cosr_cosp = 1 - (2 * ((x * x) + (y * y)))
-        roll = math.atan2(sinr_cosp, cosr_cosp)
-        #print("Roll: %0.4f" % roll)
-
-        # Pitch angle
-        sinp = 2 * ((w * y) - (z * x))
-        if (abs(sinp) >= 1.0):
-            # print("Check 1 Pitch")
-            pitch = math.copysign(math.pi / 2, sinp)
-        
-        else:
-            #print("Check 2 Pitch")
-
-            pitch = math.asin(sinp)
-
-        #print("Pitch: %0.4f" % pitch)
-
-        # Yaw angle
-        siny_cosp = 2 * ((w * z) + (x * y))
-        cosy_cosp = 1 - (2 * ((y * y) + (z * z)))
-        yaw = math.atan2(siny_cosp, cosy_cosp)
-        
-        # print("Yaw: %0.4f" % yaw)
-
-        return roll, pitch, yaw
         
     def _read_from_dev(self, reg_addr, length):
         """
@@ -351,9 +326,7 @@ class ImuNode(Node):
         """
 
         buf = self._read_from_dev(ACCEL_DATA, 45)
-
         if buf != 0:
-
             # --------------------------------------------------------------- #
             # Gravity values from the IMU buffer
             gravity_x = float(st.unpack('h', st.pack(
@@ -364,11 +337,11 @@ class ImuNode(Node):
                 'h', st.pack('BB', buf[42], buf[43]))[0]) / 100.0
 
             # --------------------------------------------------------------- #
+            """
             # Raw data
             self.imu_raw_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.imu_raw_msg.header.frame_id = self.frame_id
             self.imu_raw_msg.orientation_covariance[0] = -1
-
             self.imu_raw_msg.linear_acceleration.x = float(st.unpack(
                 'h', st.pack('BB', buf[0], buf[1]))[0]) / self.acc_fact_
             self.imu_raw_msg.linear_acceleration.y = float(st.unpack(
@@ -376,7 +349,6 @@ class ImuNode(Node):
             self.imu_raw_msg.linear_acceleration.z = float(st.unpack(
                 'h', st.pack('BB', buf[4], buf[5]))[0]) / self.acc_fact_
             self.imu_raw_msg.linear_acceleration_covariance[0] = -1
-
             self.imu_raw_msg.angular_velocity.x = float(st.unpack(
                 'h', st.pack('BB', buf[12], buf[13]))[0]) / self.gyr_fact_
             self.imu_raw_msg.angular_velocity.y = float(st.unpack(
@@ -384,6 +356,7 @@ class ImuNode(Node):
             self.imu_raw_msg.angular_velocity.z = float(st.unpack(
                 'h', st.pack('BB', buf[16], buf[17]))[0]) / self.gyr_fact_
             self.imu_raw_msg.angular_velocity_covariance[0] = -1
+            """
 
             # --------------------------------------------------------------- #
             # Filtered data
@@ -414,19 +387,13 @@ class ImuNode(Node):
                 'BB', buf[16], buf[17]))[0]) / self.gyr_fact_
             self.imu_msg.angular_velocity_covariance[0] = -1
 
-            # print("X: %0.4f" % self.imu_msg.orientation.x, \
-            #     "Y: %0.4f" % self.imu_msg.orientation.y, \
-            #     "Z: %0.4f" % self.imu_msg.orientation.z, \
-            #     "W: %0.4f" % self.imu_msg.orientation.w)
-
             # --------------------------------------------------------------- #
             # Quaternion value allocation
             quaternion_orig = [
                 self.imu_msg.orientation.x,
                 self.imu_msg.orientation.y,
                 self.imu_msg.orientation.z,
-                self.imu_msg.orientation.w
-            ]
+                self.imu_msg.orientation.w]
 
             # --------------------------------------------------------------- #
             # Magnetometer data
@@ -444,7 +411,6 @@ class ImuNode(Node):
             """
                 For kiwibot the axes are reassigned as follows due to the
                 orientation of the IMU in the robot.
-
                     * X -> Z
                     * Y -> X
                     * Z -> Y
@@ -452,7 +418,6 @@ class ImuNode(Node):
 
             self.imu_bot_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.imu_bot_msg.header.frame_id = self.frame_id
-
             self.imu_bot_msg.linear_acceleration.x = \
                 self.imu_msg.linear_acceleration.z - gravity_z
             self.imu_bot_msg.linear_acceleration.y = \
@@ -471,13 +436,9 @@ class ImuNode(Node):
                 0.0, 1e-6, 0.0, 
                 0.0, 0.0, 1e-6]
 
-            (pitch, roll, yaw) = euler_from_quaternion(
-                quaternion=quaternion_orig, axes='rxyz')
-            
-            print("Pitch - X: %0.4f" % pitch) 
-            print("Roll - Y: %0.4f" % roll) 
-            print("Yaw - Z: %0.4f" % yaw) 
-            print("# ========== #")
+            # IMU Euler angles
+            (pitch_imu, roll_imu, yaw_imu) = euler_from_quaternion(
+                quaternion=quaternion_orig, axes='sxyz')
 
             # --------------------------------------------------------------- #
             # Finding the current azimuth (Yaw)
@@ -487,14 +448,17 @@ class ImuNode(Node):
             """
 
             current_azimuth = \
-                (math.atan2(self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z) - (math.pi / 2))
+                (math.atan2(self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z) - \
+                (math.pi / 2))
 
             if (self._azimuth != 0.0):
                 current_azimuth = \
-                    ((current_azimuth - self._azimuth) + math.pi) % (2.0 * math.pi) - math.pi + self._azimuth
-                self._azimuth = ((1.0 - self._alpha) * current_azimuth) + (self._alpha * self._azimuth)
+                    ((current_azimuth - self._azimuth) + math.pi) % \
+                    (2.0 * math.pi) - math.pi + self._azimuth
+                self._azimuth = ((1.0 - self._alpha) * current_azimuth) + \
+                (self._alpha * self._azimuth)
 
-                if (self._counter < 305):
+                if (self._counter < 205):
                     self._counter += 1
             else:
 
@@ -503,20 +467,21 @@ class ImuNode(Node):
                 
                 # Else condition to handle an error in the IMU when calculating the orientation
             
-            if ((not self._first_orient) and (self._azimuth != 0.0) and (self._counter > 300)):
+            if ((not self._first_orient) and (self._azimuth != 0.0) and (self._counter > 200)):
                 self._initial_orient  = -self._azimuth + self._mgn_decl - (self._yaw - math.pi)
                 self._alpha = 0.75
                 self._first_orient = True
 
             # --------------------------------------------------------------- #
-            # Quaternion bot
-            """
-                This quaternion us created from the current euler angles. It is 
-                performed after the orientation correction.
-            """
-    
-            quaternion_bot = self._quaternion_from_euler(
-                -pitch, roll - (math.pi / 2), yaw - math.pi + self._initial_orient)
+            # Reassigning the value for the Robot axes
+            self._pitch_bot = (math.pi / 2) - pitch_imu
+            self._roll_bot = -roll_imu
+            self._yaw_bot  = yaw_imu + self._initial_orient
+            
+            quaternion_bot = quaternion_from_euler(
+                pitch=self._pitch_bot,
+                roll=self._roll_bot,
+                yaw=self._yaw_bot)
     
             # Kiwibot filtered data
             self.imu_bot_msg.orientation.x = quaternion_bot[0]
@@ -531,7 +496,9 @@ class ImuNode(Node):
             # --------------------------------------------------------------- #
             # Quaternion bot for EKF
             quaternion_bot_ekf = self._quaternion_from_euler(
-                -pitch, roll - (math.pi / 2), -self._azimuth + self._mgn_decl)
+                pitch=self._pitch_bot, 
+                roll=-self._roll_bot,
+                yaw=-self._azimuth + self._mgn_decl)
     
             # Kiwibot filtered data for EKF
             self.imu_ekf_msg.header.stamp =rclpy.clock.Clock().now().to_msg()
@@ -547,14 +514,11 @@ class ImuNode(Node):
     
             # --------------------------------------------------------------- #
             # Publish IMU motion status
-    
             self._acc_values = np.append(
                 self._acc_values, abs(self.imu_bot_msg.linear_acceleration.x))
     
             self._move_counter += 1
             if (self._move_counter == 50):
-    
-                # Check if the average linear acceletarion was greater than the motion factor
                 moving_now = np.mean(self._acc_values) > self._move_factor
     
                 if (moving_now != self._moving_old):
@@ -577,7 +541,6 @@ class ImuNode(Node):
         else:
             self.status_msg.data = "Unavailable data"
 
-
     def cb_publish_imu(self):
         """
             Desc: Publisher for the IMU node
@@ -585,41 +548,39 @@ class ImuNode(Node):
 
         # Function for updating IMU values
         self._update_imu_data()
-
-        # Raw data publisher
-        self.pub_imu_raw.publish(self.imu_raw_msg)
-    
+        # Filtered data publisher
+        self.pub_imu_data.publish(self.imu_msg)
         # Filtered data publisher
         if (self._counter > 300):
             self.pub_bot_data.publish(self.imu_bot_msg)
             self.pub_bot_ekf.publish(self.imu_ekf_msg)
-    
         # Movement publisher
         if (self._move_pub == True):
             self.pub_bot_move.publish(self.move_msg)
-    
         # Magnetometer data publisher
         self.pub_imu_mag.publish(self.mag_msg)
-    
         # Temperature data publisher
         self.pub_imu_temp.publish(self.tmp_msg)
-    
         # IMU status publisher
         self.pub_imu_status.publish(self.status_msg)
+
+        """
+        # Raw data publisher
+        self.pub_imu_raw.publish(self.imu_raw_msg)
+        """
         
-
+# --------------------------------------------------------------------------- #
 def main(args = None):
+    # Node instantiation
     rclpy.init(args = args)
-
     imu_node = ImuNode()
     rclpy.spin(imu_node)
     
     # Closing Serial Port
     imu_node.ser.close()
-
     imu_node.destoy_node()
     rclpy.shutdown()
 
-
+# --------------------------------------------------------------------------- #
 if __name__ == "__main__":
     main()

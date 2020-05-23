@@ -154,8 +154,8 @@ void WheelOdometry::CalculateOdometry()
     float _Y_dot = _X_vel * sin(imu_yaw_ - imu_yaw_offset_);
 
     /* Adding displacement in [m] to the current message */
-    wheel_odom_msg_.pose.pose.position.x = _X_dot * dt;
-    wheel_odom_msg_.pose.pose.position.y = _Y_dot * dt;
+    wheel_odom_msg_.pose.pose.position.x += _X_dot * dt;
+    wheel_odom_msg_.pose.pose.position.y += _Y_dot * dt;
     wheel_odom_msg_.pose.pose.position.z = 0.0f;
     
     /* Velocities assignation */
@@ -166,33 +166,41 @@ void WheelOdometry::CalculateOdometry()
     wheel_odom_msg_.twist.twist.angular.y = 0.0f;
     wheel_odom_msg_.twist.twist.angular.z = imu_omega_;
 
+    /* Testing purposes */
+    wheel_odom_msg_.twist.covariance = {0.0000001, 0, 0, 0, 0, 0,
+                                    0, 0.000000001, 0, 0, 0, 0,
+                                    0, 0, 0.00000002, 0, 0, 0,
+                                    0, 0, 0, 0.01, 0, 0,
+                                    0, 0, 0, 0, 0.01, 0,
+                                    0, 0, 0, 0, 0, 0.002};
+
     /* Twist covariance tunning (Velocities) */
-    if ((imu_state_ == true) && _X_vel == 0.0)
-    { //Robot is moving but wheels not (e.g. robot is being carried)
-        /* 
-            When robot is moving, but wheels not, hence we should avoid adding
-            values to the linear components.
-        */
-        wheel_odom_msg_.twist.covariance = {999, 0, 0, 0, 0, 0,
-                                            0, 999, 0, 0, 0, 0,
-                                            0, 0, 999, 0, 0, 0,
-                                            0, 0, 0, 0.001, 0, 0,
-                                            0, 0, 0, 0, 0.001, 0,
-                                            0, 0, 0, 0, 0, 0.002};
-    }
-    else
-    {
-        /* 
-            When robot is moving and wheel are moving, so we trust the readings
-            in all the components.
-        */
-        wheel_odom_msg_.twist.covariance = {0.0000001, 0, 0, 0, 0, 0,
-                                            0, 0.000000001, 0, 0, 0, 0,
-                                            0, 0, 0.00000002, 0, 0, 0,
-                                            0, 0, 0, 0.01, 0, 0,
-                                            0, 0, 0, 0, 0.01, 0,
-                                            0, 0, 0, 0, 0, 0.002};
-    }
+    // if ((imu_state_ == true) && _X_vel == 0.0)
+    // { //Robot is moving but wheels not (e.g. robot is being carried)
+    //     /* 
+    //         When robot is moving, but wheels not, hence we should avoid adding
+    //         values to the linear components.
+    //     */
+    //     wheel_odom_msg_.twist.covariance = {999, 0, 0, 0, 0, 0,
+    //                                         0, 999, 0, 0, 0, 0,
+    //                                         0, 0, 999, 0, 0, 0,
+    //                                         0, 0, 0, 0.001, 0, 0,
+    //                                         0, 0, 0, 0, 0.001, 0,
+    //                                         0, 0, 0, 0, 0, 0.002};
+    // }
+    // else
+    // {
+    //     /* 
+    //         When robot is moving and wheel are moving, so we trust the readings
+    //         in all the components.
+    //     */
+    //     wheel_odom_msg_.twist.covariance = {0.0000001, 0, 0, 0, 0, 0,
+    //                                         0, 0.000000001, 0, 0, 0, 0,
+    //                                         0, 0, 0.00000002, 0, 0, 0,
+    //                                         0, 0, 0, 0.01, 0, 0,
+    //                                         0, 0, 0, 0, 0.01, 0,
+    //                                         0, 0, 0, 0, 0, 0.002};
+    // }
 
     /* Pose covariance tunning (Positions) */
     wheel_odom_msg_.pose.covariance = {0.1, 0, 0, 0, 0, 0,
