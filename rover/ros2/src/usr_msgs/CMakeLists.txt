@@ -43,6 +43,7 @@ set(MSG_FILES
   "msg/vision/VisualMessage.msg"
   # Web client
   "msg/web_client/Messages.msg"
+  "msg/web_client/Control.msg"
 )
 
 # Message generation
