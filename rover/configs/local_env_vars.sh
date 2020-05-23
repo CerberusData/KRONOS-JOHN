@@ -31,11 +31,14 @@ export STITCHER_SUP_MODE=1      # [int-bolean](1):Enable/(0):Disable - smooth tr
 # Graphic user interface
 export VISUAL_DEBUGGER=1        # [int-bolean] (1):Enable/(0):Disable visual debugger messages 
 export VISUAL_DEBUGGER_TIME=10  # [int][sec] visual debugger message time
-export VISUAL_OVERLAY_CAMS=1    # [int][sec] enable/disable overlay cameras over main video streaming
-export VISUAL_WAYPOINT=1        # [int][sec] enable/disable waypoint components drawings
-export VISUAL_ZOOM=1            # [int][sec] enable/disable zoom by waypoint
-export VISUAL_OBJECT_DETECTOR=1 # [int][sec] enable/disable Object detection drawings
-export VISUAL_COMPASS=1         # [int][sec] enable/disable Compass drawings
+export VISUAL_OVERLAY_CAMS=1    # [int-bolean](1):Enable/(0):Disable cameras over main video streaming
+export VISUAL_WAYPOINT=1        # [int-bolean](1):Enable/(0):Disable components drawings
+export VISUAL_ZOOM=1            # [int-bolean](1):Enable/(0):Disable zoom by waypoint
+export VISUAL_OBJECT_DETECTOR=1 # [int-bolean](1):Enable/(0):Disable Object detection drawings
+export VISUAL_COMPASS=1         # [int-bolean](1):Enable/(0):Disable Compass drawings
+
+export VISUAL_LAT_CAMS_IDLE_TIME=10 # [int][sec] time to hide lateral cameras after no actions
+export VISUAL_REAR_CAM_IDLE_TIME=5  # [int][sec] time to hide rear camera after no actions
 
 export GUI_GAME_OVER_SCREEN=0       # [int-bolean](1):Enable/(0):Disable - Game over screen drawings
 export GUI_NO_CALIBRATION_SCREEN=1  # [int-bolean](1):Enable/(0):Disable - No calibration scrren

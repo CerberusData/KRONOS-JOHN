@@ -47,6 +47,7 @@ class VisualDebuggerSubscriber():
         self.msg = "" 
         # Type of message "info, err, warn"
         self.type = "INFO" 
+        self.font_scale = 0.5
         
         # Subscribers
         self._sub_visual_debugger = parent_node.create_subscription(
@@ -54,8 +55,6 @@ class VisualDebuggerSubscriber():
             callback=self.cb_visual_debugger, qos_profile=5,
             callback_group=parent_node.callback_group
             )
-
-        self.font_scale = 0.5
 
     def cb_visual_debugger(self, msg):
         """ Draws the visual debugger message
@@ -107,14 +106,6 @@ class ExtrinsicSubscriber():
         self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
         self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360))
 
-        # Subscribers
-        self._sub_extrinsic_params = parent_node.create_subscription(
-            msg_type=Extrinsic_msg, 
-            topic='video_calibrator/extrinsic_parameters', 
-            callback=self.cb_extrinsic_params, qos_profile=2,
-            callback_group=parent_node.callback_group
-            )
-
         # Read intrinsic parameters from file
         self.intrinsic = IntrinsicClass()
 
@@ -123,6 +114,14 @@ class ExtrinsicSubscriber():
             dist=self.intrinsic.distortion_coefficients,
             mtx=self.intrinsic.mtx,
             cam_labels=cam_labels
+            )
+
+        # Subscribers
+        self._sub_extrinsic_params = parent_node.create_subscription(
+            msg_type=Extrinsic_msg, 
+            topic='video_calibrator/extrinsic_parameters', 
+            callback=self.cb_extrinsic_params, qos_profile=2,
+            callback_group=parent_node.callback_group
             )
 
     def cb_extrinsic_params(self, msg):
@@ -160,6 +159,10 @@ class WebclientControl():
 
     def __init__(self, parent_node):
 
+        self.tilt = 0
+        self.pan = 0
+        self.throttle = 0
+
         self._sub_freedom_control = parent_node.create_subscription(
             topic="freedom_client/cmd_vel", msg_type=TwistStamped, 
             callback=self.cb_sub_freedom_control, qos_profile=1,
@@ -170,10 +173,6 @@ class WebclientControl():
             callback=self.cb_sub_web_client_control, qos_profile=1,
             callback_group=parent_node.callback_group)
 
-        self.tilt = 0
-        self.pan = 0
-        self.throttle = 0
-
     def cb_sub_freedom_control(self, data):
         self.throttle = int(data.twist.linear.x*(100./1.5))
 
@@ -182,7 +181,7 @@ class WebclientControl():
         self.throttle = data.speed
         self.tilt = -data.tilt
 
-class WaypointSuscriber():
+class WaypointSubscriber():
 
     def __init__(self, parent_node, extrinsic, intrinsic):
 
@@ -212,18 +211,6 @@ class WaypointSuscriber():
         self.abs_m = 0.0    # Absolute distance from origiton to waypoint
         self.angle = 0.0    # Angle of coordinate
         self.incnt = False  # Current waypoint is inside contour
-
-        # Subscribers
-        self._sub_screen_point = parent_node.create_subscription(
-            msg_type=Waypoint, 
-            topic='video_streaming/waypoint_pt', 
-            callback=self.cb_screen_point, qos_profile=2,
-            callback_group=parent_node.callback_group
-            )
-
-        self.WaypointZoom_msg = Waypoint()
-        self.pub_waypoint_zoom = parent_node.create_publisher(
-            Waypoint, 'video_streaming/zoom', 1)
 
         # ---------------------------------------------------------------------
         # Boot projection
@@ -256,6 +243,19 @@ class WaypointSuscriber():
         self.curvature = 1.0
         self.new_curvature = 0.0
         self.distord_lines = True   # Enable/Disable distord bot projection
+
+        # ---------------------------------------------------------------------
+        # Subscribers
+        self._sub_screen_point = parent_node.create_subscription(
+            msg_type=Waypoint, 
+            topic='video_streaming/waypoint_pt', 
+            callback=self.cb_screen_point, qos_profile=2,
+            callback_group=parent_node.callback_group
+            )
+
+        self.WaypointZoom_msg = Waypoint()
+        self.pub_waypoint_zoom = parent_node.create_publisher(
+            Waypoint, 'video_streaming/zoom', 1)
 
     def cb_screen_point(self, msg):
 
@@ -657,7 +657,7 @@ class WaypointSuscriber():
         # ---------------------------------------------------------------------
         cv2.imshow(win_name, img_dst); cv2.waitKey(1)
 
-class Robot():
+class RobotSubscriber():
 
     def __init__(self, parent_node):
 
@@ -688,11 +688,11 @@ class Robot():
             callback_group=parent_node.callback_group)
 
         # Door variables
+        self.door_open = False
         self._sub_pwm = parent_node.create_subscription(
             msg_type=PWMOut, topic='pwm/output', 
             callback=self.cb_sub_pwm, qos_profile=1,
             callback_group=parent_node.callback_group)
-        self.door_open = False
 
     def cb_sub_pwm(self, data):
         self.door_open = int(data.channels[2])>1435

@@ -10,9 +10,11 @@ from vision.utils.vision_utils import printlog
 
 from python_utils.pysubscribers import VisualDebuggerSubscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
-from python_utils.pysubscribers import WaypointSuscriber
+from python_utils.pysubscribers import WaypointSubscriber
 from python_utils.pysubscribers import WebclientControl
-from python_utils.pysubscribers import Robot
+from python_utils.pysubscribers import RobotSubscriber
+
+import time
 
 # =============================================================================
 class GraphicInterface():
@@ -39,11 +41,11 @@ class GraphicInterface():
         self.sub_extrinsic = ExtrinsicSubscriber(
             parent_node=parent_node, 
             cam_labels=cam_labels)
-        self.sub_waypoint = WaypointSuscriber(
+        self.sub_waypoint = WaypointSubscriber(
             parent_node=parent_node, 
             extrinsic=self.sub_extrinsic.extrinsic,
             intrinsic=self.sub_extrinsic.intrinsic)
-        self.sub_bot = Robot(
+        self.sub_bot = RobotSubscriber(
             parent_node=parent_node)
         self.sub_webclient_control = WebclientControl(
             parent_node=parent_node)
@@ -62,6 +64,10 @@ class GraphicInterface():
             key="VISUAL_OBJECT_DETECTOR", default=1))
         self._VISUAL_COMPASS = int(os.getenv(
             key="VISUAL_COMPASS", default=1))
+        self._VISUAL_LAT_CAMS_IDLE_TIME = int(os.getenv(
+            key="VISUAL_LAT_CAMS_IDLE_TIME", default=1))
+        self._VISUAL_REAR_CAM_IDLE_TIME = int(os.getenv(
+            key="VISUAL_REAR_CAM_IDLE_TIME", default=1))
         self._GUI_GAME_OVER_SCREEN = int(os.getenv(
             key="GUI_GAME_OVER_SCREEN", default=1))
         self._GUI_STOP_SCREEN = int(os.getenv(
@@ -83,6 +89,10 @@ class GraphicInterface():
             self._IMGS_PATH, "no_calibration.png"))
 
         # ---------------------------------------------------------------------
+        self.timer_tick_lateral_cam = time.time()
+        self.timer_tick_rear_cam = time.time()
+
+        # ---------------------------------------------------------------------
 
     def draw_components(self, imgs_dict):
         """ 
@@ -102,12 +112,18 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # Conditionals and logic
-        if throttle:
-            self.sub_bot.zoom = False
-
+        
+        # if robot moves fordware
+        if throttle > 0:
+            self.sub_bot.zoom = False # Take off zoom if robot moves
+            self.timer_tick_lateral_cam = time.time() # reset timer
+        # if robot moves backwards
+        elif throttle < 0:
+            self.timer_tick_rear_cam = time.time() # reset timer
+    
         # ---------------------------------------------------------------------
         # SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - S              
-        elif self.sub_bot.stream_rear_cam:
+        if self.sub_bot.stream_rear_cam:
             imgs_dict["P"], imgs_dict["B"] = imgs_dict["B"].copy(), imgs_dict["C"]
             rcam = True
         elif pan > 0:
@@ -118,12 +134,18 @@ class GraphicInterface():
             return
         else:
             imgs_dict["P"] = imgs_dict["C"].copy()
-            
+        
         # ---------------------------------------------------------------------
         # OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS
         if self._VISUAL_OVERLAY_CAMS:
-            self.draw_lateral_cams(imgs_dict, rcam=rcam)
-        
+            tock = time.time() - self.timer_tick_lateral_cam
+            tock_rcam = time.time() - self.timer_tick_rear_cam
+            self.draw_lateral_cams(
+                imgs_dict=imgs_dict,  
+                show_rcam=tock_rcam < self._VISUAL_REAR_CAM_IDLE_TIME,
+                show_ltcams=tock < self._VISUAL_LAT_CAMS_IDLE_TIME,
+                switched_cam=rcam)
+                        
         # ---------------------------------------------------------------------
         # INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC
         if self._GUI_UNDISTORD_AREA:
@@ -193,7 +215,7 @@ class GraphicInterface():
                 contourIdx=0, color=(0, 0, 200), 
                 thickness=thickness)
 
-    def draw_lateral_cams(self, imgs_dict, rcam):
+    def draw_lateral_cams(self, imgs_dict, switched_cam, show_rcam, show_ltcams):
         """ 
             Draw lateral cameras components on image
             Methods:
@@ -202,7 +224,11 @@ class GraphicInterface():
                     graphic interface
         """
 
-        if "RR" in imgs_dict.keys():
+        if switched_cam:
+            if "RR" in imgs_dict.keys() and "LL" in imgs_dict.keys():
+                imgs_dict["RR"], imgs_dict["LL"] = imgs_dict["LL"], imgs_dict["RR"]
+
+        if "RR" in imgs_dict.keys() and show_ltcams:
             insert_image(
                 original_image=imgs_dict["P"], inserted_image=imgs_dict["RR"], 
                 new_width=int(imgs_dict["P"].shape[1]*0.3), 
@@ -210,7 +236,7 @@ class GraphicInterface():
                 position='ur',
                 border_color=(255,255,255) if self.sub_extrinsic.extrinsic.cams[
                     "RR"] is not None else (0, 0, 255))
-        if "LL" in imgs_dict.keys():
+        if "LL" in imgs_dict.keys() and show_ltcams:
             insert_image(
                 original_image=imgs_dict["P"], inserted_image=imgs_dict["LL"], 
                 new_width=int(imgs_dict["P"].shape[1]*0.3), 
@@ -218,7 +244,7 @@ class GraphicInterface():
                 position='ul',
                 border_color=(255,255,255) if self.sub_extrinsic.extrinsic.cams[
                     "LL"] is not None else (0, 0, 255))
-        if "B" in imgs_dict.keys():
+        if "B" in imgs_dict.keys() and show_rcam:
             insert_image(
                 original_image=imgs_dict["P"], inserted_image=imgs_dict["B"], 
                 new_width=int(imgs_dict["P"].shape[1]*0.4), 
@@ -348,5 +374,242 @@ class gui_image_overlayed():
         # Overlay game over image text
         img_src = overlay_image(l_img=img_src, s_img=self._overlayed_mask, 
             pos=pos_coord, transparency=self.transparency)
+
+class gui_cliff_sensors():
+
+    def __init__(self, topic_list):
+        """ Initialize cliff sensors components 
+        Args:
+            topic_list: 'list' list of cliff sensors topics
+        Returns:
+        """
+
+        self._sensors = [CliffSensorSuscriber(
+            topic_name=sensor_topic) for sensor_topic in topic_list]
+        self._CLIFF_SENSOR_TRESHOLD = float(os.getenv("CLIFF_SENSOR_TRESHOLD", 0.55))
+        self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360)) 
+        self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640)) 
+        self._sensor_idx = int(self._VIDEO_WIDTH/(len(self._sensors)+1))
+        self._y_offset = 100
+        self._x_offset = 0
+        self._x_offsets = []
+        self._radius = 150
+        self._color = (0, 0, 255)
+        self._thickness = 2
+        self._inner_circles = 5
+        self._inner_cileres_step = 10
+
+        if len(self._sensors) == 2:
+            self._x_offsets = [-50, 50]
+        if len(self._sensors) == 3:
+            self._x_offsets = [-50, 0,  50]
+
+    def draw(self, img_src):
+        """ Draw cliff sensors components
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+
+        for idx, sensor in enumerate(self._sensors):
+            if sensor.range > self._CLIFF_SENSOR_TRESHOLD:
+                self.draw_sensor(img_src=img_src, sensor=sensor, 
+                    idx=(int(self._sensor_idx*(idx+1))),
+                    x_offset=self._x_offsets[idx] if len(self._x_offsets) else 0)
+
+    def draw_sensor(self, img_src, sensor, idx, x_offset=0):
+        """ Draw cliff sensor component
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+
+        for circle_idx in range(self._inner_circles):
+            radius = self._radius-self._inner_cileres_step*circle_idx
+            cv2.circle(img=img_src, 
+                center=(
+                    idx + self._x_offset + x_offset, 
+                    self._VIDEO_HEIGHT + self._y_offset), 
+                radius=radius if radius > 0 else 1, 
+                color=self._color, 
+                thickness=self._thickness) 
+        
+class gui_distance_sensors():
+
+    def __init__(self, topic_list):
+        """ Initialize distance sensors components 
+        Args:
+            topic_list: 'list' list of distance sensors topics
+        Returns:
+        """
+
+        self._sensors = [DistanceSensorSuscriber(
+            topic_name=sensor_topic) for sensor_topic in topic_list]
+
+        self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360)) 
+        self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
+        self._GUI_SENSORS_DISTANCE_MEASURE = int(os.getenv(
+            key="GUI_SENSORS_DISTANCE_MEASURE", default=1))
+        self._GUI_SENSORS_DISTANCE_LONG = float(os.getenv(
+            key="GUI_SENSORS_DISTANCE_LONG", default=150))
+        
+        self._angle_start = int(90 - int(os.getenv(
+            key="GUI_SENSORS_DISTANCE_APERTURE_ANGLE", default=30))*0.5)
+        self._angle_end = int(90 + int(os.getenv(
+            key="GUI_SENSORS_DISTANCE_APERTURE_ANGLE", default=30))*0.5)
+        self._angle_start_rad = np.deg2rad(self._angle_start)
+        self._angle_end_rad = np.deg2rad(self._angle_end)
+        self._angle_tan = math.tan(self._angle_start_rad)
+        self._sin_tan = math.sin(self._angle_start_rad)
+
+        self._font = cv2.FONT_HERSHEY_SIMPLEX
+        self._font_scale = 0.8
+        self._font_thickness = 1
+        self._sensor_idx = int(self._VIDEO_WIDTH/(len(self._sensors)+1))
+        self._y_offset = 20
+        self._x_offset = 0
+        self._x_offsets = []
+        self._angle = 30
+        self._color = (255, 255, 255)
+        self._thickness = 2
+
+        if len(self._sensors) == 2:
+            self._x_offsets = [-50, 50]
+        if len(self._sensors) == 3:
+            self._x_offsets = [-50, 0,  50]
+
+    def draw(self, img_src):
+        """ Draw distance sensors components
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+
+        for idx, sensor in enumerate(self._sensors):
+            if sensor.range >= sensor.min_range:
+                self.draw_sensor(img_src=img_src, sensor=sensor, 
+                    idx=(int(self._sensor_idx*(idx+1))),
+                    x_offset=self._x_offsets[idx] if len(self._x_offsets) else 0)
+
+    def draw_sensor(self, img_src, sensor , idx, x_offset=0):
+        """ Draw distance sensor component
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+
+        x_idx = idx + self._x_offset + x_offset
+        y_idx = self._y_offset + self._VIDEO_HEIGHT
+        l_dist = int(self._GUI_SENSORS_DISTANCE_LONG*sensor.range/sensor.max_range)
+
+        x = l_dist/self._angle_tan
+
+        # Draw right line
+        cv2.line(
+            img=img_src, 
+            pt1=(x_idx, y_idx),
+            pt2=(
+                int(x_idx + x), 
+                int(self._y_offset + self._VIDEO_HEIGHT - self._sin_tan*l_dist)),
+            color=self._color, 
+            thickness=self._thickness) 
+
+        # Draw left line
+        cv2.line(
+            img=img_src, 
+            pt1=(x_idx, y_idx),
+            pt2=(
+                int(x_idx - x), 
+                int(self._y_offset + self._VIDEO_HEIGHT - self._sin_tan*l_dist)),
+            color=self._color, 
+            thickness=self._thickness) 
+
+        # Draw elipse to complete haz
+        cv2.ellipse(
+            img=img_src, 
+            center=(x_idx, y_idx), 
+            axes=(l_dist, l_dist), 
+            angle=180, 
+            startAngle=self._angle_start, 
+            endAngle=self._angle_end, 
+            color=self._color, 
+            thickness=self._thickness) 
+
+        if self._GUI_SENSORS_DISTANCE_MEASURE:
+            self.draw_text(img=img_src, 
+                text="{}m".format(round(sensor.range, 2)), 
+                org=(x_idx - 35, self._VIDEO_HEIGHT - 20), 
+                color=self._color)
+
+    def draw_text(self, img, text, org, color):
+        cv2.putText(img=img, text=text, org=org, fontFace=self._font, 
+            fontScale=self._font_scale, color=(0, 0, 0), thickness=self._font_thickness*4)
+        cv2.putText(img=img, text=text, org=org, fontFace=self._font, 
+            fontScale=self._font_scale, color=color, thickness=self._font_thickness) 
+
+class gui_chassi_report(gui_component_base):
+    
+    def __init__(self):
+        """ Initialize class components
+        Args:
+        Returns:
+        """
+
+        super(gui_chassi_report, self).__init__()
+
+        self.robot_chassi = gui_image_overlayed(
+            img_path=os.path.join(figures_path, "robot_chassi.png"),
+            sc_fc=1., transparency=1.0)
+
+        # 4 - 1
+        # 3 - 2
+        self.wheel_1 = gui_image_overlayed(
+            img_path=os.path.join(figures_path, "wheel_error.png"),
+            sc_fc=1., transparency=1.0, flip=1)
+        self.wheel_2 = gui_image_overlayed(
+            img_path=os.path.join(figures_path, "wheel_error.png"),
+            sc_fc=1., transparency=1.0, flip=1)
+        self.wheel_3 = gui_image_overlayed(
+            img_path=os.path.join(figures_path, "wheel_error.png"),
+            sc_fc=1., transparency=1.0)
+        self.wheel_4 = gui_image_overlayed(
+            img_path=os.path.join(figures_path, "wheel_error.png"),
+            sc_fc=1., transparency=1.0)
+        self.module = gui_image_overlayed(
+            img_path=os.path.join(figures_path, "module_error.png"),
+            sc_fc=1., transparency=1.0)
+
+        self.transp=0.01
+        self.subs_chassis = ChassisSuscriber()
+
+    def draw(self, img_src):
+
+        if True in self.subs_chassis.error:
+
+            if self.wheel_2.transparency > 0.7: self.transp = -0.1
+            elif self.wheel_2.transparency < 0.2: self.transp = 0.1 
+                
+            self.wheel_1.transparency += self.transp
+            self.wheel_2.transparency += self.transp
+            self.wheel_3.transparency += self.transp
+            self.wheel_4.transparency += self.transp
+            self.module.transparency += self.transp
+
+            self.robot_chassi.draw(img_src=img_src)
+            
+            if self.subs_chassis.error[0]:
+                self.wheel_1.draw(img_src=img_src, position="", 
+                    x_off=0.095, y_off=0.255)
+            if self.subs_chassis.error[1]:
+                self.wheel_2.draw(img_src=img_src, position="", 
+                    x_off=0.095, y_off=-0.255)
+            if self.subs_chassis.error[2]:
+                self.wheel_3.draw(img_src=img_src, position="", 
+                    x_off=-0.095, y_off=0.255)
+            if self.subs_chassis.error[3]:
+                self.wheel_4.draw(img_src=img_src, position="", 
+                    x_off=-0.095, y_off=-0.255)
+            if self.subs_chassis.error[-1]:
+                self.module.draw(img_src=img_src)
 
 # =============================================================================
