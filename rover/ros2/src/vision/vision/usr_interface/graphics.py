@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # =============================================================================
 import numpy as np
+import time
+import math
 import cv2
 import os
 
@@ -9,13 +11,13 @@ from vision.utils.vision_utils import overlay_image
 from vision.utils.vision_utils import printlog
 
 from python_utils.pysubscribers import VisualDebuggerSubscriber
+from python_utils.pysubscribers import DistanceSensorSuscriber
+from python_utils.pysubscribers import CliffSensorSuscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
 from python_utils.pysubscribers import WaypointSubscriber
 from python_utils.pysubscribers import WebclientControl
 from python_utils.pysubscribers import RobotSubscriber
 from python_utils.pysubscribers import ChassisSuscriber
-
-import time
 
 # =============================================================================
 class GraphicInterface():
@@ -53,6 +55,19 @@ class GraphicInterface():
         self.sub_chassis = ChassisSuscriber(
             parent_node=parent_node)
 
+        self.subs_cliff_sensors = [CliffSensorSuscriber(
+            parent_node=parent_node, topic_name=topic) for topic in [
+            "/tf_mini_plus/cliff_sensor1",
+            "/tf_mini_plus/cliff_sensor2",
+        ]]
+
+        self.subs_dist_sensors = [DistanceSensorSuscriber(
+            parent_node=parent_node, topic_name=topic) for topic in [
+            "/tf_mini_plus/distance_sensor3",
+            "/tf_mini_plus/distance_sensor2",
+            "/tf_mini_plus/distance_sensor1",
+        ]]
+
         # ---------------------------------------------------------------------
         # User environment variables
         self._VISUAL_DEBUGGER = int(os.getenv(
@@ -71,6 +86,12 @@ class GraphicInterface():
             key="VISUAL_LAT_CAMS_IDLE_TIME", default=1))
         self._VISUAL_REAR_CAM_IDLE_TIME = int(os.getenv(
             key="VISUAL_REAR_CAM_IDLE_TIME", default=1))
+        self._VISUAL_CHASSIS_ERROR = int(os.getenv(
+            key="VISUAL_CHASSIS_ERROR", default=1))
+        self._VISUAL_DISTANCE_SENSORS = int(os.getenv(
+            key="VISUAL_DISTANCE_SENSORS", default=1))
+        self._VISUAL_CLIFF_SENSORS = int(os.getenv(
+            key="VISUAL_CLIFF_SENSORS", default=1))
         self._GUI_GAME_OVER_SCREEN = int(os.getenv(
             key="GUI_GAME_OVER_SCREEN", default=1))
         self._GUI_STOP_SCREEN = int(os.getenv(
@@ -93,6 +114,11 @@ class GraphicInterface():
 
         self.comp_chassis = gui_chassi_report(
             subs_chassis=self.sub_chassis)
+
+        self.comp_dist_sensors = gui_distance_sensors(
+            subs_sensor_list=self.subs_dist_sensors)
+        self.comp_cliff_sensors = gui_cliff_sensors(
+            subs_sensor_list=self.subs_cliff_sensors)
 
         # ---------------------------------------------------------------------
         self.timer_tick_lateral_cam = time.time()
@@ -200,9 +226,18 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # DRAW CHASSIS ISSUES - DRAW CHASSIS ISSUES - DRAW CHASSIS ISSUES - DRA
-        self.comp_chassis.draw(img_src=imgs_dict["P"])
+        if self._VISUAL_CHASSIS_ERROR:
+            self.comp_chassis.draw(img_src=imgs_dict["P"])
 
         # ---------------------------------------------------------------------
+        # CLIFF SENSORS - CLIFF SENSORS - CLIFF SENSORS - CLIFF SENSORS - CLIFF
+        if self._VISUAL_CLIFF_SENSORS:
+            self.comp_cliff_sensors.draw(img_src=imgs_dict["P"])
+
+        # ---------------------------------------------------------------------
+        # DISTANCE SENSORS - DISTANCE SENSORS - DISTANCE SENSORS - DISTANCE SEN
+        if self._VISUAL_DISTANCE_SENSORS:
+            self.comp_dist_sensors.draw(img_src=imgs_dict["P"])
 
     def draw_intrinsic(self, img, cam_label="C", thickness=2):
         """ 
@@ -385,178 +420,6 @@ class gui_image_overlayed():
         img_src = overlay_image(l_img=img_src, s_img=self._overlayed_mask, 
             pos=pos_coord, transparency=self.transparency)
 
-class gui_cliff_sensors():
-
-    def __init__(self, topic_list):
-        """ Initialize cliff sensors components 
-        Args:
-            topic_list: 'list' list of cliff sensors topics
-        Returns:
-        """
-
-        self._sensors = [CliffSensorSuscriber(
-            topic_name=sensor_topic) for sensor_topic in topic_list]
-        self._CLIFF_SENSOR_TRESHOLD = float(os.getenv("CLIFF_SENSOR_TRESHOLD", 0.55))
-        self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360)) 
-        self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640)) 
-        self._sensor_idx = int(self._VIDEO_WIDTH/(len(self._sensors)+1))
-        self._y_offset = 100
-        self._x_offset = 0
-        self._x_offsets = []
-        self._radius = 150
-        self._color = (0, 0, 255)
-        self._thickness = 2
-        self._inner_circles = 5
-        self._inner_cileres_step = 10
-
-        if len(self._sensors) == 2:
-            self._x_offsets = [-50, 50]
-        if len(self._sensors) == 3:
-            self._x_offsets = [-50, 0,  50]
-
-    def draw(self, img_src):
-        """ Draw cliff sensors components
-        Args:
-            img_src: 'cv2.math' image to draw component
-        Returns:
-        """
-
-        for idx, sensor in enumerate(self._sensors):
-            if sensor.range > self._CLIFF_SENSOR_TRESHOLD:
-                self.draw_sensor(img_src=img_src, sensor=sensor, 
-                    idx=(int(self._sensor_idx*(idx+1))),
-                    x_offset=self._x_offsets[idx] if len(self._x_offsets) else 0)
-
-    def draw_sensor(self, img_src, sensor, idx, x_offset=0):
-        """ Draw cliff sensor component
-        Args:
-            img_src: 'cv2.math' image to draw component
-        Returns:
-        """
-
-        for circle_idx in range(self._inner_circles):
-            radius = self._radius-self._inner_cileres_step*circle_idx
-            cv2.circle(img=img_src, 
-                center=(
-                    idx + self._x_offset + x_offset, 
-                    self._VIDEO_HEIGHT + self._y_offset), 
-                radius=radius if radius > 0 else 1, 
-                color=self._color, 
-                thickness=self._thickness) 
-        
-class gui_distance_sensors():
-
-    def __init__(self, topic_list):
-        """ Initialize distance sensors components 
-        Args:
-            topic_list: 'list' list of distance sensors topics
-        Returns:
-        """
-
-        self._sensors = [DistanceSensorSuscriber(
-            topic_name=sensor_topic) for sensor_topic in topic_list]
-
-        self._VIDEO_HEIGHT = int(os.getenv(key="VIDEO_HEIGHT", default=360)) 
-        self._VIDEO_WIDTH = int(os.getenv(key="VIDEO_WIDTH", default=640))
-        self._GUI_SENSORS_DISTANCE_MEASURE = int(os.getenv(
-            key="GUI_SENSORS_DISTANCE_MEASURE", default=1))
-        self._GUI_SENSORS_DISTANCE_LONG = float(os.getenv(
-            key="GUI_SENSORS_DISTANCE_LONG", default=150))
-        
-        self._angle_start = int(90 - int(os.getenv(
-            key="GUI_SENSORS_DISTANCE_APERTURE_ANGLE", default=30))*0.5)
-        self._angle_end = int(90 + int(os.getenv(
-            key="GUI_SENSORS_DISTANCE_APERTURE_ANGLE", default=30))*0.5)
-        self._angle_start_rad = np.deg2rad(self._angle_start)
-        self._angle_end_rad = np.deg2rad(self._angle_end)
-        self._angle_tan = math.tan(self._angle_start_rad)
-        self._sin_tan = math.sin(self._angle_start_rad)
-
-        self._font = cv2.FONT_HERSHEY_SIMPLEX
-        self._font_scale = 0.8
-        self._font_thickness = 1
-        self._sensor_idx = int(self._VIDEO_WIDTH/(len(self._sensors)+1))
-        self._y_offset = 20
-        self._x_offset = 0
-        self._x_offsets = []
-        self._angle = 30
-        self._color = (255, 255, 255)
-        self._thickness = 2
-
-        if len(self._sensors) == 2:
-            self._x_offsets = [-50, 50]
-        if len(self._sensors) == 3:
-            self._x_offsets = [-50, 0,  50]
-
-    def draw(self, img_src):
-        """ Draw distance sensors components
-        Args:
-            img_src: 'cv2.math' image to draw component
-        Returns:
-        """
-
-        for idx, sensor in enumerate(self._sensors):
-            if sensor.range >= sensor.min_range:
-                self.draw_sensor(img_src=img_src, sensor=sensor, 
-                    idx=(int(self._sensor_idx*(idx+1))),
-                    x_offset=self._x_offsets[idx] if len(self._x_offsets) else 0)
-
-    def draw_sensor(self, img_src, sensor , idx, x_offset=0):
-        """ Draw distance sensor component
-        Args:
-            img_src: 'cv2.math' image to draw component
-        Returns:
-        """
-
-        x_idx = idx + self._x_offset + x_offset
-        y_idx = self._y_offset + self._VIDEO_HEIGHT
-        l_dist = int(self._GUI_SENSORS_DISTANCE_LONG*sensor.range/sensor.max_range)
-
-        x = l_dist/self._angle_tan
-
-        # Draw right line
-        cv2.line(
-            img=img_src, 
-            pt1=(x_idx, y_idx),
-            pt2=(
-                int(x_idx + x), 
-                int(self._y_offset + self._VIDEO_HEIGHT - self._sin_tan*l_dist)),
-            color=self._color, 
-            thickness=self._thickness) 
-
-        # Draw left line
-        cv2.line(
-            img=img_src, 
-            pt1=(x_idx, y_idx),
-            pt2=(
-                int(x_idx - x), 
-                int(self._y_offset + self._VIDEO_HEIGHT - self._sin_tan*l_dist)),
-            color=self._color, 
-            thickness=self._thickness) 
-
-        # Draw elipse to complete haz
-        cv2.ellipse(
-            img=img_src, 
-            center=(x_idx, y_idx), 
-            axes=(l_dist, l_dist), 
-            angle=180, 
-            startAngle=self._angle_start, 
-            endAngle=self._angle_end, 
-            color=self._color, 
-            thickness=self._thickness) 
-
-        if self._GUI_SENSORS_DISTANCE_MEASURE:
-            self.draw_text(img=img_src, 
-                text="{}m".format(round(sensor.range, 2)), 
-                org=(x_idx - 35, self._VIDEO_HEIGHT - 20), 
-                color=self._color)
-
-    def draw_text(self, img, text, org, color):
-        cv2.putText(img=img, text=text, org=org, fontFace=self._font, 
-            fontScale=self._font_scale, color=(0, 0, 0), thickness=self._font_thickness*4)
-        cv2.putText(img=img, text=text, org=org, fontFace=self._font, 
-            fontScale=self._font_scale, color=color, thickness=self._font_thickness) 
-
 class gui_chassi_report():
     
     def __init__(self, subs_chassis):
@@ -621,5 +484,176 @@ class gui_chassi_report():
                     x_off=-0.095, y_off=-0.255)
             if self.subs_chassis.error[-1]:
                 self.module.draw(img_src=img_src)
+
+class gui_distance_sensors():
+
+    def __init__(self, subs_sensor_list):
+        """ Initialize distance sensors components 
+        Args:
+        Returns:
+        """
+
+        self._sensors = subs_sensor_list
+
+        self._GUI_SENSORS_DISTANCE_MEASURE = int(os.getenv(
+            key="GUI_SENSORS_DISTANCE_MEASURE", default=1))
+        self._GUI_SENSORS_DISTANCE_LONG = float(os.getenv(
+            key="GUI_SENSORS_DISTANCE_LONG", default=150))
+        
+        self._angle_start = int(90 - int(os.getenv(
+            key="GUI_SENSORS_DISTANCE_APERTURE_ANGLE", default=30))*0.5)
+        self._angle_end = int(90 + int(os.getenv(
+            key="GUI_SENSORS_DISTANCE_APERTURE_ANGLE", default=30))*0.5)
+
+        self._angle_start_rad = np.deg2rad(self._angle_start)
+        self._angle_end_rad = np.deg2rad(self._angle_end)
+        self._angle_tan = math.tan(self._angle_start_rad)
+        self._sin_tan = math.sin(self._angle_start_rad)
+
+        self._font = cv2.FONT_HERSHEY_SIMPLEX
+        self._font_scale = 0.8
+        self._font_thickness = 1
+        self._y_offset = 20
+        self._x_offset = 0
+        self._x_offsets = []
+        self._angle = 30
+        self._color = (255, 255, 255)
+        self._thickness = 2
+
+        if len(self._sensors) == 2:
+            self._x_offsets = [-50, 50]
+        if len(self._sensors) == 3:
+            self._x_offsets = [-50, 0,  50]
+
+    def draw(self, img_src):
+        """ Draw distance sensors components
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+
+        sensor_idx = int(img_src.shape[1]/(len(self._sensors)+1))
+        for idx, sensor in enumerate(self._sensors):
+            if sensor.range >= sensor.min_range:
+                self.draw_sensor(
+                    img_src=img_src, 
+                    sensor=sensor, 
+                    idx=(int(sensor_idx*(idx+1))),
+                    x_offset=self._x_offsets[idx] 
+                        if len(self._x_offsets) else 0)
+
+    def draw_sensor(self, img_src, sensor , idx, x_offset=0):
+        """ Draw distance sensor component
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+
+        x_idx = idx + self._x_offset + x_offset
+        y_idx = self._y_offset + img_src.shape[0]
+        l_dist = int(self._GUI_SENSORS_DISTANCE_LONG*sensor.range/sensor.max_range)
+        x = l_dist/self._angle_tan
+
+        # Draw right line
+        cv2.line(
+            img=img_src, 
+            pt1=(x_idx, y_idx),
+            pt2=(
+                int(x_idx + x), 
+                int(self._y_offset + img_src.shape[0] - self._sin_tan*l_dist)),
+            color=self._color, 
+            thickness=self._thickness) 
+
+        # Draw left line
+        cv2.line(
+            img=img_src, 
+            pt1=(x_idx, y_idx),
+            pt2=(
+                int(x_idx - x), 
+                int(self._y_offset + img_src.shape[0] - self._sin_tan*l_dist)),
+            color=self._color, 
+            thickness=self._thickness) 
+        
+        # Draw elipse to complete haz
+        cv2.ellipse(
+            img=img_src, 
+            center=(x_idx, y_idx), 
+            axes=(l_dist, l_dist), 
+            angle=180, 
+            startAngle=self._angle_start, 
+            endAngle=self._angle_end, 
+            color=self._color, 
+            thickness=self._thickness) 
+
+        if (self._GUI_SENSORS_DISTANCE_MEASURE 
+            and sensor.range > sensor.min_range):
+            self.draw_text(img=img_src, 
+                text="{}m".format(round(sensor.range, 2)), 
+                org=(x_idx - 35, img_src.shape[0] - 20), 
+                color=self._color)
+
+    def draw_text(self, img, text, org, color):
+        cv2.putText(img=img, text=text, org=org, fontFace=self._font, 
+            fontScale=self._font_scale, color=(0, 0, 0), thickness=self._font_thickness*4)
+        cv2.putText(img=img, text=text, org=org, fontFace=self._font, 
+            fontScale=self._font_scale, color=color, thickness=self._font_thickness) 
+
+class gui_cliff_sensors():
+
+    def __init__(self, subs_sensor_list):
+        """ Initialize cliff sensors components 
+        Args:
+        Returns:
+        """
+
+        return
+        self._sensors = subs_sensor_list
+        self._CLIFF_SENSOR_TRESHOLD = float(
+            os.getenv("CLIFF_SENSOR_TRESHOLD", 0.55))
+        self._sensor_idx = int(self._VIDEO_WIDTH/(len(self._sensors)+1))
+        self._y_offset = 100
+        self._x_offset = 0
+        self._x_offsets = []
+        self._radius = 150
+        self._color = (0, 0, 255)
+        self._thickness = 2
+        self._inner_circles = 5
+        self._inner_cileres_step = 10
+
+        if len(self._sensors) == 2:
+            self._x_offsets = [-50, 50]
+        if len(self._sensors) == 3:
+            self._x_offsets = [-50, 0,  50]
+
+    def draw(self, img_src):
+        """ Draw cliff sensors components
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+        return
+        for idx, sensor in enumerate(self._sensors):
+            if sensor.range > self._CLIFF_SENSOR_TRESHOLD:
+                self.draw_sensor(img_src=img_src, sensor=sensor, 
+                    idx=(int(self._sensor_idx*(idx+1))),
+                    x_offset=self._x_offsets[idx] if len(self._x_offsets) else 0)
+
+    def draw_sensor(self, img_src, sensor, idx, x_offset=0):
+        """ Draw cliff sensor component
+        Args:
+            img_src: 'cv2.math' image to draw component
+        Returns:
+        """
+
+        for circle_idx in range(self._inner_circles):
+            radius = self._radius-self._inner_cileres_step*circle_idx
+            cv2.circle(img=img_src, 
+                center=(
+                    idx + self._x_offset + x_offset, 
+                    self._VIDEO_HEIGHT + self._y_offset), 
+                radius=radius if radius > 0 else 1, 
+                color=self._color, 
+                thickness=self._thickness) 
+  
 
 # =============================================================================

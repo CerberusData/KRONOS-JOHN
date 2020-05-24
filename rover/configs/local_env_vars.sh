@@ -29,13 +29,16 @@ export STITCHER_SUP_MODE=1      # [int-bolean](1):Enable/(0):Disable - smooth tr
 
 # -----------------------------------------------------------------------------
 # Graphic user interface
-export VISUAL_DEBUGGER=1        # [int-bolean] (1):Enable/(0):Disable visual debugger messages 
-export VISUAL_DEBUGGER_TIME=10  # [int][sec] visual debugger message time
-export VISUAL_OVERLAY_CAMS=1    # [int-bolean](1):Enable/(0):Disable cameras over main video streaming
-export VISUAL_WAYPOINT=1        # [int-bolean](1):Enable/(0):Disable components drawings
-export VISUAL_ZOOM=1            # [int-bolean](1):Enable/(0):Disable zoom by waypoint
-export VISUAL_OBJECT_DETECTOR=1 # [int-bolean](1):Enable/(0):Disable Object detection drawings
-export VISUAL_COMPASS=1         # [int-bolean](1):Enable/(0):Disable Compass drawings
+export VISUAL_DEBUGGER=1            # [int-bolean] (1):Enable/(0):Disable visual debugger messages 
+export VISUAL_DEBUGGER_TIME=10      # [int][sec] visual debugger message time
+export VISUAL_OVERLAY_CAMS=1        # [int-bolean](1):Enable/(0):Disable cameras over main video streaming
+export VISUAL_WAYPOINT=1            # [int-bolean](1):Enable/(0):Disable components drawings
+export VISUAL_ZOOM=1                # [int-bolean](1):Enable/(0):Disable zoom by waypoint
+export VISUAL_OBJECT_DETECTOR=1     # [int-bolean](1):Enable/(0):Disable Object detection drawings
+export VISUAL_COMPASS=1             # [int-bolean](1):Enable/(0):Disable Compass drawings
+export VISUAL_CHASSIS_ERROR=1       # [int-bolean](1):Enable/(0):Disable Chassis error drawings
+export VISUAL_DISTANCE_SENSORS=1    # [int-bolean](1):Enable/(0):Disable distance sensors drawings
+export VISUAL_CLIFF_SENSORS=1       # [int-bolean](1):Enable/(0):Disable cliff sensors drawings
 
 export VISUAL_LAT_CAMS_IDLE_TIME=10 # [int][sec] time to hide lateral cameras after no actions
 export VISUAL_REAR_CAM_IDLE_TIME=5  # [int][sec] time to hide rear camera after no actions
@@ -50,6 +53,12 @@ export GUI_PROJECTION_BOT_WIDTH=0.5 # [float] [m] robot's width to draw its proj
 export GUI_PROJECTION_BOT_MARGI=0.3 # [float] [m] margin to add to robots projection
 export GUI_PROJECTION_SHOW_LOCAL=0  # [int-bolean]  with LOCAL_LAUNCH=1 (1):Enable/(0):Disable show image projection
 
+export GUI_SENSORS_DISTANCE_MEASURE=1           # [int-bolean](1):Enable/(0):Disable - Distance sensors distance value on local gui
+export GUI_SENSORS_DISTANCE_APERTURE_ANGLE=40   # [int][pix] - aperture angle to draw distance sensor cone on local gui
+export GUI_SENSORS_DISTANCE_LONG=170            # [int][pix] - vertical length to draw distance sensor cone on local gui
+
+export CLIFF_SENSOR_TRESHOLD=0.55   # [float] - Threshold value to draw cliff sensors
+ 
 # -----------------------------------------------------------------------------
 # Extrinsic calibration - Mono-vision
 export VISION_CAL_SHOW_LOCAL=0          # NOTE: Should be undefined in the robot

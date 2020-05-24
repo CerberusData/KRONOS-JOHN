@@ -21,6 +21,7 @@ from usr_msgs.msg import PWMOut
 from usr_msgs.msg import Motors
 from usr_msgs.msg import State
 from std_msgs.msg import Bool
+from sensor_msgs.msg import Range
 from geometry_msgs.msg import TwistStamped
 
 from vision.utils.vision_utils import print_text_list
@@ -730,7 +731,6 @@ class RobotSubscriber():
 
         self.zoom_roi = (x, y, x + self.zoom_width, y + self.zoom_height)
 
-# TODO:(john) define cahssis subscriber
 class ChassisSuscriber():
 
     def __init__(self, parent_node):
@@ -757,5 +757,35 @@ class ChassisSuscriber():
         self.error[-1] = not data.connected
         self.armed = data.armed
 
+class DistanceSensorSuscriber():
+
+    def __init__(self, parent_node, topic_name, min_range=1.0, max_range=10.):
+
+        self.min_range = min_range # [m]
+        self.max_range = max_range # [m]
+        self.range = min_range
+        self.sub_dist_sensor = parent_node.create_subscription(
+            msg_type=Range, topic=topic_name, 
+            callback=self.cb_dist_sensor, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+    def cb_dist_sensor(self, data):
+
+        self.range = data.range if data.range < self.max_range else self.max_range
+        self.min_range = data.min_range # [m]
+        self.max_range = data.max_range # [m]
+
+class CliffSensorSuscriber():
+
+    def __init__(self, parent_node, topic_name):
+
+        self.range = 0.0
+        self.sub_cliff_sensor = parent_node.create_subscription(
+            msg_type=Range, topic=topic_name, 
+            callback=self.cb_cliff_sensor, qos_profile=1,
+            callback_group=parent_node.callback_group)
+
+    def cb_cliff_sensor(self, data):
+        self.range = data.range
 
 # =============================================================================

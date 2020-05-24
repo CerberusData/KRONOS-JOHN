@@ -20,10 +20,11 @@ from rclpy.executors import MultiThreadedExecutor
 from threading import Thread, Event
 
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import Range
+
 from usr_msgs.msg import Control as WebControl
 from usr_msgs.msg import PWMOut
 from usr_msgs.msg import Motors
-from usr_msgs.msg import State
 from std_msgs.msg import String
 from std_msgs.msg import Bool
 
@@ -108,6 +109,27 @@ class LocalConsoleNode(Node, Thread):
         self.pub_motors = self.create_publisher(
             Motors, '/canlink/chassis/motors_status', 1,
             callback_group=self.callback_group)
+
+        self.sim_cliff_sensors = False
+        self.dist_sensor_msg = Range()
+        self.dist_sensor_msg.max_range = 10.
+        self.dist_sensor_msg.min_range = 1.0
+        self.dist_sensor_inc = 0.2
+        self.pubs_dist_sensors = [self.create_publisher(
+            Range, topic, 1, callback_group=self.callback_group) for topic in [
+                "/tf_mini_plus/distance_sensor3",
+                "/tf_mini_plus/distance_sensor2",
+                "/tf_mini_plus/distance_sensor1",
+            ]]
+
+        self.sim_dist_sensors = False
+        self.cliff_sensor_inc = 0.2
+        self.cliff_sensor_msg = Range()
+        self.pubs_cliff_sensors = [self.create_publisher(
+            Range, topic, 1, callback_group=self.callback_group) for topic in [
+                "/tf_mini_plus/cliff_sensor1",
+                "/tf_mini_plus/cliff_sensor2",
+            ]]
 
         # ---------------------------------------------------------------------  
         # Thread variables
@@ -253,7 +275,9 @@ class LocalConsoleNode(Node, Thread):
                 f"\n\tM - Activate/deactivate waypoint"
                 f"\n\tP - Open lid"
                 f"\n\tR - Switch to rear camera"
-                f"\n\tR - Simulate motor and chassis error\n"
+                f"\n\tZ - Simulate motor and chassis error"
+                f"\n\tX - Simulate distance sensors"
+                f"\n\tC - Simulate cliff sensors\n"
                 f"\n\tLeft row - Move left"
                 f"\n\tRight row - Move right"
                 f"\n\tUp row - Move forward"
@@ -282,7 +306,7 @@ class LocalConsoleNode(Node, Thread):
             msg = Bool(); msg.data = True
             self.pub_video_streaming_stitch.publish(msg)
             return
-        # If pressed Z key then simulate cahsis errros
+        # If pressed Z key then simulate chasis errros
         elif key == 122:
             self.sim_motros_report = not self.sim_motros_report
             if self.sim_motros_report:
@@ -292,6 +316,16 @@ class LocalConsoleNode(Node, Thread):
                 self.motors_msg.error_status = [0, 0, 0, 0, 0]
                 self.pub_motors.publish(self.motors_msg)
             return
+        # If pressed X key then simulate distance sensors
+        elif key == 120:
+            self.sim_dist_sensors = not self.sim_dist_sensors
+            if not self.sim_dist_sensors:
+                self.dist_sensor_msg.range = self.dist_sensor_msg.min_range
+                for pub in self.pubs_dist_sensors:
+                    pub.publish(self.dist_sensor_msg)
+        # If pressed C key then simulate cliff sensors
+        elif key == 99:
+            self.sim_cliff_sensors = not self.sim_cliff_sensors
         # If pressed no key defined then print message
         else:
             printlog(
@@ -299,7 +333,23 @@ class LocalConsoleNode(Node, Thread):
                 msg_type="WARN")
             return
   
-        self.pub_web_client_control.publish(self.web_client_control_msg)
+        self.pub_web_client_control.publish(
+            self.web_client_control_msg)
+
+        if self.sim_dist_sensors:
+            if self.dist_sensor_msg.range >= self.dist_sensor_msg.max_range:
+                self.dist_sensor_inc = -abs(self.dist_sensor_inc)
+                self.dist_sensor_msg.range = self.dist_sensor_msg.max_range
+            elif self.dist_sensor_msg.range <= self.dist_sensor_msg.min_range:
+                self.dist_sensor_inc = abs(self.dist_sensor_inc)
+                self.dist_sensor_msg.range = self.dist_sensor_msg.min_range
+            self.dist_sensor_msg.range += self.dist_sensor_inc
+            for pub in self.pubs_dist_sensors:
+                pub.publish(self.dist_sensor_msg)
+
+        # if self.sim_cliff_sensors:
+        #     for pub in self.pubs_cliff_sensors: 
+        #         pub.publish(self.cliff_sensor_msg)
 
     def run(self):
         """
