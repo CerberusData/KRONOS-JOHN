@@ -61,7 +61,7 @@ class IntrinsicClass():
                     msg="No intrinsic configuration file {}".format(
                         self.file_name), msg_type="ERROR")
                 return
-            
+
             for key in [
                 "camera_matrix", 
                 "distortion_coefficients",

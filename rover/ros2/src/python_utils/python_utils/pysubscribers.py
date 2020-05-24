@@ -51,7 +51,7 @@ class VisualDebuggerSubscriber():
         # Type of message "info, err, warn"
         self.type = "INFO" 
         self.font_scale = 0.5
-        
+
         # Subscribers
         self._sub_visual_debugger = parent_node.create_subscription(
             msg_type=VisualMessage, topic='video_streaming/visual_debugger', 
@@ -147,7 +147,7 @@ class ExtrinsicSubscriber():
                         msg.cam_label)
                         )
 
-                for key, val in self.extrinsic.update.items():
+                for key, _ in self.extrinsic.update.items():
                     self.extrinsic.update[key] = True
 
             printlog(msg="Extrinsic parameters for CAM{} updated".format(
@@ -211,7 +211,7 @@ class WaypointSubscriber():
         self.y_warp = None  # Y axis Waypoint coordinate in warped space
         self.x_m = 0.0      # X axis Waypoint coordinate in warped space
         self.y_m = 0.0      # Y axis Waypoint coordinate in warped space
-        self.abs_m = 0.0    # Absolute distance from origiton to waypoint
+        self.abs_m = 0.0    # Absolute distance from origin to waypoint
         self.angle = 0.0    # Angle of coordinate
         self.incnt = False  # Current waypoint is inside contour
 
@@ -235,7 +235,7 @@ class WaypointSubscriber():
         self.AL = 0.0
         self.BL = 0.0
         self.CL = 0.0
-        
+
         self.left_proj = []
         self.right_proj = []
 
@@ -425,7 +425,7 @@ class WaypointSubscriber():
                     left_proj.append(lp)
                 else:
                     lout = True
-        
+
             # Right projection line
             if not rout:
                 rp = get_projection_point_src(
@@ -448,7 +448,7 @@ class WaypointSubscriber():
                     right_proj.append(rp)
                 else:
                     rout = True
-            
+
             idx_y -= increment; increment += 1
 
         self.left_proj = np.array(left_proj)
@@ -481,7 +481,7 @@ class WaypointSubscriber():
 
         # ---------------------------------------------------------------------
         # Draw robots projection lines
-        
+
         # Left side
         color_idx = 0
         thickness_idx = len(self._COLORS)
@@ -533,8 +533,6 @@ class WaypointSubscriber():
         # Print doted center line
         dotline(src=img, p1=self._cnt_line[0], p2=self._cnt_line[1],
             color=(255, 255, 255), thickness=self._VER_THICK, Dl=10)
-
-                # ---------------------------------------------------------------------
 
         # ---------------------------------------------------------------------
         # Draw waypoint coordinate
@@ -731,7 +729,7 @@ class RobotSubscriber():
 
         self.zoom_roi = (x, y, x + self.zoom_width, y + self.zoom_height)
 
-class ChassisSuscriber():
+class ChassisSubscriber():
 
     def __init__(self, parent_node):
         
@@ -752,7 +750,7 @@ class ChassisSuscriber():
         motor_errors = data.error_status
         for idx, status in enumerate(motor_errors):
             self.error[idx] = True if status > 0 else False
-         
+
     def cb_chassis_module(self, data):
         self.error[-1] = not data.connected
         self.armed = data.armed

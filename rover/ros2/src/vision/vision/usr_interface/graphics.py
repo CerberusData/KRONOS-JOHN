@@ -15,9 +15,9 @@ from python_utils.pysubscribers import DistanceSensorSuscriber
 from python_utils.pysubscribers import CliffSensorSuscriber
 from python_utils.pysubscribers import ExtrinsicSubscriber
 from python_utils.pysubscribers import WaypointSubscriber
+from python_utils.pysubscribers import ChassisSubscriber
 from python_utils.pysubscribers import WebclientControl
 from python_utils.pysubscribers import RobotSubscriber
-from python_utils.pysubscribers import ChassisSuscriber
 
 # =============================================================================
 class GraphicInterface():
@@ -52,7 +52,7 @@ class GraphicInterface():
             parent_node=parent_node)
         self.sub_webclient_control = WebclientControl(
             parent_node=parent_node)
-        self.sub_chassis = ChassisSuscriber(
+        self.sub_chassis = ChassisSubscriber(
             parent_node=parent_node)
 
         self.subs_cliff_sensors = [CliffSensorSuscriber(
@@ -144,7 +144,7 @@ class GraphicInterface():
 
         # ---------------------------------------------------------------------
         # Conditionals and logic
-        
+
         # if robot moves fordware
         if throttle > 0:
             self.sub_bot.zoom = False # Take off zoom if robot moves
@@ -152,7 +152,7 @@ class GraphicInterface():
         # if robot moves backwards
         elif throttle < 0:
             self.timer_tick_rear_cam = time.time() # reset timer
-    
+
         # ---------------------------------------------------------------------
         # SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - SWITCH CAMERAS - S              
         if self.sub_bot.stream_rear_cam:
@@ -166,7 +166,7 @@ class GraphicInterface():
             return
         else:
             imgs_dict["P"] = imgs_dict["C"].copy()
-        
+
         # ---------------------------------------------------------------------
         # OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS - OVERLAY OTHER CAMERAS
         if self._VISUAL_OVERLAY_CAMS:
@@ -177,7 +177,7 @@ class GraphicInterface():
                 show_rcam=tock_rcam < self._VISUAL_REAR_CAM_IDLE_TIME,
                 show_ltcams=tock < self._VISUAL_LAT_CAMS_IDLE_TIME,
                 switched_cam=rcam)
-                        
+
         # ---------------------------------------------------------------------
         # INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC - INTRINSIC
         if self._GUI_UNDISTORD_AREA:
@@ -247,7 +247,7 @@ class GraphicInterface():
                 cam_label: 'string' camera label to get extrinsic components
             returns:
         """
-        
+
         if cam_label in self.sub_extrinsic.extrinsic.cams.keys():
             if self.sub_extrinsic.extrinsic.cams[cam_label] is None:
                 return
@@ -340,14 +340,15 @@ class gui_image_overlayed():
         self.sc_fc = sc_fc  # image scaling factor
         self.x_pos = 0
         self.y_pos = 0
-        
+
         # If file exits then load image icon
         if os.path.isfile(img_path):
             self._overlayed_mask = cv2.imread(
                 filename=img_path, flags=cv2.IMREAD_UNCHANGED)
             self._overlayed_mask = cv2.resize(src=self._overlayed_mask, 
-                dsize=(int(self.x_pos + self._overlayed_mask.shape[1]*self.sc_fc), 
-                       int(self.y_pos + self._overlayed_mask.shape[0]*self.sc_fc)))
+                dsize=(
+                    int(self.x_pos + self._overlayed_mask.shape[1]*self.sc_fc), 
+                    int(self.y_pos + self._overlayed_mask.shape[0]*self.sc_fc)))
             if flip:
                 self._overlayed_mask = cv2.flip(
                     src=self._overlayed_mask, flipCode=-1) 
@@ -454,14 +455,14 @@ class gui_chassi_report():
 
         self.transp=0.01
         self.subs_chassis = subs_chassis
-        
+
     def draw(self, img_src):
 
         if True in self.subs_chassis.error:
 
             if self.wheel_2.transparency > 0.7: self.transp = -0.1
             elif self.wheel_2.transparency < 0.2: self.transp = 0.1 
-                
+
             self.wheel_1.transparency += self.transp
             self.wheel_2.transparency += self.transp
             self.wheel_3.transparency += self.transp
@@ -499,7 +500,7 @@ class gui_distance_sensors():
             key="GUI_SENSORS_DISTANCE_MEASURE", default=1))
         self._GUI_SENSORS_DISTANCE_LONG = float(os.getenv(
             key="GUI_SENSORS_DISTANCE_LONG", default=150))
-        
+
         self._angle_start = int(90 - int(os.getenv(
             key="GUI_SENSORS_DISTANCE_APERTURE_ANGLE", default=30))*0.5)
         self._angle_end = int(90 + int(os.getenv(
@@ -654,5 +655,5 @@ class gui_cliff_sensors():
                 radius=radius if radius > 0 else 1, 
                 color=self._color, 
                 thickness=self._thickness) 
-  
+
 # =============================================================================

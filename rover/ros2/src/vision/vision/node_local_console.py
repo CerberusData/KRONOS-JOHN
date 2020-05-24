@@ -306,7 +306,7 @@ class LocalConsoleNode(Node, Thread):
             msg = Bool(); msg.data = True
             self.pub_video_streaming_stitch.publish(msg)
             return
-        # If pressed Z key then simulate chasis errros
+        # If pressed Z key then simulate chasis errors
         elif key == 122:
             self.sim_motros_report = not self.sim_motros_report
             if self.sim_motros_report:
@@ -335,7 +335,7 @@ class LocalConsoleNode(Node, Thread):
                 msg=f"{key} key action no defined", 
                 msg_type="WARN")
             return
-  
+
         # ---------------------------------------------------------------------
         self.pub_web_client_control.publish(
             self.web_client_control_msg)
@@ -351,7 +351,6 @@ class LocalConsoleNode(Node, Thread):
             self.dist_sensor_msg.range += self.dist_sensor_inc
             for pub in self.pubs_dist_sensors:
                 pub.publish(self.dist_sensor_msg)
-
 
     def run(self):
         """

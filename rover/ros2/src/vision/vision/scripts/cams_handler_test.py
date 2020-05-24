@@ -44,7 +44,7 @@ def main(args=None):
         exit()
     else:
         printlog("cameras configuration loaded")
-    
+
     # ---------------------------------------------------------------------
     cameras_supervisor = CamerasSupervisor(cams_config=cams_config)
     rate = max(list(map(lambda o: int(o.cam_config["FPS"]), 
@@ -56,7 +56,7 @@ def main(args=None):
         start = time.time()
 
         images_dict = dict(map(lambda o: (o.cam_label, o.image.copy()), 
-                cameras_supervisor.camera_handlers.values()))
+            cameras_supervisor.camera_handlers.values()))
         show_local_gui(images_dict)
 
         end = time.time()

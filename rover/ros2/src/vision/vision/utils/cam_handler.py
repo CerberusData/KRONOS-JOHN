@@ -287,7 +287,6 @@ class CameraHandler():
             cv2.FONT_HERSHEY_SIMPLEX, font_size, (255,255,255), 4)
 
     def get_image(self):
-        
         # If camera got image capture new frame 
         if self.grabbed and self.cap is not None: 
             

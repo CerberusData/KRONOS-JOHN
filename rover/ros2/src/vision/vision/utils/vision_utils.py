@@ -55,7 +55,7 @@ def printlog(msg, msg_type="INFO", flush=True):
     _str = "[{}][{}][{}]: {}".format(bcolors.LOG[msg_type][1], org, caller, msg)
 
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=True)
-    
+
 def print_text_list(img, tex_list, color=(0, 0, 255), orig=(10, 25), 
     fontScale=0.7, y_jump=30):
     """
@@ -144,8 +144,9 @@ def overlay_image(l_img, s_img, pos, transparency):
 
         # Do the overlay with alpha channel
         for c in range(0, l_img.shape[2]):
-            l_img[y1:y2, x1:x2, c] = (alpha_s * img_overlay[y1o:y2o, x1o:x2o, c] +
-                                    alpha_l * l_img[y1:y2, x1:x2, c])
+            l_img[y1:y2, x1:x2, c] = (
+                alpha_s * img_overlay[y1o:y2o, x1o:x2o, c] +
+                alpha_l * l_img[y1:y2, x1:x2, c])
 
     elif s_img_channels < 4:
         # Do the overlay with no alpha channel
@@ -240,7 +241,7 @@ def flat_matrix_for_service(numpy_array):
     Returns:
         _: `list` vector of matrix flatten
     """
-    
+
     numpy_array = np.array(numpy_array)
 
     rows = len(numpy_array)
@@ -319,7 +320,7 @@ def discrete_contour(contour, Dl):
 
         # Calculate length of segment
         segment_lenth = math.sqrt((next_cordinate[0] - cordinate[0])**2 +\
-                        (next_cordinate[1] - cordinate[1])**2)
+            (next_cordinate[1] - cordinate[1])**2)
 
         divitions = segment_lenth/Dl # Number of new point for current segment
         dy = next_cordinate[1] - cordinate[1] # Segment's height
@@ -334,8 +335,9 @@ def discrete_contour(contour, Dl):
 
         # get new intermediate points in segments
         for idx in range(0, int(divitions)):
-            new_contour.append((int(cordinate[0] + (ddx*idx)), 
-                                int(cordinate[1] + (ddy*idx))))    
+            new_contour.append(
+                (int(cordinate[0] + (ddx*idx)), 
+                int(cordinate[1] + (ddy*idx))))    
 
     # Return new contour with intermediate points
     return new_contour

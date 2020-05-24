@@ -257,7 +257,7 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
         # Contours detection and classification
         # https://docs.opencv.org/3.3.1/dd/d49/tutorial_py_contour_features.html
         if cv2v_base == "4":
-            contours, hierarchy = cv2.findContours(image=img_scr_hsv, 
+            contours, _ = cv2.findContours(image=img_scr_hsv, 
                 mode=int(cv2.RETR_TREE), method=int(cv2.CHAIN_APPROX_SIMPLE))
         else:
             _, contours, _ = cv2.findContours(image=img_scr_hsv, 
@@ -278,7 +278,7 @@ def find_projection(img_src, mtx, dist, PATTERN_THRESH_TOP, PATTERN_THRESH_BOTTO
             cnt_area = cv2.contourArea(contour=cnt)
             cnt_perimeter = cv2.arcLength(curve=cnt, closed=True)
             cnt_M = cv2.moments(cnt)
-            _, _, cnt_w, cnt_h = cv2.boundingRect(cnt)
+            _, _, _, cnt_h = cv2.boundingRect(cnt)
 
             if cnt_M['m00'] != 0: # Get contour center point if moment found
                 cnt_cx = int(cnt_M['m10'] / cnt_M['m00'])
@@ -805,7 +805,7 @@ def pixel_relation(img_src, M, mtx, dist, p1, p2 , p3 , p4, Left_Line,
             img_proj_thresh = cv2.inRange(src=img_proj_hsv, 
                 lowerb=(HSVI["H"], HSVI["S"] - 5*iterations, 0), 
                 upperb=(HSVS["H"], HSVS["S"], HSVS["V"]))
-        
+
         # Apply erosion to delete small particles
         kernel = np.ones((3, 3),np.uint8)
         img_proj_thresh = cv2.erode(src=img_proj_thresh, 
@@ -945,7 +945,7 @@ def create_ruler_mask(flag_img, extrinsic_params, fontScale=0.7):
     p3 = tuple(extrinsic_params["p3"])
     p4 = tuple(extrinsic_params["p4"])
     M = extrinsic_params["M"]
-    
+
     # Create a mask with extra size to draw ruler
     Ruler_Mask = np.zeros((UNWARPED_SIZE[1]+int(round(dead_distance*ppmy)), 
         UNWARPED_SIZE[0], 4), np.uint8)
@@ -961,7 +961,7 @@ def create_ruler_mask(flag_img, extrinsic_params, fontScale=0.7):
     # Max distance in rule given for pixel relation in Y axis
     if ppmy: Max_distance = math.trunc(Ruler_Mask.shape[0]/ppmy)
     else: return None, None
-    
+
     # Draw tens in ruler mask
     for i in range(0, Max_distance+1):
         y_pos = int(round(i*ppmy))
@@ -975,7 +975,7 @@ def create_ruler_mask(flag_img, extrinsic_params, fontScale=0.7):
         cv2.putText(Ruler_Mask,str(i*100),
             (int(round(bot_cord[0]+Ruler_Mask.shape[1]*0.12)),Ruler_Mask.shape[0] - int(round(y_pos+ppmy*0.02))),
             cv2.FONT_HERSHEY_SIMPLEX, fontScale*0.5, (255, 255, 255, 255), 1, cv2.LINE_AA)
-    
+
     # Draw hundreds in ruler mask
     for i in range(0, Max_distance*11):
         y_pos = int(round(i*ppmy)/10)
@@ -1008,10 +1008,11 @@ def create_ruler_mask(flag_img, extrinsic_params, fontScale=0.7):
 
     # Create ruler mask for projected surface
     Scale_Factor = 8
-    pts1 = np.float32([ [0,0],
-                        [Temp_Ruler_Mask.shape[1],0],
-                        [Temp_Ruler_Mask.shape[1],Temp_Ruler_Mask.shape[0]],
-                        [0,Temp_Ruler_Mask.shape[0]]])
+    pts1 = np.float32(
+        [ [0,0],
+        [Temp_Ruler_Mask.shape[1],0],
+        [Temp_Ruler_Mask.shape[1],Temp_Ruler_Mask.shape[0]],
+        [0,Temp_Ruler_Mask.shape[0]]])
 
     p1_aux =  [x * Scale_Factor for x in p1]
     p2_aux =  [x * Scale_Factor for x in p2]
@@ -1171,7 +1172,8 @@ def get_distor_point(pt, mtx, dist):
 
     rtemp = ttemp = np.array([0, 0, 0], dtype='float32')
 
-    # Normalize the points to be independent of the camera matrix using undistortPoints with no distortion matrix
+    # Normalize the points to be independent of the camera matrix using 
+    # undistortPoints with no distortion matrix
     xy_normalized = cv2.undistortPoints(test, mtx, None)
 
     # Convert them to 3d points 
