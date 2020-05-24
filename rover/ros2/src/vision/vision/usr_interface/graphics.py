@@ -606,11 +606,10 @@ class gui_cliff_sensors():
         Returns:
         """
 
-        return
-        self._sensors = subs_sensor_list
         self._CLIFF_SENSOR_TRESHOLD = float(
             os.getenv("CLIFF_SENSOR_TRESHOLD", 0.55))
-        self._sensor_idx = int(self._VIDEO_WIDTH/(len(self._sensors)+1))
+
+        self._sensors = subs_sensor_list
         self._y_offset = 100
         self._x_offset = 0
         self._x_offsets = []
@@ -631,29 +630,29 @@ class gui_cliff_sensors():
             img_src: 'cv2.math' image to draw component
         Returns:
         """
-        return
+
         for idx, sensor in enumerate(self._sensors):
             if sensor.range > self._CLIFF_SENSOR_TRESHOLD:
-                self.draw_sensor(img_src=img_src, sensor=sensor, 
-                    idx=(int(self._sensor_idx*(idx+1))),
+                self.draw_sensor(
+                    img_src=img_src, 
+                    idx=int((img_src.shape[1]/(len(self._sensors)+1)*(idx+1))),
                     x_offset=self._x_offsets[idx] if len(self._x_offsets) else 0)
 
-    def draw_sensor(self, img_src, sensor, idx, x_offset=0):
+    def draw_sensor(self, img_src, idx, x_offset=0):
         """ Draw cliff sensor component
         Args:
             img_src: 'cv2.math' image to draw component
         Returns:
         """
 
+        center = (idx + self._x_offset + x_offset, 
+            img_src.shape[0] + self._y_offset)
         for circle_idx in range(self._inner_circles):
             radius = self._radius-self._inner_cileres_step*circle_idx
             cv2.circle(img=img_src, 
-                center=(
-                    idx + self._x_offset + x_offset, 
-                    self._VIDEO_HEIGHT + self._y_offset), 
+                center=center, 
                 radius=radius if radius > 0 else 1, 
                 color=self._color, 
                 thickness=self._thickness) 
   
-
 # =============================================================================

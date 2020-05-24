@@ -123,7 +123,7 @@ class LocalConsoleNode(Node, Thread):
             ]]
 
         self.sim_dist_sensors = False
-        self.cliff_sensor_inc = 0.2
+        self.cliff_sensor_inc = 0.0
         self.cliff_sensor_msg = Range()
         self.pubs_cliff_sensors = [self.create_publisher(
             Range, topic, 1, callback_group=self.callback_group) for topic in [
@@ -326,6 +326,9 @@ class LocalConsoleNode(Node, Thread):
         # If pressed C key then simulate cliff sensors
         elif key == 99:
             self.sim_cliff_sensors = not self.sim_cliff_sensors
+            self.cliff_sensor_msg.range = 1. if self.sim_cliff_sensors else 0.
+            for pub in self.pubs_cliff_sensors:
+                pub.publish(self.cliff_sensor_msg)
         # If pressed no key defined then print message
         else:
             printlog(
@@ -333,9 +336,11 @@ class LocalConsoleNode(Node, Thread):
                 msg_type="WARN")
             return
   
+        # ---------------------------------------------------------------------
         self.pub_web_client_control.publish(
             self.web_client_control_msg)
 
+        # ---------------------------------------------------------------------
         if self.sim_dist_sensors:
             if self.dist_sensor_msg.range >= self.dist_sensor_msg.max_range:
                 self.dist_sensor_inc = -abs(self.dist_sensor_inc)
@@ -347,9 +352,6 @@ class LocalConsoleNode(Node, Thread):
             for pub in self.pubs_dist_sensors:
                 pub.publish(self.dist_sensor_msg)
 
-        # if self.sim_cliff_sensors:
-        #     for pub in self.pubs_cliff_sensors: 
-        #         pub.publish(self.cliff_sensor_msg)
 
     def run(self):
         """
