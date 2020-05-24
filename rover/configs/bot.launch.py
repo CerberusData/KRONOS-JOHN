@@ -43,122 +43,116 @@ from typing import cast
 # ============================================================================
 class bcolors:
     LOG = {
-        "WARN": ['\033[33m', "WARN"],
-        "ERROR": ['\033[91m', "ERROR"],
-        "OKGREEN": ['\033[32m', "INFO"],
-        "INFO": ['\033[0m', "INFO"], # ['\033[94m', "INFO"], 
-        "BOLD": ['\033[1m', "INFO"],
+        "WARN": ["\033[33m", "WARN"],
+        "ERROR": ["\033[91m", "ERROR"],
+        "OKGREEN": ["\033[32m", "INFO"],
+        "INFO": ["\033[0m", "INFO"],  # ['\033[94m', "INFO"],
+        "BOLD": ["\033[1m", "INFO"],
         "GRAY": ["\033[90m", "INFO"],
     }
-    BOLD = '\033[1m'
-    ENDC = '\033[0m'
-    HEADER = '\033[95m' 
-    OKBLUE = '\033[94m'
+    BOLD = "\033[1m"
+    ENDC = "\033[0m"
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
     GRAY = "\033[90m"
-    UNDERLINE = '\033[4m'
+    UNDERLINE = "\033[4m"
+
+
 def printlog(msg, msg_type="INFO", flush=True):
     org = os.path.splitext(os.path.basename(inspect.stack()[1][1]))[0].upper()
     caller = inspect.stack()[1][3].upper()
     _str = "[{}][{}][{}]: {}".format(bcolors.LOG[msg_type][1], org, caller, msg)
     print(bcolors.LOG[msg_type][0] + _str + bcolors.ENDC, flush=flush)
 
+
 def read_node_launch(default_file):
-    
+
     CONF_PATH = os.path.dirname(os.path.abspath(__file__))
-    CONF_FILE = 'nodes_local_launch.yaml'
+    CONF_FILE = "nodes_local_launch.yaml"
     FILE_PATH = os.path.join(CONF_PATH, CONF_FILE)
 
     if not os.path.exists(FILE_PATH):
-        
+
         try:
-            with open(FILE_PATH, 'w') as outfile: 
+            with open(FILE_PATH, "w") as outfile:
                 yaml.dump(default_file, outfile, default_flow_style=False)
-            printlog(msg="Nodes launch file created", 
-                msg_type="WARN")
+            printlog(msg="Nodes launch file created", msg_type="WARN")
 
         except Exception as e:
-            printlog(msg="Error creating nodes launch file: {}".format(e), 
-                msg_type="ERROR")
+            printlog(
+                msg="Error creating nodes launch file: {}".format(e), msg_type="ERROR"
+            )
 
         return default_file
 
     else:
-        
+
         try:
-            with open(FILE_PATH, 'r') as stream:
+            with open(FILE_PATH, "r") as stream:
                 default_file = yaml.safe_load(stream)
-            printlog(msg="Nodes local launch file {}".format(
-                CONF_FILE), msg_type="OKGREEN")
+            printlog(
+                msg="Nodes local launch file {}".format(CONF_FILE), msg_type="OKGREEN"
+            )
 
         except Exception as e:
-            printlog(msg="Error reading nodes launch file: {}".format(e), 
-                msg_type="ERROR")
+            printlog(
+                msg="Error reading nodes launch file: {}".format(e), msg_type="ERROR"
+            )
 
         return default_file
 
+
 def generate_launch_description():
 
-    ld = launch.LaunchDescription([
-        launch.actions.LogInfo(msg='Launching Kiwibot ROS2 ...'),
-    ])
+    ld = launch.LaunchDescription(
+        [launch.actions.LogInfo(msg="Launching Kiwibot ROS2 ..."),]
+    )
 
     # -------------------------------------------------------------------------
     # Add here your ROS2 node actions and logics
     nodes = {
         "NODE_VIDEO_MAPPING": {
-            "node_executable": 'video_mapping',
-            "node_name": 'video_mapping',
-            "package": 'vision',
-            "output": 'screen',
-            "launch": int(os.getenv(
-                key="NODE_VIDEO_MAPPING", 
-                default=1))
+            "node_executable": "video_mapping",
+            "node_name": "video_mapping",
+            "package": "vision",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_VIDEO_MAPPING", default=1)),
         },
         "NODE_VIDEO_CALIBRATION": {
-            "node_executable": 'video_calibrator',
-            "node_name": 'video_calibrator',
-            "package": 'vision',
-            "output": 'screen',
-            "launch": int(os.getenv(
-                key="NODE_VIDEO_CALIBRATION", 
-                default=1))
+            "node_executable": "video_calibrator",
+            "node_name": "video_calibrator",
+            "package": "vision",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_VIDEO_CALIBRATION", default=1)),
         },
         "NODE_VIDEO_PARTICLE": {
-            "node_executable": 'video_particle',
-            "node_name": 'video_particle',
-            "package": 'vision',
-            "output": 'screen',
-            "launch": int(os.getenv(
-                key="NODE_VIDEO_PARTICLE", 
-                default=0))
+            "node_executable": "video_particle",
+            "node_name": "video_particle",
+            "package": "vision",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_VIDEO_PARTICLE", default=0)),
         },
         "NODE_LOCAL_CONSOLE": {
-            "node_executable": 'local_console',
-            "node_name": 'local_console',
-            "package": 'vision',
-            "output": 'screen',
-            "launch": int(os.getenv(
-                key="NODE_LOCAL_CONSOLE", 
-                default=0))
+            "node_executable": "local_console",
+            "node_name": "local_console",
+            "package": "vision",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_LOCAL_CONSOLE", default=0)),
         },
         "NODE_CANLINK_CHASSIS": {
-            "node_executable": 'canlink_chassis',
-            "node_name": 'canlink_chassis',
-            "package": 'canlink',
-            "output": 'screen',
-            "launch": int(os.getenv(
-                key="NODE_CANLINK_CHASSIS", 
-                default=0))
+            "node_executable": "canlink_chassis",
+            "node_name": "canlink_chassis",
+            "package": "canlink",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_CANLINK_CHASSIS", default=0)),
         },
         "NODE_CANLINK_CABIN": {
-            "node_executable": 'canlink_cabin',
-            "node_name": 'canlink_cabin',
-            "package": 'canlink',
-            "output": 'screen',
-            "launch": int(os.getenv(
-                key="NODE_CANLINK_CABIN", 
-                default=0))
-        }
+            "node_executable": "canlink_cabin",
+            "node_name": "canlink_cabin",
+            "package": "canlink",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_CANLINK_CABIN", default=0)),
+        },
     }
 
     if os.getenv(key="LOCAL_LAUNCH", default=0):
@@ -169,23 +163,23 @@ def generate_launch_description():
     for key, node_args in nodes.items():
         if node_args["launch"]:
             srt_ = srt_ + "\n\tNode {}\tfrom {} package".format(
-                node_args["node_name"],
-                node_args["package"])
-    ld = launch.LaunchDescription([
-        launch.actions.LogInfo(msg=srt_+"\n"),
-    ])
+                node_args["node_name"], node_args["package"]
+            )
+    ld = launch.LaunchDescription([launch.actions.LogInfo(msg=srt_ + "\n"),])
 
     for key, node_args in nodes.items():
         if node_args["launch"]:
-            ld.add_action(launch_ros.actions.Node(
-                node_executable=node_args["node_executable"], 
-                node_name=node_args["node_name"],
-                package=node_args["package"], 
-                output=node_args["output"])
+            ld.add_action(
+                launch_ros.actions.Node(
+                    node_executable=node_args["node_executable"],
+                    node_name=node_args["node_name"],
+                    package=node_args["package"],
+                    output=node_args["output"],
                 )
+            )
 
     # -------------------------------------------------------------------------
-    # Add here your python scripts 
+    # Add here your python scripts
     # ld.add_action(launch.actions.ExecuteProcess(
     #     cmd=[sys.executable, '-u', './script_name.py', '--ignore-sigint', '--ignore-sigterm']
     # ))

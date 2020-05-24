@@ -36,27 +36,26 @@ from usr_msgs.msg import Waypoint
 
 # =============================================================================
 class LocalConsoleNode(Node, Thread):
-
-    def __init__(self, streaming_topic='streaming/cam_central', win_rate=30.):
+    def __init__(self, streaming_topic="streaming/cam_central", win_rate=30.0):
         """ Object class constructor
         Args:
             streaming_topic: `string` topic of video streaming
             win_rate: `float` window rate 
         Returns:
-        """  
+        """
 
         # ---------------------------------------------------------------------
-        super().__init__('LocalConsoleNode')
+        super().__init__("LocalConsoleNode")
         Thread.__init__(self)
-        
+
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
 
         # ---------------------------------------------------------------------
-        # window properties  
+        # window properties
         self.win_name = "LOCAL_CONSOLE"
         self.win_mouse_click = None
-        self.win_time = int(1000/win_rate)
+        self.win_time = int(1000 / win_rate)
         cv2.namedWindow(self.win_name)
         cv2.setMouseCallback(self.win_name, self.cb_mouse_event)
 
@@ -65,73 +64,86 @@ class LocalConsoleNode(Node, Thread):
         self.streaming_topic = streaming_topic
         self.img_bridge = CvBridge()
 
-        # ---------------------------------------------------------------------  
+        # ---------------------------------------------------------------------
         # Subscribers
         self.sub_streaming = self.create_subscription(
-            msg_type=Image, topic=self.streaming_topic, 
-            callback=self.cb_streaming_img, qos_profile=5, 
-            callback_group=self.callback_group)
+            msg_type=Image,
+            topic=self.streaming_topic,
+            callback=self.cb_streaming_img,
+            qos_profile=5,
+            callback_group=self.callback_group,
+        )
 
-        # ---------------------------------------------------------------------  
+        # ---------------------------------------------------------------------
         # Publishers
         self.pub_cam_calibrate_msg = String()
         self.pub_cam_calibrate = self.create_publisher(
-            String, 'video_calibrator/calibrate_cam', 1,
-            callback_group=self.callback_group)
+            String,
+            "video_calibrator/calibrate_cam",
+            1,
+            callback_group=self.callback_group,
+        )
 
         self.pub_video_streaming_stitch = self.create_publisher(
-            Bool, 'video_streaming/stitch', 1,
-            callback_group=self.callback_group)
+            Bool, "video_streaming/stitch", 1, callback_group=self.callback_group
+        )
 
         self.pub_video_streaming_rear_cam = self.create_publisher(
-            Bool, 'video_streaming/rear_cam', 1,
-            callback_group=self.callback_group)
+            Bool, "video_streaming/rear_cam", 1, callback_group=self.callback_group
+        )
 
         self.waypoint_msg = Waypoint()
         self.pub_video_streaming_waypoint = self.create_publisher(
-            Waypoint, 'video_streaming/waypoint_pt', 1,
-            callback_group=self.callback_group)
+            Waypoint,
+            "video_streaming/waypoint_pt",
+            1,
+            callback_group=self.callback_group,
+        )
 
         self.web_client_control_msg = WebControl()
         self.pub_web_client_control = self.create_publisher(
-            WebControl, 'web_client/control', 1,
-            callback_group=self.callback_group)
+            WebControl, "web_client/control", 1, callback_group=self.callback_group
+        )
 
         self.pwm_msg = PWMOut()
         self.pwm_msg.channels = [0, 0, 0, 0, 0]
         self.pub_pwm = self.create_publisher(
-            PWMOut, 'pwm/output', 1,
-            callback_group=self.callback_group)
+            PWMOut, "pwm/output", 1, callback_group=self.callback_group
+        )
 
         self.motors_msg = Motors()
         self.motors_msg.error_status = [0, 0, 0, 0, 0]
         self.sim_motros_report = False
         self.pub_motors = self.create_publisher(
-            Motors, '/canlink/chassis/motors_status', 1,
-            callback_group=self.callback_group)
+            Motors,
+            "/canlink/chassis/motors_status",
+            1,
+            callback_group=self.callback_group,
+        )
 
         self.sim_cliff_sensors = False
         self.dist_sensor_msg = Range()
-        self.dist_sensor_msg.max_range = 10.
+        self.dist_sensor_msg.max_range = 10.0
         self.dist_sensor_msg.min_range = 1.0
         self.dist_sensor_inc = 0.2
-        self.pubs_dist_sensors = [self.create_publisher(
-            Range, topic, 1, callback_group=self.callback_group) for topic in [
+        self.pubs_dist_sensors = [
+            self.create_publisher(Range, topic, 1, callback_group=self.callback_group)
+            for topic in [
                 "/tf_mini_plus/distance_sensor3",
                 "/tf_mini_plus/distance_sensor2",
                 "/tf_mini_plus/distance_sensor1",
-            ]]
+            ]
+        ]
 
         self.sim_dist_sensors = False
         self.cliff_sensor_inc = 0.0
         self.cliff_sensor_msg = Range()
-        self.pubs_cliff_sensors = [self.create_publisher(
-            Range, topic, 1, callback_group=self.callback_group) for topic in [
-                "/tf_mini_plus/cliff_sensor1",
-                "/tf_mini_plus/cliff_sensor2",
-            ]]
+        self.pubs_cliff_sensors = [
+            self.create_publisher(Range, topic, 1, callback_group=self.callback_group)
+            for topic in ["/tf_mini_plus/cliff_sensor1", "/tf_mini_plus/cliff_sensor2",]
+        ]
 
-        # ---------------------------------------------------------------------  
+        # ---------------------------------------------------------------------
         # Thread variables
         self.run_event = Event()
         self.run_event.set()
@@ -142,30 +154,45 @@ class LocalConsoleNode(Node, Thread):
         Args:
             img: `cv2.math` image to print components
         Returns:
-        """  
+        """
 
         if self.win_mouse_click is not None:
-            cv2.line(img=img, 
+            cv2.line(
+                img=img,
                 pt1=(
-                    int(self.win_mouse_click[0]*img.shape[1]-10), 
-                    int(self.win_mouse_click[1]*img.shape[0])), 
+                    int(self.win_mouse_click[0] * img.shape[1] - 10),
+                    int(self.win_mouse_click[1] * img.shape[0]),
+                ),
                 pt2=(
-                    int(self.win_mouse_click[0]*img.shape[1]+10), 
-                    int(self.win_mouse_click[1]*img.shape[0])), 
-                color=(0, 0, 255), thickness=2)
-            cv2.line(img=img, 
+                    int(self.win_mouse_click[0] * img.shape[1] + 10),
+                    int(self.win_mouse_click[1] * img.shape[0]),
+                ),
+                color=(0, 0, 255),
+                thickness=2,
+            )
+            cv2.line(
+                img=img,
                 pt1=(
-                    int(self.win_mouse_click[0]*img.shape[1]), 
-                    int(self.win_mouse_click[1]*img.shape[0]-10)), 
+                    int(self.win_mouse_click[0] * img.shape[1]),
+                    int(self.win_mouse_click[1] * img.shape[0] - 10),
+                ),
                 pt2=(
-                    int(self.win_mouse_click[0]*img.shape[1]), 
-                    int(self.win_mouse_click[1]*img.shape[0]+10)), 
-                color=(0, 0, 255), thickness=2)
-            cv2.circle(img=img, 
+                    int(self.win_mouse_click[0] * img.shape[1]),
+                    int(self.win_mouse_click[1] * img.shape[0] + 10),
+                ),
+                color=(0, 0, 255),
+                thickness=2,
+            )
+            cv2.circle(
+                img=img,
                 center=(
-                    int(self.win_mouse_click[0]*img.shape[1]), 
-                    int(self.win_mouse_click[1]*img.shape[0])), 
-                radius=2, color=(0, 255, 255), thickness=-1)
+                    int(self.win_mouse_click[0] * img.shape[1]),
+                    int(self.win_mouse_click[1] * img.shape[0]),
+                ),
+                radius=2,
+                color=(0, 255, 255),
+                thickness=-1,
+            )
 
     def cb_streaming_img(self, data):
         """     
@@ -178,10 +205,15 @@ class LocalConsoleNode(Node, Thread):
 
         try:
             self.streaming_img = self.img_bridge.imgmsg_to_cv2(
-                img_msg=data, desired_encoding="bgr8")
+                img_msg=data, desired_encoding="bgr8"
+            )
         except CvBridgeError as e:
-            printlog(msg="Subscriber for camera in topic {}, {}".format(
-                self.streaming_topic, e), msg_type="ERROR")
+            printlog(
+                msg="Subscriber for camera in topic {}, {}".format(
+                    self.streaming_topic, e
+                ),
+                msg_type="ERROR",
+            )
 
     def cb_mouse_event(self, event, x, y, flags, param):
         """
@@ -195,10 +227,10 @@ class LocalConsoleNode(Node, Thread):
             returns:
         """
 
-        x = x/self.streaming_img.shape[1]
-        y = y/self.streaming_img.shape[0]
+        x = x / self.streaming_img.shape[1]
+        y = y / self.streaming_img.shape[0]
 
-        # Add point 
+        # Add point
         if event == cv2.EVENT_LBUTTONDOWN:
             self.win_mouse_click = (x, y)
 
@@ -206,12 +238,13 @@ class LocalConsoleNode(Node, Thread):
                 # Publish waypoint
                 self.waypoint_msg.x = x
                 self.waypoint_msg.y = y
-                self.pub_video_streaming_waypoint.publish(
-                    self.waypoint_msg)
+                self.pub_video_streaming_waypoint.publish(self.waypoint_msg)
 
             except Exception as e:
-                printlog(msg="Error publishing waypoint coord "
-                    "trough topic, {}".format(e), msg_type="ERROR")
+                printlog(
+                    msg="Error publishing waypoint coord " "trough topic, {}".format(e),
+                    msg_type="ERROR",
+                )
 
     def cb_key_event(self, key):
         """
@@ -221,9 +254,9 @@ class LocalConsoleNode(Node, Thread):
             returns:
         """
 
-        self.web_client_control_msg.pan = 0.
-        self.web_client_control_msg.speed = 0.
-        self.web_client_control_msg.tilt = 0.
+        self.web_client_control_msg.pan = 0.0
+        self.web_client_control_msg.speed = 0.0
+        self.web_client_control_msg.tilt = 0.0
 
         # If pressed No key then continue
         if key == -1:
@@ -250,19 +283,19 @@ class LocalConsoleNode(Node, Thread):
             return
         # If pressed right key then move to right
         elif key == 81:
-            self.web_client_control_msg.tilt = 100.
+            self.web_client_control_msg.tilt = 100.0
         # If pressed up key then move to forward
         elif key == 82:
-            self.web_client_control_msg.speed = 100.
+            self.web_client_control_msg.speed = 100.0
         # If pressed left key then move to left
         elif key == 83:
-            self.web_client_control_msg.tilt = -100.
+            self.web_client_control_msg.tilt = -100.0
         # If pressed down key then move to backwards
         elif key == 84:
-            self.web_client_control_msg.speed = -100.
+            self.web_client_control_msg.speed = -100.0
         # If pressed A key then switch to left camera
         elif key == 97:
-            self.web_client_control_msg.pan = -100.
+            self.web_client_control_msg.pan = -100.0
         # If pressed H key then print help
         elif key == 104:
             print(
@@ -281,29 +314,32 @@ class LocalConsoleNode(Node, Thread):
                 f"\n\tLeft row - Move left"
                 f"\n\tRight row - Move right"
                 f"\n\tUp row - Move forward"
-                f"\n\tDown row - Move backwards\n", 
-                flush=True)
+                f"\n\tDown row - Move backwards\n",
+                flush=True,
+            )
             return
         # If pressed M key then switch between manual and waypoint mode
         elif key == 109:
             pass
             return
         # If pressed D key then switch to right camera
-        elif key == 100.:
-            self.web_client_control_msg.pan = 100.
+        elif key == 100.0:
+            self.web_client_control_msg.pan = 100.0
         # If pressed P key then open the lid
         elif key == 112:
-            self.pwm_msg.channels[2]=2000 if self.pwm_msg.channels[2]<300 else 0
+            self.pwm_msg.channels[2] = 2000 if self.pwm_msg.channels[2] < 300 else 0
             self.pub_pwm.publish(self.pwm_msg)
             return
         # If pressed R key then switch to rear camera
         elif key == 114:
-            msg = Bool(); msg.data = True
+            msg = Bool()
+            msg.data = True
             self.pub_video_streaming_rear_cam.publish(msg)
             return
         # If pressed S key then activate/desactivate stitching mode
         elif key == 115:
-            msg = Bool(); msg.data = True
+            msg = Bool()
+            msg.data = True
             self.pub_video_streaming_stitch.publish(msg)
             return
         # If pressed Z key then simulate chasis errors
@@ -326,19 +362,16 @@ class LocalConsoleNode(Node, Thread):
         # If pressed C key then simulate cliff sensors
         elif key == 99:
             self.sim_cliff_sensors = not self.sim_cliff_sensors
-            self.cliff_sensor_msg.range = 1. if self.sim_cliff_sensors else 0.
+            self.cliff_sensor_msg.range = 1.0 if self.sim_cliff_sensors else 0.0
             for pub in self.pubs_cliff_sensors:
                 pub.publish(self.cliff_sensor_msg)
         # If pressed no key defined then print message
         else:
-            printlog(
-                msg=f"{key} key action no defined", 
-                msg_type="WARN")
+            printlog(msg=f"{key} key action no defined", msg_type="WARN")
             return
 
         # ---------------------------------------------------------------------
-        self.pub_web_client_control.publish(
-            self.web_client_control_msg)
+        self.pub_web_client_control.publish(self.web_client_control_msg)
 
         # ---------------------------------------------------------------------
         if self.sim_dist_sensors:
@@ -370,22 +403,23 @@ class LocalConsoleNode(Node, Thread):
             except Exception as e:
                 printlog(msg=e, msg_type="ERROR")
 
+
 # =============================================================================
 def main(args=None):
 
     # Initialize ROS communications for a given context.
     rclpy.init(args=args)
 
-    # Execute work and block until the context associated with the 
+    # Execute work and block until the context associated with the
     # executor is shutdown.
     local_console_node = LocalConsoleNode()
 
     # Runs callbacks in a pool of threads.
     executor = MultiThreadedExecutor()
     printlog(msg="press H Key for help", msg_type="INFO")
-    
-    # Execute work and block until the context associated with the 
-    # executor is shutdown. Callbacks will be executed by the provided 
+
+    # Execute work and block until the context associated with the
+    # executor is shutdown. Callbacks will be executed by the provided
     # executor.
     rclpy.spin(local_console_node, executor)
 
@@ -395,8 +429,9 @@ def main(args=None):
     local_console_node.destroy_node()
     rclpy.shutdown()
 
+
 # =============================================================================
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 # =============================================================================
