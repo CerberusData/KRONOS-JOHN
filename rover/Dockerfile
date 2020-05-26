@@ -207,6 +207,7 @@ RUN \
 
 # -----------------------------------------------------------------------------
 # Add development, debugging utils/dependencies here
+RUN echo "text"
 RUN \
     apt-get update && \
     apt-get install -y \
@@ -225,7 +226,6 @@ RUN \
 # Add Python dependencies in here
 RUN \
     pip install pyserial
-
 
 # -----------------------------------------------------------------------------
 # Copy configuration and other file
