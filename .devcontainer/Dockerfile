@@ -192,7 +192,8 @@ RUN  \
     libblkid-dev \
     e2fslibs-dev \
     libboost-all-dev \
-    libaudit-dev
+    libaudit-dev  \
+    can-utils
 
 RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
     export PATH="${PATH}:/home/ada/.local/bin"
@@ -202,6 +203,11 @@ RUN  \
     sudo apt install -y \
     libcanberra-gtk-module \
     libcanberra-gtk3-module
+
+# -----------------------------------------------------------------------------
+# Add Python dependencies in here
+RUN \
+    pip install pyserial
 
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom roboticsp
