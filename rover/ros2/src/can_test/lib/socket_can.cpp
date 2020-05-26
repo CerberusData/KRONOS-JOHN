@@ -5,7 +5,7 @@
     - Email: juangalvis@kiwicampus.com
 */
 
-#include "canlink/socketCAN.hpp"
+#include "can_test/socketCAN.hpp"
  
 CANDriver::CANDriver(const char *interface_name)
 {
@@ -56,6 +56,7 @@ struct can_frame *CANDriver::ReadSocket()
     read(sckt_, &rx_frame_, sizeof(rxmsg));
     return &rx_frame_;
 }
+ 
  
 int CANDriver::CANWrite(int can_id, int can_data_length, uint8_t *data)
 {

@@ -32,6 +32,9 @@
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
+/* ROS2 Services */
+#include "std_srvs/srv/set_bool.hpp"
+
 /* Custom Messages */
 #include "usr_msgs/msg/configuration.hpp"
 #include "usr_msgs/msg/motors.hpp"
@@ -75,20 +78,23 @@
 #define LEFT_FRONT_WHEEL 0x08
  
 using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
 
 class Chassis : public rclcpp::Node
 {
     public:
-    Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver);
-    ~Chassis(){};
+        /* Constructor */
+        Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver);
+        ~Chassis(){};
 
-    void PublishChassisStatus(struct can_frame* frame);
-    void PublishMotorStatus(struct can_frame* frame);
-    void PublishTestReport(struct can_frame* frame);
-    void SetErrorStatus(struct can_frame* frame);
-    void SetMotorsCurrent(struct can_frame* frame);
-
-    bool GetConnected();
+        /* Public functions */
+        void PublishChassisStatus(struct can_frame* frame);
+        void PublishMotorStatus(struct can_frame* frame);
+        void PublishTestReport(struct can_frame* frame);
+        void SetErrorStatus(struct can_frame* frame);
+        void SetMotorsCurrent(struct can_frame* frame);
+        bool GetConnected();
 
     private:
         /* Publishers */
@@ -122,6 +128,15 @@ class Chassis : public rclcpp::Node
         void ChassisTestCb(const std_msgs::msg::Bool::SharedPtr msg);
         void ChassisRestartCb(const std_msgs::msg::Bool::SharedPtr msg); 
         void OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg);
+
+        /* Services */
+        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr arm_srv_;
+
+        /* Services callbacks */
+        bool ArmCb(
+            const std::shared_ptr<rmw_request_id_t> request_header,
+            const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+            std::shared_ptr<std_srvs::srv::SetBool::Response> response);
 
         /* Timers */
         rclcpp::TimerBase::SharedPtr heartbeat_tmr_;
@@ -177,11 +192,10 @@ class Chassis : public rclcpp::Node
         bool current_timer_started_ = false;
         bool accelerating_ = false;
         bool soft_brake_ = true;
+
+        /* Motors vectors */
         std::vector<float> controls_ = {0.0f, 0.0f, 0.0f};
         std::vector<uint16_t> raw_motors_out_;
-        uint16_t motor_error_[4] = {0, 0, 0, 0};  /* Double check if it makes sense */
-
+        uint16_t motor_error_[4] = {0, 0, 0, 0};
 };
 #endif  /* End of CAN_CHASSIS_H_INCLUDED */ 
- 
- 

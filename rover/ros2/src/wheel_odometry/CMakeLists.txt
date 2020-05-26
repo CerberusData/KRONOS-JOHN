@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(canlink)
+project(wheel_odometry)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -20,52 +20,36 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(usr_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+
 find_package(utils REQUIRED)
 
 include_directories(include)
-
-add_library(${PROJECT_NAME} 
-  lib/socket_can.cpp
-)
 
 set(DEPENDENCIES
   rclcpp
   std_srvs
   std_msgs
-  geometry_msgs
-  sensor_msgs
   nav_msgs
   usr_msgs
+  sensor_msgs
+  geometry_msgs
   utils
 )
 
-add_executable(canlink_chassis 
-  src/can_chassis.cpp
-  src/modules/battery.cpp
-  src/modules/chassis.cpp
-  src/modules/lights.cpp
-  lib/socket_can.cpp
+add_executable(wheel_odometry
+  src/main.cpp
+  src/wheel_odometry.cpp
 )
 
-add_executable(canlink_cabin 
-  src/can_cabin.cpp
-  src/modules/lock_system.cpp
-  lib/socket_can.cpp
-)
-
-target_link_libraries(canlink_chassis utils::utils)
-ament_target_dependencies(canlink_chassis ${DEPENDENCIES})
-
-target_link_libraries(canlink_cabin utils::utils)
-ament_target_dependencies(canlink_cabin ${DEPENDENCIES})
+target_link_libraries(wheel_odometry utils::utils)
+ament_target_dependencies(wheel_odometry ${DEPENDENCIES})
 
 install(TARGETS
-  canlink_chassis
-  canlink_cabin
+  wheel_odometry
   DESTINATION lib/${PROJECT_NAME}
 )
 

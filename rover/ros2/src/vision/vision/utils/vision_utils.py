@@ -25,11 +25,11 @@ import os
 
 class bcolors:
     LOG = {
-        "WARN": ["\033[33m", "WARN"],
-        "ERROR": ["\033[91m", "ERROR"],
-        "OKGREEN": ["\033[32m", "INFO"],
-        "INFO": ["\033[0m", "INFO"],  # ['\033[94m', "INFO"],
-        "BOLD": ["\033[1m", "INFO"],
+        "WARN": ['\033[33m', "WARN"],
+        "ERROR": ['\033[91m', "ERROR"],
+        "OKGREEN": ['\033[32m', "INFO"],
+        "INFO": ['\033[0m', "INFO"], # ['\033[94m', "INFO"], 
+        "BOLD": ['\033[1m', "INFO"],
         "GRAY": ["\033[90m", "INFO"],
     }
     BOLD = "\033[1m"

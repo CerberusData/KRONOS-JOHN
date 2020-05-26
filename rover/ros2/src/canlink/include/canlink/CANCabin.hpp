@@ -28,7 +28,7 @@
 class CANCabin : public rclcpp::Node
 {
     public:
-        CANCabin(const rclcpp::NodeOptions & options, CANDriver *can_driver);
+        CANCabin(const rclcpp::NodeOptions & options, CANDriver *can_driver, std::shared_ptr<LockSystem> lock_system);
         ~CANCabin(){};
 
         /* Functions*/
@@ -36,7 +36,7 @@ class CANCabin : public rclcpp::Node
     
     private:
         /* Modules */
-        LockSystem *lock_system_;
+        std::shared_ptr<LockSystem> lock_system_;
         CANDriver *can_driver_;
 
         /* Member functions */
@@ -45,7 +45,7 @@ class CANCabin : public rclcpp::Node
         /* Thread to Listen CAN port */
         std::thread read_thread_; 
         
-        /* Double check */
+        /* CAN Interface */
         // const char *interface_name_ = getEnv("CANLINK_CABIN_INTERFACE", "can1").c_str();
         std::string Mystr = "can1";
         const char *interface_name_ = Mystr.c_str();

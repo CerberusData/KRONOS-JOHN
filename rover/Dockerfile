@@ -210,7 +210,8 @@ RUN \
 RUN \
     apt-get update && \
     apt-get install -y \
-    htop
+    htop \
+    can-utils
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here
@@ -219,6 +220,12 @@ RUN \
 #     apt-get install -y \ 
 #     vim && \
 #     rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
+# Add Python dependencies in here
+RUN \
+    pip install pyserial
+
 
 # -----------------------------------------------------------------------------
 # Copy configuration and other file
@@ -256,8 +263,8 @@ RUN  \
 WORKDIR /usr/src/app/dev_ws
 RUN  \
     . /opt/ros/dashing/setup.sh && \ 
-    colcon build && \ 
-    # colcon test && \ 
+    colcon build --symlink-install && \ 
+    colcon test && \ 
     /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
 
 # -----------------------------------------------------------------------------
