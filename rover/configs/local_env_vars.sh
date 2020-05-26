@@ -58,7 +58,7 @@ export GUI_SENSORS_DISTANCE_APERTURE_ANGLE=40   # [int][pix] - aperture angle to
 export GUI_SENSORS_DISTANCE_LONG=170            # [int][pix] - vertical length to draw distance sensor cone on local gui
 
 export CLIFF_SENSOR_TRESHOLD=0.55   # [float] - Threshold value to draw cliff sensors
- 
+
 # -----------------------------------------------------------------------------
 # Extrinsic calibration - Mono-vision
 export VISION_CAL_SHOW_LOCAL=0          # NOTE: Should be undefined in the robot
@@ -94,10 +94,10 @@ export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   # By default, info and debug log
 # -----------------------------------------------------------------------------
 # Fredoom robotics enviroment
 export FR_AGENT=1                   # [int-bolean] (1):Enable/(0):Disable freedom robotics agent 
-export FR_STREAMING_OPTIMIZER=0     # [int-bolean] (1):Enable/(0):Disable freedom video streaming optimizer
-export FR_STREAMING_FACTOR=0.4      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative
-export FR_STREAMING_IDLE_TIME=20    # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
-export FR_STREAMING_IDLE_FACTOR=0.2 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
+export FR_STREAMING_OPTIMIZER=1     # [int-bolean] (1):Enable/(0):Disable freedom video streaming optimizer
+export FR_STREAMING_FACTOR=0.6      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative
+export FR_STREAMING_IDLE_TIME=60    # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
+export FR_STREAMING_IDLE_FACTOR=0.4 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
 
 # -----------------------------------------------------------------------------
 

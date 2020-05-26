@@ -143,6 +143,11 @@ class LocalConsoleNode(Node, Thread):
             for topic in ["/tf_mini_plus/cliff_sensor1", "/tf_mini_plus/cliff_sensor2",]
         ]
 
+        self.bool_msg = Bool()
+        self.pubs_streaming_idle_restart = self.create_publisher(
+            Bool, "video_streaming/optimizer/idle_restart", 1, 
+            callback_group=self.callback_group)
+
         # ---------------------------------------------------------------------
         # Thread variables
         self.run_event = Event()
@@ -369,6 +374,10 @@ class LocalConsoleNode(Node, Thread):
         else:
             printlog(msg=f"{key} key action no defined", msg_type="WARN")
             return
+
+        # ---------------------------------------------------------------------
+        if key != -1:
+            self.pubs_streaming_idle_restart.publish(self.bool_msg)
 
         # ---------------------------------------------------------------------
         self.pub_web_client_control.publish(self.web_client_control_msg)

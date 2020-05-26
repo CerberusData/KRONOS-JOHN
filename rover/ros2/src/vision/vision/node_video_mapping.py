@@ -34,6 +34,7 @@ from vision.stitcher.stitcher import Stitcher
 
 from usr_msgs.msg import CamerasStatus
 from std_msgs.msg import String
+from std_msgs.msg import Bool
 
 # =============================================================================
 class MappingNode(Node, Thread):
@@ -91,7 +92,7 @@ class MappingNode(Node, Thread):
         self.gui = GraphicInterface(
             cam_labels=self.cams_config.keys(), parent_node=self
         )
-        self.img_optimizer = StreamingOptimizer()
+        self.img_optimizer = StreamingOptimizer(parent_node=self)
         self.img_bridge = CvBridge()
 
         # ---------------------------------------------------------------------
@@ -298,9 +299,10 @@ class MappingNode(Node, Thread):
                 else:
                     self.gui.draw_components(imgs_dict=imgs_dic)
 
-                    # Optimize image
-                    if self._FR_STREAMING_OPTIMIZER:
-                        self.img_optimizer.optimize(img=imgs_dic["P"])
+                # Optimize image
+                if self._FR_STREAMING_OPTIMIZER:
+                    img=imgs_dic["P"] = self.img_optimizer.optimize(
+                        img=imgs_dic["P"])
 
                 # -------------------------------------------------------------
                 # Publish image
@@ -328,7 +330,7 @@ class MappingNode(Node, Thread):
 
 
 class StreamingOptimizer:
-    def __init__(self):
+    def __init__(self, parent_node):
         """     
             Creates video optimizer object for third party services to get the 
             parameters with images quality are reduced to be sent.
@@ -344,6 +346,14 @@ class StreamingOptimizer:
         self.inactive_timer = 0
         self._time_tick = time.time()
 
+        self.sub_restart = parent_node.create_subscription(
+            msg_type=Bool,
+            topic="video_streaming/optimizer/idle_restart",
+            callback=self.cb_restart,
+            qos_profile=5,
+            callback_group=parent_node.callback_group,
+        )
+
     def optimize(self, img):
         """     
             reduces the images quality to be sent.
@@ -352,23 +362,34 @@ class StreamingOptimizer:
         Returns:
         """
 
-        if self.inactive_timer < self.IDLE_TIME + 1:
+        if self.inactive_timer < self.IDLE_TIME:
             self.inactive_timer = time.time() - self._time_tick
 
         elif self.inactive_timer >= self.IDLE_TIME:
+            img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY)
             img = cv2.resize(
-                src=cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY),
+                src=img,
                 dsize=(
                     int(img.shape[1] * self.STREAMING_IDLE_FACTOR),
                     int(img.shape[0] * self.STREAMING_IDLE_FACTOR),
                 ),
+                interpolation=int(cv2.INTER_NEAREST)
             )
             img = cv2.cvtColor(src=img, code=cv2.COLOR_GRAY2BGR)
+        else:
+            img = cv2.resize(
+                src=img,
+                dsize=(
+                    int(img.shape[1] * self.STREAMING_FACTOR),
+                    int(img.shape[0] * self.STREAMING_FACTOR),
+                ),
+                interpolation=int(cv2.INTER_NEAREST)
+            )
 
         return img
 
     # TODO(JOHN): Integrate robot actions to reset idle time
-    def cb_actuator_action(self):
+    def cb_restart(self, msg):
         """     
             Reset inactive timer when a action coming from actuator reference
             control is received
@@ -377,6 +398,7 @@ class StreamingOptimizer:
         """
 
         self._time_tick = time.time()
+        self.inactive_timer = 0
 
 
 # =============================================================================
