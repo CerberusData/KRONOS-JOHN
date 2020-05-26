@@ -111,6 +111,8 @@ def generate_launch_description():
     # -------------------------------------------------------------------------
     # Add here your ROS2 node actions and logics
     nodes = {
+        # ---------------------------------------------------------------------
+        # Vision Nodes
         "NODE_VIDEO_MAPPING": {
             "node_executable": "video_mapping",
             "node_name": "video_mapping",
@@ -139,16 +141,16 @@ def generate_launch_description():
             "output": "screen",
             "launch": int(os.getenv(key="NODE_LOCAL_CONSOLE", default=0)),
         },
+        # ---------------------------------------------------------------------
+        # Control Nodes
         "NODE_CANLINK_CHASSIS": {
             "node_executable": "canlink_chassis",
-            "node_name": "canlink_chassis",
             "package": "canlink",
             "output": "screen",
             "launch": int(os.getenv(key="NODE_CANLINK_CHASSIS", default=0)),
         },
         "NODE_CANLINK_CABIN": {
             "node_executable": "canlink_cabin",
-            "node_name": "canlink_cabin",
             "package": "canlink",
             "output": "screen",
             "launch": int(os.getenv(key="NODE_CANLINK_CABIN", default=0)),
@@ -163,20 +165,30 @@ def generate_launch_description():
     for key, node_args in nodes.items():
         if node_args["launch"]:
             srt_ = srt_ + "\n\tNode {}\tfrom {} package".format(
-                node_args["node_name"], node_args["package"]
+                node_args["node_name"] if "node_name" in node_args.keys() else "(Executables)", 
+                node_args["package"]
             )
     ld = launch.LaunchDescription([launch.actions.LogInfo(msg=srt_ + "\n"),])
 
     for key, node_args in nodes.items():
         if node_args["launch"]:
-            ld.add_action(
-                launch_ros.actions.Node(
-                    node_executable=node_args["node_executable"],
-                    node_name=node_args["node_name"],
-                    package=node_args["package"],
-                    output=node_args["output"],
+            if "node_name" in node_args.keys():
+                ld.add_action(
+                    launch_ros.actions.Node(
+                        node_executable=node_args["node_executable"],
+                        node_name=node_args["node_name"],
+                        package=node_args["package"],
+                        output=node_args["output"],
+                    )
                 )
-            )
+            else:
+                ld.add_action(
+                    launch_ros.actions.Node(
+                        node_executable=node_args["node_executable"],
+                        package=node_args["package"],
+                        output=node_args["output"],
+                    )
+                )
 
     # -------------------------------------------------------------------------
     # Add here your python scripts
