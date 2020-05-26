@@ -147,13 +147,13 @@ def generate_launch_description():
             "node_executable": "canlink_chassis",
             "package": "canlink",
             "output": "screen",
-            "launch": int(os.getenv(key="NODE_CANLINK_CHASSIS", default=0)),
+            "launch": int(os.getenv(key="NODE_CANLINK_CHASSIS", default=1)),
         },
         "NODE_CANLINK_CABIN": {
             "node_executable": "canlink_cabin",
             "package": "canlink",
             "output": "screen",
-            "launch": int(os.getenv(key="NODE_CANLINK_CABIN", default=0)),
+            "launch": int(os.getenv(key="NODE_CANLINK_CABIN", default=1)),
         },
     }
 
@@ -165,7 +165,7 @@ def generate_launch_description():
     for key, node_args in nodes.items():
         if node_args["launch"]:
             srt_ = srt_ + "\n\tNode {}\tfrom {} package".format(
-                node_args["node_name"] if "node_name" in node_args.keys() else "(Executables)", 
+                node_args["node_name"] if "node_name" in node_args.keys() else "(Executable)", 
                 node_args["package"]
             )
     ld = launch.LaunchDescription([launch.actions.LogInfo(msg=srt_ + "\n"),])
