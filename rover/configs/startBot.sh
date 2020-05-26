@@ -40,13 +40,12 @@ case "$1" in
 
       #  ----------------------------------------------------------------------
       # Delete previous workspaces
-      # echo  [WARN]: "ROS2 Removing old shit ... "
-      # rm -r ${PWD%}/ros2/install || true
-      # rm -r ${PWD%}/ros2/build || true
-      # rm -r ${PWD%}/ros2/log || true
-      # sleep 2 && clear 
-      # sleep 2 && clear 
-
+      echo  [WARN]: "ROS2 Removing old shit ... "
+      rm -r ${PWD%}/ros2/install || true
+      rm -r ${PWD%}/ros2/build || true
+      rm -r ${PWD%}/ros2/log || true
+      sleep 2 && clear 
+      
       #  ----------------------------------------------------------------------
       #  Build ROS2 packages
       . /opt/ros/dashing/setup.bash
