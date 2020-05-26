@@ -1,2 +1,0 @@
-ros2 topic pub --once /video_streaming/visual_debugger usr_msgs/msg/vision/VisualMessage '{data: "tumama", type": "INFO"}'
-ros2 topic pub --once /video_calibrator/calibrate std_msgs/msg/String '{data: "C"}'

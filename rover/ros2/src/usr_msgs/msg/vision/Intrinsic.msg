@@ -1,6 +1,0 @@
-int16 image_width
-int16 image_height
-float32[] camera_matrix
-float32[] distortion_coefficients
-float32[] rectification_matrix
-float32[] projection_matrix

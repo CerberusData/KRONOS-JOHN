@@ -232,7 +232,7 @@ RUN \
 COPY configs/freedom_robotics/ /usr/src/app/freedom_robotics/
 COPY balena_configs/balena_start.sh .
 COPY data/ /usr/src/app/data
-COPY configs/bot_local.launch.py /usr/src/app/configs/
+COPY configs/bot.launch.py /usr/src/app/configs/
 COPY configs/cams_conf.yaml /usr/src/app/configs/
 COPY configs/Intrinsic_640_360.yaml /usr/src/app/configs/
 COPY configs/Intrinsic_640_480.yaml /usr/src/app/configs/

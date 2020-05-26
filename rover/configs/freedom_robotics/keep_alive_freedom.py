@@ -3,24 +3,25 @@ import time
 import logging
 import subprocess
 
+
 def execute(cmd):
     """
     Simple wrapper for executing command line 
 
     """
     try:
-        return str(subprocess.check_output(cmd, shell=True).strip(),'utf-8')
+        return str(subprocess.check_output(cmd, shell=True).strip(), "utf-8")
     except Exception as e:
         return None
 
 
-def get_freedomrobotics_python_package_path( ):
+def get_freedomrobotics_python_package_path():
     """
     Simple helper to get the freedom package base file path on the system
 
     """
 
-    result = execute('pip3 show freedomrobotics | grep "Location:"' ).split("\n")
+    result = execute('pip3 show freedomrobotics | grep "Location:"').split("\n")
 
     for l in result:
         if "Location:" in l:

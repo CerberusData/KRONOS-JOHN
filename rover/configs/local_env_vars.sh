@@ -9,29 +9,55 @@
 
 # -----------------------------------------------------------------------------
 # DO NOT DEFINE IN ROBOT - DO NOT DEFINE IN ROBOT - DO NOT DEFINE IN ROBOT
-export ROBOBOT_ID=666      # [int] Robot ID
-                           # NOTE: Should be undefined in the robot
-export LOCAL_LAUNCH=1      # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
-                           # NOTE: Should be zero in the robot
+export ROBOBOT_ID=666       # [int] Robot ID
+                            # NOTE: Should be undefined in the robot
+export LOCAL_LAUNCH=1       # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
+                            # NOTE: Should be zero in the robot
+export LOCAL_GUI=1          # [int-bolean] Disable(1)/Enable(0) - Local GUI launch
+                            # NOTE: Should be zero in the robot
 export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
-
-# -----------------------------------------------------------------------------
-# Nodes launching
-export NODE_VIDEO_MAPPING=1     # [int-bolean] (1):Enable/(0):Disable video mapping node launching
-export NODE_VIDEO_CALIBRATION=0 # [int-bolean] (1):Enable/(0):Disable video calibration node launching
-export NODE_VIDEO_PARTICLE=0    # [int-bolean] (1):Enable/(0):Disable video particle node launching
 
 # -----------------------------------------------------------------------------
 # Video processing
 export VIDEO_WIDTH=640          # [int][pix] Cameras Video width
 export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
-export VISUAL_DEBUGGER=1        # [int-bolean] (1):Enable/(0):Disable visual debugger messages 
-export VISUAL_DEBUGGER_TIME=10  # [int][sec] visual debugger message time
 
 # -----------------------------------------------------------------------------
 # Stitcher
-export STITCHER=0               # [int-bolean](1):Enable/(0):Disable - Video Stitching
-export STITCHER_SUP_MODE=0      # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
+export STITCHER=1               # [int-bolean](1):Enable/(0):Disable - Video Stitching
+export STITCHER_SUP_MODE=1      # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
+
+# -----------------------------------------------------------------------------
+# Graphic user interface
+export VISUAL_DEBUGGER=1            # [int-bolean] (1):Enable/(0):Disable visual debugger messages 
+export VISUAL_DEBUGGER_TIME=10      # [int][sec] visual debugger message time
+export VISUAL_OVERLAY_CAMS=1        # [int-bolean](1):Enable/(0):Disable cameras over main video streaming
+export VISUAL_WAYPOINT=1            # [int-bolean](1):Enable/(0):Disable components drawings
+export VISUAL_ZOOM=1                # [int-bolean](1):Enable/(0):Disable zoom by waypoint
+export VISUAL_OBJECT_DETECTOR=1     # [int-bolean](1):Enable/(0):Disable Object detection drawings
+export VISUAL_COMPASS=1             # [int-bolean](1):Enable/(0):Disable Compass drawings
+export VISUAL_CHASSIS_ERROR=1       # [int-bolean](1):Enable/(0):Disable Chassis error drawings
+export VISUAL_DISTANCE_SENSORS=1    # [int-bolean](1):Enable/(0):Disable distance sensors drawings
+export VISUAL_CLIFF_SENSORS=1       # [int-bolean](1):Enable/(0):Disable cliff sensors drawings
+
+export VISUAL_LAT_CAMS_IDLE_TIME=10 # [int][sec] time to hide lateral cameras after no actions
+export VISUAL_REAR_CAM_IDLE_TIME=5  # [int][sec] time to hide rear camera after no actions
+
+export GUI_GAME_OVER_SCREEN=0       # [int-bolean](1):Enable/(0):Disable - Game over screen drawings
+export GUI_NO_CALIBRATION_SCREEN=1  # [int-bolean](1):Enable/(0):Disable - No calibration scrren
+export GUI_STOP_SCREEN=1            # [int-bolean](1):Enable/(0):Disable - Stop screen drawings
+export GUI_WAYPOINT_AREA=1          # [int-bolean](1):Enable/(0):Disable - Waypoint drawings
+export GUI_WAYPOINT_DESCRIPTION=1   # [int-bolean](1):Enable/(0):Disable - Waypoint drawings
+export GUI_UNDISTORD_AREA=0         # [int-bolean](1):Enable/(0):Disable - Undistord drawings
+export GUI_PROJECTION_BOT_WIDTH=0.5 # [float] [m] robot's width to draw its projection
+export GUI_PROJECTION_BOT_MARGI=0.3 # [float] [m] margin to add to robots projection
+export GUI_PROJECTION_SHOW_LOCAL=0  # [int-bolean]  with LOCAL_LAUNCH=1 (1):Enable/(0):Disable show image projection
+
+export GUI_SENSORS_DISTANCE_MEASURE=1           # [int-bolean](1):Enable/(0):Disable - Distance sensors distance value on local gui
+export GUI_SENSORS_DISTANCE_APERTURE_ANGLE=40   # [int][pix] - aperture angle to draw distance sensor cone on local gui
+export GUI_SENSORS_DISTANCE_LONG=170            # [int][pix] - vertical length to draw distance sensor cone on local gui
+
+export CLIFF_SENSOR_TRESHOLD=0.55   # [float] - Threshold value to draw cliff sensors
 
 # -----------------------------------------------------------------------------
 # Extrinsic calibration - Mono-vision
@@ -42,7 +68,6 @@ export VISION_CAL_DAYS_OUT=10           # [int][days] Number of days for a calib
 export VISION_CAL_DAYS_REMOVE=20        # [int][days] Number of days to remove a calibration file
 export VISION_CAL_UNWARPED_WIDTH=200    # [int][pix] width of unwarped image for monovision
 export VISION_CAL_UNWARPED_HEIGHT=360   # [int][pix] height of unwarped image for monovision
-export VISION_CAL_TRIES=5               # [int] Number of tries to calibrate a camera
 export VISION_CAL_PAT_HOZ=0.6223        # [float][m] Horizontal distance between lines in calibration pattern
 export VISION_CAL_PAT_VER=4.0           # [float][m] Vertical length of calibration pattern
 export VISION_CAL_PAT_TH_TOP=15         # [int][pix] Number of pixel to project pattern from vanishing point
@@ -68,11 +93,11 @@ export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   # By default, info and debug log
 
 # -----------------------------------------------------------------------------
 # Fredoom robotics enviroment
-export FR_AGENT=0                   # [int-bolean] (1):Enable/(0):Disable freedom robotics agent 
+export FR_AGENT=1                   # [int-bolean] (1):Enable/(0):Disable freedom robotics agent 
 export FR_STREAMING_OPTIMIZER=1     # [int-bolean] (1):Enable/(0):Disable freedom video streaming optimizer
-export FR_STREAMING_FACTOR=0.4      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative
-export FR_STREAMING_IDLE_TIME=120   # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
-export FR_STREAMING_IDLE_FACTOR=0.2 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
+export FR_STREAMING_FACTOR=0.6      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative
+export FR_STREAMING_IDLE_TIME=60    # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
+export FR_STREAMING_IDLE_FACTOR=0.4 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
 
 # -----------------------------------------------------------------------------
 
