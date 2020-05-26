@@ -36,16 +36,16 @@ set(DEPENDENCIES
   utils
 )
 
-add_executable(speed_controller_node
+add_executable(speed_controller
   src/motion_control_speed.cpp
   src/speed_controller.cpp
 )
 
-target_link_libraries(speed_controller_node utils::utils)
-ament_target_dependencies(speed_controller_node ${DEPENDENCIES})
+target_link_libraries(speed_controller utils::utils)
+ament_target_dependencies(speed_controller ${DEPENDENCIES})
 
 install(TARGETS
-  speed_controller_node
+  speed_controller
   DESTINATION lib/${PROJECT_NAME}
 )
 

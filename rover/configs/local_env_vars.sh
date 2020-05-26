@@ -18,8 +18,8 @@ export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
 # -----------------------------------------------------------------------------
 # Nodes launching
 export NODE_VIDEO_MAPPING=1     # [int-bolean] (1):Enable/(0):Disable video mapping node launching
-export NODE_VIDEO_CALIBRATION=1 # [int-bolean] (1):Enable/(0):Disable video calibration node launching
-export NODE_VIDEO_PARTICLE=1    # [int-bolean] (1):Enable/(0):Disable video particle node launching
+export NODE_VIDEO_CALIBRATION=0 # [int-bolean] (1):Enable/(0):Disable video calibration node launching
+export NODE_VIDEO_PARTICLE=0    # [int-bolean] (1):Enable/(0):Disable video particle node launching
 
 # -----------------------------------------------------------------------------
 # Video processing

@@ -21,7 +21,6 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 
-
 include_directories(include)
 
 add_library(${PROJECT_NAME} 
@@ -37,6 +36,7 @@ set(DEPENDENCIES
 add_executable(test_node
   src/main.cpp
   src/can_test.cpp
+  src/modules/chassis.cpp
   lib/socket_can.cpp
 )
 
@@ -47,6 +47,10 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_export_include_directories(include)
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
+ament_export_include_directories(include)
 ament_package()

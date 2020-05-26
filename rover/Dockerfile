@@ -263,7 +263,7 @@ RUN  \
 WORKDIR /usr/src/app/dev_ws
 RUN  \
     . /opt/ros/dashing/setup.sh && \ 
-    colcon build && \ 
+    colcon build --symlink-install && \ 
     colcon test && \ 
     /bin/bash -c "source /usr/src/app/dev_ws/install/setup.bash"
 

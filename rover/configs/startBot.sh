@@ -51,7 +51,7 @@ case "$1" in
       . /opt/ros/dashing/setup.bash
       clear && cd ${PWD%}/ros2    
       echo  "ROS2 Building new stuff ... "
-      colcon build
+      colcon build  --symlink-install
       echo  "ROS2 Build successful ... "
       sleep 2 && clear && cd ..
        

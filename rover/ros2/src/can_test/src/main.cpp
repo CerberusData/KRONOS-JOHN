@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     // auto can_dvr_ = new CANDriver(interface_name_);
     
     auto can_dvr_ = std::make_shared<CANDriver>(interface_name_);
+    auto chassis = std::make_shared<Chassis>(options);  /* Chassis */
     auto test_node = std::make_shared<CANTest>(options, can_dvr_);
 
     RCLCPP_WARN(test_node->get_logger(), "Init Test");

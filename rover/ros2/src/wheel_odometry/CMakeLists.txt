@@ -40,16 +40,16 @@ set(DEPENDENCIES
   utils
 )
 
-add_executable(odometry
+add_executable(wheel_odometry
   src/main.cpp
   src/wheel_odometry.cpp
 )
 
-target_link_libraries(odometry utils::utils)
-ament_target_dependencies(odometry ${DEPENDENCIES})
+target_link_libraries(wheel_odometry utils::utils)
+ament_target_dependencies(wheel_odometry ${DEPENDENCIES})
 
 install(TARGETS
-  odometry
+  wheel_odometry
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -2,10 +2,10 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>bosch_imu</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="kmilo7204@gmail.com">ada</maintainer>
-  <license>TODO: License declaration</license>
+  <version>0.0.1</version>
+  <description>IMU node for Medussa Project</description>
+  <maintainer email="camiloalvis@kiwibot.com">ada</maintainer>
+  <license>Apache License 2.0</license>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>

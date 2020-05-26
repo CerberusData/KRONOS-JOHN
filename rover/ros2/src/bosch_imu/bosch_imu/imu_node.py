@@ -88,7 +88,7 @@ OPER_MODE_M4G = 0x0a
 OPER_MODE_NDOF_FMC_OFF = 0x0b
 OPER_MODE_NDOF = 0x0C
 
-#  Power modes
+# Power modes
 PWR_MODE_NORMAL = 0x00
 PWR_MODE_LOW = 0x01
 PWR_MODE_SUSPEND  = 0x02
@@ -123,8 +123,7 @@ class ImuNode(Node):
             Bool, 'imu/move_state', 1)      # Kiwibot movement status - move_msg 
         self.pub_imu_status = self.create_publisher(
             String, 'imu/status', 1)        # Kiwibot IMU status - status_msg 
-        self.pub_radio_check = self.create_publisher(
-            String, 'imu/radio_check', 1)
+            
         """
         self.pub_imu_raw = self.create_publisher(
             Imu, 'imu/raw_data', 1)         # Raw data - imu_raw_msg
@@ -226,7 +225,8 @@ class ImuNode(Node):
         # Timers
         self.pub_timer_ = self.create_timer(
             timer_period_sec=self.pub_rate,
-            callback=self.cb_publish_imu)
+            callback=self.cb_publish_imu
+        )
 
 # --------------------------------------------------------------------------- #   
 ## Member functions 
@@ -241,6 +241,7 @@ class ImuNode(Node):
             import ctypes
             libc = ctypes.cdll.LoadLibrary('libc.so.6')
             libc.prctl(15, name, 0, 0, 0)
+
         else:
             raise Exception(
                 "Can not set the process name on non-linux systems: " + \
@@ -448,8 +449,7 @@ class ImuNode(Node):
             """
 
             current_azimuth = \
-                (math.atan2(self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z) - \
-                (math.pi / 2))
+                (math.atan2(self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z))
 
             if (self._azimuth != 0.0):
                 current_azimuth = \
@@ -468,7 +468,7 @@ class ImuNode(Node):
                 # Else condition to handle an error in the IMU when calculating the orientation
             
             if ((not self._first_orient) and (self._azimuth != 0.0) and (self._counter > 200)):
-                self._initial_orient  = -self._azimuth + self._mgn_decl - (self._yaw - math.pi)
+                self._initial_orient  = -self._azimuth - self._mgn_decl
                 self._alpha = 0.75
                 self._first_orient = True
 
@@ -476,12 +476,13 @@ class ImuNode(Node):
             # Reassigning the value for the Robot axes
             self._pitch_bot = (math.pi / 2) - pitch_imu
             self._roll_bot = -roll_imu
-            self._yaw_bot  = yaw_imu + self._initial_orient
+            self._yaw_bot  = math.atan2(math.sin(yaw_imu - math.pi), math.cos(yaw_imu - math.pi)) - self._initial_orient
             
             quaternion_bot = quaternion_from_euler(
                 pitch=self._pitch_bot,
                 roll=self._roll_bot,
-                yaw=self._yaw_bot)
+                yaw=self._yaw_bot
+            )
     
             # Kiwibot filtered data
             self.imu_bot_msg.orientation.x = quaternion_bot[0]
@@ -491,17 +492,18 @@ class ImuNode(Node):
             self.imu_bot_msg.orientation_covariance = [
                 1e-5, 0.0, 0.0, 
                 0.0, 1e-5, 0.0, 
-                0.0, 0.0, 1e-3]
+                0.0, 0.0, 1e-3
+            ]
 
             # --------------------------------------------------------------- #
             # Quaternion bot for EKF
-            quaternion_bot_ekf = self._quaternion_from_euler(
+            quaternion_bot_ekf = quaternion_from_euler(
                 pitch=self._pitch_bot, 
                 roll=-self._roll_bot,
                 yaw=-self._azimuth + self._mgn_decl)
     
             # Kiwibot filtered data for EKF
-            self.imu_ekf_msg.header.stamp =rclpy.clock.Clock().now().to_msg()
+            self.imu_ekf_msg.header.stamp = rclpy.clock.Clock().now().to_msg()
             self.imu_ekf_msg.header.frame_id = self.frame_id
             self.imu_ekf_msg.orientation.x = quaternion_bot_ekf[0]
             self.imu_ekf_msg.orientation.y = quaternion_bot_ekf[1]
@@ -510,7 +512,8 @@ class ImuNode(Node):
             self.imu_ekf_msg.orientation_covariance = [
                 1e-3, 0.0, 0.0, 
                 0.0, 1e-3, 0.0, 
-                0.0, 0.0, 1e-2]
+                0.0, 0.0, 1e-2
+            ]
     
             # --------------------------------------------------------------- #
             # Publish IMU motion status
@@ -551,7 +554,7 @@ class ImuNode(Node):
         # Filtered data publisher
         self.pub_imu_data.publish(self.imu_msg)
         # Filtered data publisher
-        if (self._counter > 300):
+        if (self._counter > 200):
             self.pub_bot_data.publish(self.imu_bot_msg)
             self.pub_bot_ekf.publish(self.imu_ekf_msg)
         # Movement publisher

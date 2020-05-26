@@ -9,6 +9,8 @@
 /* ROS2 Default */
 #include <rclcpp/rclcpp.hpp>
 
+#include "can_test/modules/chassis.hpp"
+
 /* ROS2 Messages */
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
