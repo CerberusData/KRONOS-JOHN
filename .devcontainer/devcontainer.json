@@ -12,5 +12,9 @@
 
     "extensions": [
         "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker",
+        "oderwat.indent-rainbow",
+        "ms-vsliveshare.vsliveshare",
     ]
 }
