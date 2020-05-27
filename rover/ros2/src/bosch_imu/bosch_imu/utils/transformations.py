@@ -38,10 +38,12 @@ _AXES2TUPLE = {
 
 def euler_from_quaternion(quaternion, axes='sxyz'):
     """
-    Return Euler angles from quaternion for specified axis sequence.
-    >>> angles = euler_from_quaternion([0.06146124, 0, 0, 0.99810947])
-    >>> numpy.allclose(angles, [0.123, 0, 0])
-    True
+    Desc: Calculates the euler angles for the given quaternions by calling two
+        additional funcions
+    Args: 
+        quaternion - Input quaternion to be transformed
+        axes : One of 24 axis sequences as string or encoded tuple
+    Returns: Euler angles from rotation matrix for specified axis sequence.
     """
     return euler_from_matrix(quaternion_matrix(quaternion), axes)
 

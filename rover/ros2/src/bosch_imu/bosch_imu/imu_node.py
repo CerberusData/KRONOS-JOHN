@@ -17,16 +17,15 @@ Sources:
 # --------------------------------------------------------------------------- #
 
 import rclpy 
-import serial
-import sys
-import struct as st
-import binascii
-import math
 import os
+import sys
+import math
+import serial
+import binascii
 import numpy as np
-from time import time
 
 from rclpy.node import Node
+from time import time
 
 from std_msgs.msg import Bool
 from std_msgs.msg import String
@@ -468,7 +467,7 @@ class ImuNode(Node):
                 # Else condition to handle an error in the IMU when calculating the orientation
             
             if ((not self._first_orient) and (self._azimuth != 0.0) and (self._counter > 200)):
-                self._initial_orient  = -self._azimuth - self._mgn_decl
+                self._initial_orient = -self._azimuth - self._mgn_decl
                 self._alpha = 0.75
                 self._first_orient = True
 

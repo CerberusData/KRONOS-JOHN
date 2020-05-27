@@ -32,7 +32,7 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
 
     # Add devices to be share in container
-    devices: 
+    # devices: 
       # - /dev/video0
       # - /dev/video1
       # - /dev/video2

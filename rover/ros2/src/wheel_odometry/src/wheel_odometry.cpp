@@ -101,6 +101,9 @@ void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
 
     tf2::Matrix3x3 m(q);
     m.getRPY(imu_roll_, imu_pitch_, imu_yaw_);
+    RCLCPP_INFO(this->get_logger(), "Pitch: %0.4f", imu_pitch_);
+    RCLCPP_INFO(this->get_logger(), "Roll: %0.4f", imu_roll_);
+    RCLCPP_INFO(this->get_logger(), "Yaw: %0.4f", imu_yaw_);
 
     imu_omega_ = msg->angular_velocity.z;
 

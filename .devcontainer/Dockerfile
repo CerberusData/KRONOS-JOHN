@@ -14,6 +14,7 @@ ARG USER_GID=$USER_UID
 ENV DEBIAN_FRONTEND=noninteractive
 
 # -----------------------------------------------------------------------------
+RUN echo "Devcontainer"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-utils \
     dialog \
