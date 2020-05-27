@@ -42,6 +42,7 @@ class SpeedController : public rclcpp::Node
 
         /* Subscribers */
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr driving_cmd_fr_sub_;
+        // rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
 
         /* Timers */
         rclcpp::TimerBase::SharedPtr pub_timer_;

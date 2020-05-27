@@ -54,6 +54,10 @@ class WheelOdometry : public rclcpp::Node
         rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr wheel_odom_global_pub_;
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr radio_check_pub_;
 
+        /* Publisher messages */
+        nav_msgs::msg::Odometry wheel_odom_msg_;
+        nav_msgs::msg::Odometry global_wheel_odom_msg_;
+
         /* Subscribers */
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr movement_sub_;
         rclcpp::Subscription<usr_msgs::msg::Motors>::SharedPtr motor_status_sub_;
@@ -73,11 +77,11 @@ class WheelOdometry : public rclcpp::Node
             const std::shared_ptr<rmw_request_id_t> request_header,
             const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
             std::shared_ptr<std_srvs::srv::SetBool::Response> response); 
-
+        float CalculateSlipFactor(float kin_omega, float imu_omega);
         /* Member attributes */
         std::vector<double> motors_rpm_{0.0f, 0.0f, 0.0f, 0.0f};
         std::vector<double> motors_curr_{0.0f, 0.0f, 0.0f, 0.0f};
-        nav_msgs::msg::Odometry wheel_odom_msg_;
+
         rclcpp::Time prev_time_;
         
         /* Environment variables */

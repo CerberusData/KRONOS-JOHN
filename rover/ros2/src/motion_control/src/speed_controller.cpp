@@ -12,6 +12,9 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
     /* Subscribers */ 
     driving_cmd_fr_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
         "/freedom_client/reference_commands", 10, std::bind(&SpeedController::CommandsCb, this, _1));
+    // odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    //     "wheel_odometry/odometry"
+    // )
 
     // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 1.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
     // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: -1.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
@@ -57,8 +60,26 @@ float SpeedController::ThrottlePID(float vx_ref)
     {
         return 0.0f;
     }
+    // error = ref - current velocity
+
     return 0.0f;
 }
+
+// float SpeedController::PIDCmd()
+// {
+//     /*
+//         This function will calculate and return the PID command for the given 
+//         integral, derivative and proportional errors
+
+//         The velocity representation (For PID discretization) is used here.
+//     */
+
+// }
+
+
+/*
+Odometry callback to extract the current velocity and pose comming from Wheel odometry
+*/
 
 void SpeedController::Controller()
 {

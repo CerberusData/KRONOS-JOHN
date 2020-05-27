@@ -28,6 +28,7 @@ WheelOdometry::WheelOdometry(const rclcpp::NodeOptions & options)
     pub_timer_ = this->create_wall_timer(std::chrono::milliseconds(50), std::bind(&WheelOdometry::PubTimerCb, this));
 }
 
+/* Callbacks */
 bool WheelOdometry::RestartCb(
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
@@ -116,6 +117,20 @@ void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
     }
 }
 
+/* Functions */
+float WheelOdometry::CalculateSlipFactor(float kin_omega, float imu_omega)
+{
+    float alpha = 1.0f;
+    if (kin_omega != 0.0f)
+    {
+        alpha = 1.0f - ((kin_omega - imu_omega) / 2.0f); 
+        alpha = alpha < 0.0f ? 0.0f : alpha;
+        alpha = alpha > 1.0f ? 1.0f : alpha;
+    }
+
+    return alpha;
+}
+
 void WheelOdometry::CalculateOdometry()
 {
     /*
@@ -132,7 +147,7 @@ void WheelOdometry::CalculateOdometry()
     float _R_vel = -(_FR_vel + _RR_vel) / 2.0f;  
     float _L_vel = (_FL_vel + _RL_vel) / 2.0f;
     float _X_vel = (_R_vel + _L_vel) / 2.0f;
-    // float _Z_omg = (_R_vel - _L_vel) / bot_track_;
+    float _kin_omega = (_R_vel - _L_vel) / bot_track_;
 
     rclcpp::Time curr_time = this->now();
     double dt = (curr_time - prev_time_).seconds();
@@ -141,26 +156,29 @@ void WheelOdometry::CalculateOdometry()
     /* Filling a Quaternion with the current euler angles */
     tf2::Quaternion quat;
     quat.setRPY(imu_roll_, imu_pitch_, imu_yaw_ - imu_yaw_offset_);
-    
+
+    /* Header assignation */
     wheel_odom_msg_.header.stamp = this->now();
     wheel_odom_msg_.header.frame_id = "odom";
     wheel_odom_msg_.child_frame_id = "base_link";
-
     /* Quaternion assignation */
     wheel_odom_msg_.pose.pose.orientation.x = quat[0];
     wheel_odom_msg_.pose.pose.orientation.y = quat[1];
     wheel_odom_msg_.pose.pose.orientation.z = quat[2];
     wheel_odom_msg_.pose.pose.orientation.w = quat[3];
-    
     /* Speeds in X and Y axes */
     float _X_dot = _X_vel * cos(imu_yaw_ - imu_yaw_offset_);
     float _Y_dot = _X_vel * sin(imu_yaw_ - imu_yaw_offset_);
-
     /* Adding displacement in [m] to the current message */
     wheel_odom_msg_.pose.pose.position.x += _X_dot * dt;
     wheel_odom_msg_.pose.pose.position.y += _Y_dot * dt;
     wheel_odom_msg_.pose.pose.position.z = 0.0f;
-    
+    wheel_odom_msg_.pose.covariance = {0.1, 0, 0, 0, 0, 0,
+                                        0, 0.1, 0, 0, 0, 0,
+                                        0, 0, 0.2, 0, 0, 0,
+                                        0, 0, 0, 0.001, 0, 0,
+                                        0, 0, 0, 0, 0.001, 0,
+                                        0, 0, 0, 0, 0, 0.002};
     /* Velocities assignation */
     wheel_odom_msg_.twist.twist.linear.x = _X_vel;
     wheel_odom_msg_.twist.twist.linear.y = 0.0f;
@@ -206,22 +224,47 @@ void WheelOdometry::CalculateOdometry()
     // }
 
     /* Pose covariance tunning (Positions) */
-    wheel_odom_msg_.pose.covariance = {0.1, 0, 0, 0, 0, 0,
-                                        0, 0.1, 0, 0, 0, 0,
-                                        0, 0, 0.2, 0, 0, 0,
-                                        0, 0, 0, 0.001, 0, 0,
-                                        0, 0, 0, 0, 0.001, 0,
-                                        0, 0, 0, 0, 0, 0.002};
+    
+
+    /* Calculations for Global Wheel Odometry */
+    float _alpha = CalculateSlipFactor(_kin_omega, imu_omega_);
+    float _X_vel_corrected = _X_vel * _alpha;
+
+    /* Filling a global Quaternion with the current euler angles */
+    tf2::Quaternion quat_global;
+    quat_global.setRPY(imu_roll_, imu_pitch_, imu_yaw_);
+
+    /* Header assignation */
+    global_wheel_odom_msg_.header.stamp = this->now();
+    global_wheel_odom_msg_.header.frame_id = "odom";
+    global_wheel_odom_msg_.child_frame_id = "base_link";
+    /* Quaternion assignation */
+    global_wheel_odom_msg_.pose.pose.orientation.x = quat_global[0];
+    global_wheel_odom_msg_.pose.pose.orientation.y = quat_global[1];
+    global_wheel_odom_msg_.pose.pose.orientation.z = quat_global[2];
+    global_wheel_odom_msg_.pose.pose.orientation.w = quat_global[3];
+    /* Speeds in X and Y axes */
+    float _X_dot_global = _X_vel_corrected * cos(imu_yaw_ - imu_yaw_offset_);
+    float _Y_dot_global = _X_vel_corrected * sin(imu_yaw_ - imu_yaw_offset_);
+    /* Adding displacement in [m] to the global message */
+    global_wheel_odom_msg_.pose.pose.position.x += _X_dot_global * dt;
+    global_wheel_odom_msg_.pose.pose.position.y += _Y_dot_global * dt;
+    global_wheel_odom_msg_.pose.pose.position.z = 0.0f;
+    global_wheel_odom_msg_.pose.covariance = wheel_odom_msg_.pose.covariance;
+    /* Velocities assignation */
+    global_wheel_odom_msg_.twist.twist.linear.x = _X_vel_corrected;
+    global_wheel_odom_msg_.twist.twist.linear.y = 0.0f;
+    global_wheel_odom_msg_.twist.twist.linear.z = 0.0f;
+    global_wheel_odom_msg_.twist.twist.angular.x = 0.0f;
+    global_wheel_odom_msg_.twist.twist.angular.y = 0.0f;
+    global_wheel_odom_msg_.twist.twist.angular.z = imu_omega_;
+    global_wheel_odom_msg_.twist.covariance = wheel_odom_msg_.twist.covariance;
 
     if (imu_published_ == true)
     {
         wheel_odom_pub_->publish(wheel_odom_msg_);
+        wheel_odom_global_pub_->publish(global_wheel_odom_msg_);
     } 
-    
-    else
-    {
-        RCLCPP_ERROR(this->get_logger(), "IMU is not publishing to Wheel Odometry");
-    }
 }
 
 void WheelOdometry::PubTimerCb()
