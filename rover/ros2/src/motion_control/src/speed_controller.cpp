@@ -11,31 +11,34 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
 
     /* Subscribers */ 
     driving_cmd_fr_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-        "/freedom_client/reference_commands", 10, std::bind(&SpeedController::CommandsCb, this, _1));
-    // odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    //     "wheel_odometry/odometry"
-    // )
+        "/freedom_client/joystick_commands", 10, std::bind(&SpeedController::CommandsCb, this, _1));
+    odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        "/wheel_odometry/global_odometry", 50, std::bind(&SpeedController::OdometryCb, this, _1));
 
-    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 1.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
-    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: -1.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
-    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}"
-    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -1.0}}"
-    // ros2 topic pub --once /freedom_client/reference_commands geometry_msgs/msg/TwistStamped "{linear: {x: 1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -1.0}}"
+}
+void SpeedController::OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
+{
 
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: -1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -0.5}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+    /*
+        Odometry callback to extract the current velocity and pose comming from Wheel odometry
+        We are using global wheel odometry, but I need to check if we should use the local one.
+    */
+    robot_twist_->twist = msg->twist.twist;
 
-    // ros2 topic pub --once /test/leds std_msgs/msg/Bool "{data: true}"
-    // ros2 topic pub --once /test/config std_msgs/msg/Bool "{data: true}"
-    // ros2 topic pub --once /test/chassis std_msgs/msg/Bool "{data: true}"
-    // ros2 service call /test/arm std_srvs/srv/SetBool "{data: true}"
-    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: true}"
-    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: false}"
+    double roll = 0.0f; 
+    double pitch = 0.0f;
+    tf2::Quaternion q(msg->pose.pose.orientation.x, 
+                    msg->pose.pose.orientation.y, 
+                    msg->pose.pose.orientation.z, 
+                    msg->pose.pose.orientation.w);
+    tf2::Matrix3x3 m(q);
+    m.getRPY(roll, pitch, bot_yaw_);
 
-
+    if (first_yaw_value == false)
+    {
+        yaw_set_point = bot_yaw_;
+        first_yaw_value = true;
+    }
 }
 
 void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
@@ -77,9 +80,7 @@ float SpeedController::ThrottlePID(float vx_ref)
 // }
 
 
-/*
-Odometry callback to extract the current velocity and pose comming from Wheel odometry
-*/
+
 
 void SpeedController::Controller()
 {

@@ -16,7 +16,12 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
+
+/* TF2 Transformations */
+#include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/Quaternion.h"
 
 /* ROS2 Services */
 #include "std_srvs/srv/set_bool.hpp"
@@ -42,16 +47,26 @@ class SpeedController : public rclcpp::Node
 
         /* Subscribers */
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr driving_cmd_fr_sub_;
-        // rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
 
         /* Timers */
         rclcpp::TimerBase::SharedPtr pub_timer_;
 
         /* Member functions */
         void CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+        void OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg);
         float ThrottlePID(float vx_ref);
 
         /* Environment variables */
         bool ctrl_throttle_enable_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL_ENABLE", true);
+
+        /* -- */
+        std::shared_ptr<geometry_msgs::msg::TwistStamped> robot_twist_;
+        std::shared_ptr<geometry_msgs::msg::TwistStamped> robot_twist_;
+
+        double bot_yaw_;
+        double yaw_set_point = 0.0f;
+        bool first_yaw_value = false;
+
 };
 #endif
