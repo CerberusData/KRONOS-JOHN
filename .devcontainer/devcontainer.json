@@ -15,6 +15,7 @@
         "eamodio.gitlens",
         "streetsidesoftware.code-spell-checker",
         "oderwat.indent-rainbow",
-        "ms-vsliveshare.vsliveshare"
+        "ms-vsliveshare.vsliveshare",
+        "2gua.rainbow-brackets"
     ]
 }

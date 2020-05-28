@@ -34,39 +34,48 @@ using std::placeholders::_1;
 class SpeedController : public rclcpp::Node
 {
     public:
-        /* Constructor */
         SpeedController(rclcpp::NodeOptions & options);
         ~SpeedController(){};
 
-        /* Publis functions */
         void Controller();
 
     private:
-        /* Publishers */
+        // Publishers
         rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr output_cmd_pub_;
 
-        /* Subscribers */
+        // Subscribers
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr driving_cmd_fr_sub_;
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
 
-        /* Timers */
+        // Timers
         rclcpp::TimerBase::SharedPtr pub_timer_;
 
-        /* Member functions */
+        // Member functions
         void CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
         void OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg);
-        float ThrottlePID(float vx_ref);
+        float ThrottlePID(double ref_vx, double cur_vx, double dt);
 
-        /* Environment variables */
-        bool ctrl_throttle_enable_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL_ENABLE", true);
-
+        // Environment variables
+        bool throttle_ctrl_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL_ENABLE", true);
+        double kp_thr_ = getEnv("SPEED_CONTROLLER_KP_THROTTLE", 0.2f);
+        double ki_thr_ = getEnv("SPEED_CONTROLLER_KI_THROTTLE", 0.2f);
+        double kd_thr_ = getEnv("SPEED_CONTROLLER_KD_THROTTLE", 0.0f);
+        double kff_thr_ = getEnv("SPEED_CONTROLLER_FF_THROTTLE", 1.0f);
+        
         /* -- */
-        std::shared_ptr<geometry_msgs::msg::TwistStamped> robot_twist_;
-        std::shared_ptr<geometry_msgs::msg::TwistStamped> robot_twist_;
+        geometry_msgs::msg::TwistStamped robot_twist_;
+        geometry_msgs::msg::TwistStamped reference_cmd_;
 
-        double bot_yaw_;
-        double yaw_set_point = 0.0f;
+        rclcpp::Time prev_time_;
+
+        double int_error_ = 0.0f;
+        double e_k1_ = 0.0f;
+        double prev_ref_vx_ = 0.0f;
+
+        double yaw_set_point_ = 0.0f;
+        double bot_yaw_ = 0.0f;
         bool first_yaw_value = false;
+
 
 };
 #endif
