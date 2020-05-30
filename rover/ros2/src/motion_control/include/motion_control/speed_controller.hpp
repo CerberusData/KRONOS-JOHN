@@ -76,6 +76,5 @@ class SpeedController : public rclcpp::Node
         double bot_yaw_ = 0.0f;
         bool first_yaw_value = false;
 
-
 };
 #endif

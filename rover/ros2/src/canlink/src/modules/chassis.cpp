@@ -38,7 +38,7 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
             for(int i = 0; i < 4; ++i)
             {
                 std::string topic_name = "/canlink/chassis/current" + std::to_string(i + 1);
-                rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr current_pub = \
+                rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr current_pub =
                     this->create_publisher<std_msgs::msg::Float32>(topic_name, 10);
                 current_pub_.push_back(current_pub);
             }
@@ -361,7 +361,7 @@ void Chassis::CurrentTimerCb()
     current_timer_started_ = false;
     auto info_message = std::make_unique<usr_msgs::msg::Messages>();  /* I can implement a Pointer here */
     info_message->type = usr_msgs::msg::Messages::ERROR;
-    info_message->data = "Parar cuanto antes: Codigo de error en motores:"
+    info_message->data = "Stop: Codigo de error en motores:"
                         + std::to_string(motor_error_[0]) + ", "
                         + std::to_string(motor_error_[1]) + ", "
                         + std::to_string(motor_error_[2]) + ", "
@@ -378,19 +378,18 @@ void Chassis::CurrentTimerCb()
 void Chassis::SendChassisConfiguration()
 {
     /*
-        - Sends the initial chassis configuration
-          + Values defined within *InitialConfig()*
-        - Writes the data configuration through the *CANWrite()* (Def at socket_can.cpp)
+    - Sends the initial chassis configuration
+        + Values defined within *InitialConfig()*
+    - Writes the data configuration through the *CANWrite()* (Def at socket_can.cpp)
     */
     uint8_t data[8] = {CONFIGURATION_CMD_ID,
-                       chassis_cfg_.wheels_baudrate,
-                       chassis_cfg_.battery_status_baudrate,
-                       chassis_cfg_.wheel_control_mode,
-                       chassis_cfg_.operation_mode,
-                       chassis_cfg_.number_battery_cells,
-                       chassis_cfg_.motors_model,
-                       chassis_cfg_.motors_current_baudrate
-                    };
+                    chassis_cfg_.wheels_baudrate,
+                    chassis_cfg_.battery_status_baudrate,
+                    chassis_cfg_.wheel_control_mode,
+                    chassis_cfg_.operation_mode,
+                    chassis_cfg_.number_battery_cells,
+                    chassis_cfg_.motors_model,
+                    chassis_cfg_.motors_current_baudrate};
     can_driver_->CANWrite(CHASSIS_ADDRESS, 8, data);
 }
 
@@ -418,8 +417,8 @@ void Chassis::ConfigurePID()
 void Chassis::InitialConfig()
 {
     /*
-        - Sets the initial chassis configuration
-        - Softbrake activation - Writes the data through the *CANWrite()* (Def at socket_can.cpp)
+    - Sets the initial chassis configuration
+    - Softbrake activation - Writes the data through the *CANWrite()* (Def at socket_can.cpp)
     */
     chassis_cfg_.wheels_baudrate = WHEELS_BAUDRATE_DEFAULT;
     chassis_cfg_.battery_status_baudrate = BATTERY_STATUS_BAUDRATE_DEFAULT;
@@ -430,17 +429,17 @@ void Chassis::InitialConfig()
     chassis_cfg_.motors_current_baudrate = MOTORS_CURRENT_DEFAULT;
     SendChassisConfiguration();
 
-    /* Motors state initialization */
+    // Motors state initialization
     motors_status_.rpm = {0.0, 0.0, 0.0, 0.0};
     motors_status_.current = {0.0, 0.0, 0.0, 0.0};
     motors_status_.error_status = {0, 0, 0, 0};
     test_motors_response_.status = {0, 0, 0, 0, 0, 0};
 
-    /* Heartbeat Timer */
+    // Heartbeat Timer
     heartbeat_tmr_ = this->create_wall_timer(std::chrono::seconds(3), std::bind(&Chassis::HeartbeatTimerCb, this));
     heartbeat_tmr_->reset();
 
-    /* Soft brake activation */
+    // Soft brake activation
     sleep(0.5);
     uint8_t data[2] = {SOFT_BRAKE_CMD_ID, 0x01};
     can_driver_->CANWrite(CHASSIS_ADDRESS, 2, data);
@@ -460,8 +459,6 @@ bool Chassis::SendMotorsCmd()
 {
     float w_left = (2.0f * controls_.at(1) - controls_.at(0) * robot_length_) / (2.0f * radius_);
     float w_right = (2.0f * controls_.at(1) + controls_.at(0) * robot_length_) / (2.0f * radius_);
-    // float w_right = 15.0f;
-    // float w_right = 15.0f;
     if(motors_current_ok_ == false)
     {
         w_left = 0.0f;
@@ -470,49 +467,51 @@ bool Chassis::SendMotorsCmd()
 
     uint8_t w_left_dig = RadsToDigital(w_left);
     uint8_t w_right_dig = RadsToDigital(w_right);
-    uint8_t directions = 0xAA;  /* Brake on all motors */
+    uint8_t directions = 0xAA;  // Brake on all motors
    
-    /* Positive Left wheel speed */
+    // Positive Left wheel speed
     if (w_left > 0)
     {
         if (w_right > 0)
         {
-            directions = 0x05;  /* Left: CCW - Right: CW - (Forwards) */
+            directions = 0x05;  // Left: CCW - Right: CW - (Forwards)
         }
         else if (w_right < 0)
         {
-            directions = 0x00;  /* Left: CCW - Right: CCW - (Turn CW) */
+            directions = 0x00;  // Left: CCW - Right: CCW - (Turn CW)
         }
     }
-    /* Negative Left wheel speed */
+
+    // Negative Left wheel speed
     else if (w_left < 0)
     {
         if (w_right > 0)
         {
-            directions = 0x55;  /* Right: CW - Left: CW - (Turn CCW) */ 
+            directions = 0x55;  // Right: CW - Left: CW - (Turn CCW) 
         }
+
         else if (w_right < 0)
         {
-            directions = 0x50;  /* Right: CCW - Left: CW  - (Backwards) */
+            directions = 0x50;  // Right: CCW - Left: CW  - (Backwards)
         }
     }
 
-    if ((motors_dvr_status_.connected == true) && \
-        (motors_dvr_status_.armed == true) && \
-        (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL))
+    if ((motors_dvr_status_.connected == true) 
+        && (motors_dvr_status_.armed == true) 
+        && (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL))
     {
         /* 
-            - This conditional checks three things
-              + Chassis connection (True when Can Driver is working)
-              + If the Robot is armed
-              + Current operation mode for the chassis
+        - This conditional checks three things
+            + Chassis connection (True when Can Driver is working)
+            + If the Robot is armed
+            + Current operation mode for the chassis
         */
         if (((controls_.at(0) == 0.0f) && (controls_.at(1) == 0.0f)))
         {
             /*
-                - Controls:
-                  + Position 0: Angular speed (Steering)
-                  + Position 1: Linear speed (Throttle)
+            - Controls:
+                + Position 0: Angular speed (Steering)
+                + Position 1: Linear speed (Throttle)
             */
             if (moving_ == true)
             {
@@ -530,8 +529,8 @@ bool Chassis::SendMotorsCmd()
         }
 
         /* Decceleration checking */
-        if((((throttle_prev_ < 0.0f) && (throttle_current_ - throttle_prev_ > 0.1f)) || \
-            ((throttle_prev_ > 0.0f) && (throttle_current_ - throttle_prev_ < -0.1f))))
+        if((((throttle_prev_ < 0.0f) && (throttle_current_ - throttle_prev_ > 0.1f)) 
+            || ((throttle_prev_ > 0.0f) && (throttle_current_ - throttle_prev_ < -0.1f))))
         {
             if (accelerating_ == true)
             {
@@ -555,7 +554,7 @@ bool Chassis::SendMotorsCmd()
         
         raw_motors_out_ = {w_dig_1, w_dig_2, w_dig_3, w_dig_4};
 
-        /* Checking the current chassis wheel control mode */
+        // Checking the current chassis wheel control mode 
         if (chassis_cfg_.wheel_control_mode == WHEEL_CONTROL_MODE_RPM)
         {
             uint8_t data_cmd[6] = {
@@ -592,7 +591,7 @@ bool Chassis::SendMotorsCmd()
 
 bool Chassis::GetConnected()
 {
-   return motors_dvr_status_.connected;
+    return motors_dvr_status_.connected;
 }
 
 void Chassis::SetMotorsCurrent(struct can_frame* frame)
@@ -615,18 +614,20 @@ void Chassis::SetMotorsCurrent(struct can_frame* frame)
     motor_current = msbs >> 4;
     motors_status_.current[3] = (float)((motor_current << 8) | (lsbs));
 
-    /* Current units conversion (A) */
+    // Current units conversion (A)
     for( int i = 0; i < 4; i++)
     {
         motors_status_.current[i] = motors_status_.current[i] * current_slope_ + current_intercept_;
     }
     motor_error_state_ = 0;
 
-    /* Checking the current limits and status for each motor */
+    // Checking the current limits and status for each motor
     for(int i = 0; i < 4; i++)
     {
-        /* Locked wheel */
-        if((motors_status_.current[i] >= min_current_) && (std::abs(motors_status_.rpm[i]) < 3.0f)){
+        // Locked wheel
+        if((motors_status_.current[i] >= min_current_) 
+            && (std::abs(motors_status_.rpm[i]) < 3.0f))
+        {
             motor_error_[i] = 2;
             motor_error_state_ -= 1;
             if((motors_status_.current[i] >= max_allowed_current_))
@@ -634,18 +635,20 @@ void Chassis::SetMotorsCurrent(struct can_frame* frame)
                 motor_error_[i] = 3;
             }
         }
-        /* Overcurrent */
+
+        // Overcurrent
         else if((motors_status_.current[i] >= max_allowed_current_))
         {
-           motor_error_[i] = 1;
-           motor_error_state_ -= 1;
+            motor_error_[i] = 1;
+            motor_error_state_ -= 1;
         }
-        /* No problem at all */
-        else if((motors_status_.current[i] < max_allowed_current_) && \
-            (std::abs(motors_status_.rpm[i]) > 3.0f) && \
-            (motors_status_.current[i] >= min_current_))
+
+        // No problem at all
+        else if((motors_status_.current[i] < max_allowed_current_) 
+                && (std::abs(motors_status_.rpm[i]) > 3.0f) 
+                && (motors_status_.current[i] >= min_current_))
         {
-           motor_error_[i] = 0;
+            motor_error_[i] = 0;
         }
     }
 

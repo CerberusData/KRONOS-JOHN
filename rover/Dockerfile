@@ -207,7 +207,6 @@ RUN \
 
 # -----------------------------------------------------------------------------
 # Add development, debugging utils/dependencies here
-RUN echo "text"
 RUN \
     apt-get update && \
     apt-get install -y \
@@ -270,6 +269,7 @@ RUN  \
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom robotics
 # https://docs.freedomrobotics.ai/docs/install
+RUN echo "FR Agent Updating"
 RUN \
     curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3
 
