@@ -140,3 +140,4 @@ exit 0
 # # Source ROS2 enviroment
 # sudo bash configs/startBot.sh start
 # source /opt/ros/dashing/setup.sh && source /workspace/rover/ros2/install/setup.sh && clear
+# sudo chown -R $USER:$USER medusa_directorio
