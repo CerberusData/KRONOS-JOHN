@@ -12,8 +12,12 @@
 export ROBOBOT_ID=666       # [int] Robot ID
                             # NOTE: Should be undefined in the robot
 export LOCAL_LAUNCH=1       # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
-                            # NOTE: Should be zero in the robot
+                            # NOTE: Should be zero in the robot OR UNDEFINED
 export LOCAL_GUI=1          # [int-bolean] Disable(1)/Enable(0) - Local GUI launch
+                            # NOTE: Should be zero in the robot
+export DELETE_BUILD=0       # [int-bolean] Disable(1)/Enable(0) - Delte previous ROS2 build and stuff
+                            # NOTE: Should be zero in the robot
+export LOCAL_CLIENT=1       # [int-bolean] Disable(1)/Enable(0) - local socket server
                             # NOTE: Should be zero in the robot
 export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
 
