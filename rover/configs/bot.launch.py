@@ -155,6 +155,14 @@ def generate_launch_description():
             "output": "screen",
             "launch": int(os.getenv(key="NODE_CANLINK_CABIN", default=1)),
         },
+        # ---------------------------------------------------------------------
+        # Local node
+        "NODE_LOCAL_CLIENT": {
+            "node_executable": "local_client",
+            "package": "local_client",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_LOCAL_CLIENT", default=0)),
+        },
     }
 
     if os.getenv(key="LOCAL_LAUNCH", default=0):
