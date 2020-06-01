@@ -15,5 +15,7 @@ rover/ros2/src/vision/vision/extrinsic/*.jpg
 rover/configs/Extrinsic_640_360_LL.yaml
 rover/configs/Extrinsic_640_360_RR.yaml
 rover/configs/Extrinsic_640_360_B.yaml
+rover/socketio-server
+rover/tmp
 *.pyc
 .vscode
