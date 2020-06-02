@@ -41,6 +41,7 @@ set(DEPENDENCIES
 add_executable(speed_controller
   src/motion_control_speed.cpp
   src/speed_controller.cpp
+  src/soft_speed_spline.cpp
 )
 
 target_link_libraries(speed_controller utils::utils)

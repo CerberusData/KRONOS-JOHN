@@ -6,7 +6,7 @@
 */
 #include "canlink/modules/chassis.hpp"
 
-Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
+Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>can_driver)
 : Node("chassis", options)
 {
     
@@ -94,12 +94,13 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver)
 }
 
 /* ------------------------------------------------------------------------- */
-/* Services callbacks */
+// Services callbacks 
 bool Chassis::ArmCb(
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
+    (void) request_header;
     bool arm_req = request->data;
     uint8_t data_arm[2];
     data_arm[0] = ARM_CMD_ID;
@@ -138,11 +139,12 @@ bool Chassis::ArmCb(
 }
 
 /* ------------------------------------------------------------------------- */
-/* Services callbacks */
+// Subscribers callbacks
 void Chassis::ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
     float throttle = msg->twist.linear.x;
-    /* Throttle limitation depending on the inclination to avoid moon launch position */
+
+    // Throttle limitation depending on the inclination to avoid moon launch position
     if ((throttle > 0.0f) && (pitch_ < 0.0f))
     {
         throttle = throttle > speed_pitch_factor_ ?  speed_pitch_factor_ : throttle;
@@ -152,28 +154,36 @@ void Chassis::ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPt
         throttle = throttle < -speed_pitch_factor_ ?  -speed_pitch_factor_ : throttle;
     }
 
-    /* Moon launch position (Robot must stop) */
+    // Downhill
     if(moon_view_ == 1)
     {
         controls_.at(0) = 0.0f;  /* Angular velocity - Steering */
         controls_.at(1) = throttle >= 0.0f ? 0.0f : throttle;  /* Linear velocity - Throttle */
     }
+    
+    // Moonlaunch
     else if (moon_view_ == -1) 
     {
         controls_.at(0) = 0.0f; /* Angular velocity - Steering */
         controls_.at(1) = throttle <= 0.0f ? 0.0f : throttle;  /* Linear velocity - Throttle */
     }
+
+    // Uphill
     else if (moon_view_ == 2)
     {
         throttle = pitch_ <= 0.2 ? 0.0f : throttle;
         controls_.at(0) = 0.0f;  /* Angular velocity - Steering */
         controls_.at(1) = throttle <= 0.0f ? 0.0f : throttle;  /* Linear velocity - Throttle */
     }
+
+    // Normal
     else
     {
         controls_.at(0) = msg->twist.angular.z;  /* Angular velocity - Steering */
         controls_.at(1) = throttle;  /* Linear velocity - Throttle */
     }
+
+    // Send by CAN the motors commands
     SendMotorsCmd();
 }
 
@@ -202,6 +212,7 @@ void Chassis::MotorsSleepCb(const std_msgs::msg::Bool::SharedPtr msg)
 
 void Chassis::ChassisTestCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
+    (void)msg;
     RCLCPP_INFO(this->get_logger(), "----- Chassis configured in Test mode -----");
     chassis_cfg_.operation_mode = OPERATION_MODE_TEST;
     SendChassisConfiguration();
@@ -209,6 +220,7 @@ void Chassis::ChassisTestCb(const std_msgs::msg::Bool::SharedPtr msg)
 
 void Chassis::ChassisRestartCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
+    (void)msg;
     RCLCPP_INFO(this->get_logger(), "----- Restarting Chassis -----");
     /* Restarting motor status */ 
     for(int i = 0; i < 4; ++i)
@@ -238,16 +250,18 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
                     msg->pose.pose.orientation.z, 
                     msg->pose.pose.orientation.w);
     tf2::Matrix3x3 m(q);
-    m.getRPY(roll, pitch_, yaw);  /* Only pitch is a global variable */
+    m.getRPY(roll, pitch_, yaw);
 
-    if (std::abs(pitch_) > 0.3f && std::abs(pitch_) <= max_allowed_pitch_)  /* Normal */
-    { /* Check 1 */
+    // Robot is uphill
+    if (std::abs(pitch_) > 0.3f && std::abs(pitch_) <= max_allowed_pitch_)
+    {
         speed_pitch_factor_ = (1.0 - std::abs(pitch_) * 2.5f);
         speed_pitch_factor_ = speed_pitch_factor_ < 0.0f ? (1.5 * speed_pitch_factor_ - 0.7) : speed_pitch_factor_;
         if (speed_pitch_factor_ < 0.0)
         {
             moon_view_ = 2;
             moon_tmr_->reset();
+
             /* Deploying warning message to the console */
             if (!moon_first_time_)  /* False */
             {
@@ -259,8 +273,10 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
             }
         }
     }
-    else if ((pitch_) < -max_allowed_pitch_)  /* Normal */
-    { /* Check 2 */
+
+    // Robot is downhill
+    else if ((pitch_) < -max_allowed_pitch_)
+    {
         moon_view_ = 1;
         moon_tmr_->reset();
         /* Deploying warning message to the console */
@@ -273,12 +289,14 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
             msg_pub_->publish(std::move(info_msg));
         }
     }
-    else if ((pitch_) > (max_allowed_pitch_))  /* Upwards */
-    {  /* Check 3 */
+
+    // Moontime position
+    else if ((pitch_) > (max_allowed_pitch_))
+    {
         moon_view_ = -1;
         moon_tmr_->reset();
         /* Deploying warning message to the console */
-        if(!moon_first_time_)  /* False */
+        if(!moon_first_time_)  // False
         {
             moon_first_time_ = true;
             auto info_msg = std::make_unique<usr_msgs::msg::Messages>();
@@ -287,27 +305,28 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
             msg_pub_->publish(std::move(info_msg));
         }
     }
+
+    // Normal (Flat land)
     else
-    { /* Check 4 */
+    {
         speed_pitch_factor_ = 100.0f;
-        /* Strong inclination */
+        // Strong inclination
         if (std::abs(pitch_) > 0.15f)
         { 
-            /* Checking the Soft brake flag and Throttle value (Linear velocity) */
+            // Checking the soft brake flag and Throttle value (Linear velocity)
             if (soft_brake_ && controls_.at(1) == 0.0f)
             {
-                /* Strong brake */
-                uint8_t data[2] = {SOFT_BRAKE_CMD_ID, 0x00};
                 if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
                 {
                     soft_brake_ = false;
                 }
             }
         }
-        else if (!soft_brake_)  /* False */
+
+        // False
+        else if (!soft_brake_)
         {
-            /* Soft brake activation */
-            uint8_t data[2] = {SOFT_BRAKE_CMD_ID, 0x01};
+            // Soft brake activation
             if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
             {
                 soft_brake_ = true;
@@ -318,7 +337,7 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 
 
 /* ------------------------------------------------------------------------- */
-/* Timers Callbacks */
+// Timers Callbacks 
 void Chassis::HeartbeatTimerCb()
 {
     auto info_message = std::make_unique<usr_msgs::msg::Messages>();
@@ -333,7 +352,7 @@ void Chassis::HeartbeatTimerCb()
     controls_.at(0) = 0.0f;
     controls_.at(1) = 0.0f;
 
-    /* On Heartbeat timer, the Robot must be stopped */
+    // On Heartbeat timer, the Robot must be stopped
     for (int i = 0; i < 4; ++i)
     {
         motors_status_.rpm[i] = 0.0f;
@@ -359,9 +378,9 @@ void Chassis::CurrentTimerCb()
         motors_current_ok_ = false;
     }
     current_timer_started_ = false;
-    auto info_message = std::make_unique<usr_msgs::msg::Messages>();  /* I can implement a Pointer here */
+    auto info_message = std::make_unique<usr_msgs::msg::Messages>();
     info_message->type = usr_msgs::msg::Messages::ERROR;
-    info_message->data = "Stop: Codigo de error en motores:"
+    info_message->data = "Parar cuanto antes: Codigo de error en motores:"
                         + std::to_string(motor_error_[0]) + ", "
                         + std::to_string(motor_error_[1]) + ", "
                         + std::to_string(motor_error_[2]) + ", "
@@ -374,7 +393,7 @@ void Chassis::CurrentTimerCb()
 
 
 /* ------------------------------------------------------------------------- */
-/* Functions */
+// Functions
 void Chassis::SendChassisConfiguration()
 {
     /*
@@ -417,8 +436,9 @@ void Chassis::ConfigurePID()
 void Chassis::InitialConfig()
 {
     /*
-    - Sets the initial chassis configuration
-    - Softbrake activation - Writes the data through the *CANWrite()* (Def at socket_can.cpp)
+        - Sets the initial chassis configuration
+        - Softbrake activation - Writes the data through the *CANWrite()* 
+        (Def at socket_can.cpp)
     */
     chassis_cfg_.wheels_baudrate = WHEELS_BAUDRATE_DEFAULT;
     chassis_cfg_.battery_status_baudrate = BATTERY_STATUS_BAUDRATE_DEFAULT;

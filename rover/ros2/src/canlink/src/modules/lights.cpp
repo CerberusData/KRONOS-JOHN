@@ -7,8 +7,8 @@
  
 #include "canlink/modules/lights.hpp"
 
-Lights::Lights(const rclcpp::NodeOptions & options, CANDriver *can_driver)
-: Node("lights", options)
+Lights::Lights(const rclcpp::NodeOptions & options, 
+    std::shared_ptr<CANDriver> can_driver) : Node("lights", options)
 {
     RCLCPP_INFO(this->get_logger(), "Lights init");
     can_driver_ = can_driver;

@@ -26,7 +26,7 @@ class CANDriver
 {
 public:
    CANDriver(const char *interface_name);
-   ~CANDriver();
+   ~CANDriver(){};
 
    int CANWrite(int can_id, int can_data_length, uint8_t *data);
    void ListenSocket();

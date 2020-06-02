@@ -26,12 +26,13 @@
 class Lights : public rclcpp::Node
 {
     public:
-        Lights(const rclcpp::NodeOptions & options, CANDriver *can_driver);
+        Lights(const rclcpp::NodeOptions & options, 
+            std::shared_ptr<CANDriver> can_driver);
         ~Lights(){};
  
     private: 
         /* Modules */
-        CANDriver *can_driver_;
+        std::shared_ptr<CANDriver> can_driver_;
         
         /* Enviroment variables */
         uint8_t led1_sts_ = getEnv("LIGHT1_STATUS", 0x00);

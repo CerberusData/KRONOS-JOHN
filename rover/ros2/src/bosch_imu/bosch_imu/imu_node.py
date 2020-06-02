@@ -23,6 +23,7 @@ import math
 import serial
 import binascii
 import numpy as np
+import struct as st
 
 from rclpy.node import Node
 from time import time

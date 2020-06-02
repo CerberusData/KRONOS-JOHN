@@ -89,7 +89,7 @@ float SpeedController::ThrottlePID(double ref_vx, double cur_vx, double dt)
 
 void SpeedController::Controller()
 {
-    RCLCPP_INFO(this->get_logger(), "Controller function");
+    RCLCPP_DEBUG(this->get_logger(), "Controller function");
 
     auto output_cmd_msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
 
@@ -108,3 +108,13 @@ void SpeedController::Controller()
 
     output_cmd_pub_->publish(std::move(output_cmd_msg));
 }
+
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}}"
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: -1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -0.5}}}"
+    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+
+    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: true}"
+    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: false}"
+    // ros2 service call /test/arm std_srvs/srv/SetBool "{data: true}"

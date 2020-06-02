@@ -25,7 +25,8 @@
 class CANChassis : public rclcpp::Node
 {
     public:
-        CANChassis(const rclcpp::NodeOptions & options, CANDriver *can_driver, std::shared_ptr<Chassis> chassis);
+        CANChassis(const rclcpp::NodeOptions & options,
+            std::shared_ptr<CANDriver> can_driver, std::shared_ptr<Chassis> chassis);
         ~CANChassis(){};
 
         /* Functions */
@@ -43,7 +44,7 @@ class CANChassis : public rclcpp::Node
         std::shared_ptr<Battery> battery_;
         std::shared_ptr<Chassis> chassis_;
         std::shared_ptr<Lights> lights_;
-        CANDriver* can_driver_;
+        std::shared_ptr<CANDriver> can_driver_;
 
         /* Member functions */
         void PublishCANInfo(struct can_frame *frame);

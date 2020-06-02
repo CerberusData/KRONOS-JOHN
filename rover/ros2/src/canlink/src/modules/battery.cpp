@@ -7,7 +7,7 @@
  
 #include "canlink/modules/battery.hpp"
  
-Battery::Battery(const rclcpp::NodeOptions & options, CANDriver *can_driver)
+Battery::Battery(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver> can_driver)
 : Node("battery", options)
 {
     RCLCPP_INFO(this->get_logger(), "Battery init");

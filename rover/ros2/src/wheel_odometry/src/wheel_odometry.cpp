@@ -38,6 +38,8 @@ bool WheelOdometry::RestartCb(
         This service is in charge of restarting the odometry values and set the
         IMU offset for the new movement.
     */
+    (void) request_header;
+    (void) request;
 
     wheel_odom_msg_.pose.pose.position.x = 0.0f;
     wheel_odom_msg_.pose.pose.position.y = 0.0f;

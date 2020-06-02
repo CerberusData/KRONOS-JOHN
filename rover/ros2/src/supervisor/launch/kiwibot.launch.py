@@ -13,6 +13,11 @@ def generate_launch_description():
             node_executable = 'canlink_chassis',
             output = 'screen'
         ),
+        # Node(
+        #     package = 'can_test',
+        #     node_executable = 'test_node',
+        #     output = 'screen'
+        # ),
         Node(
             package = 'bosch_imu',
             node_executable = 'imu',
