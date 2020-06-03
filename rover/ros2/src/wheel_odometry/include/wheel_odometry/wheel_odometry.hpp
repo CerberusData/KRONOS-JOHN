@@ -55,7 +55,7 @@ class WheelOdometry : public rclcpp::Node
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr radio_check_pub_;
 
         /* Publisher messages */
-        nav_msgs::msg::Odometry wheel_odom_msg_;
+        nav_msgs::msg::Odometry local_wheel_odom_msg_;
         nav_msgs::msg::Odometry global_wheel_odom_msg_;
 
         /* Subscribers */

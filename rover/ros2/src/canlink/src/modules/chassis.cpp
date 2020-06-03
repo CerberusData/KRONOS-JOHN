@@ -58,14 +58,14 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
         chassis_restart_sub_ = this->create_subscription<std_msgs::msg::Bool>(
             "/canlink/chassis/restart", 10, std::bind(&Chassis::ChassisRestartCb, this, _1));
         odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-            "/wheel_odometry/odometry", 10, std::bind(&Chassis::OdomCb, this, _1));
+            "/wheel_odometry/global_odometry", 10, std::bind(&Chassis::OdomCb, this, _1));
 
         /* Initial chassis setup */
         ConfigurePID();
         sleep(1.0);
         InitialConfig();
 
-        /* Timers */
+        // Timers
         moon_tmr_ = this->create_wall_timer(
             std::chrono::milliseconds(1000), 
             std::bind(&Chassis::MoonTimerCb, this));
@@ -75,22 +75,24 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
             std::bind(&Chassis::CurrentTimerCb, this));
         current_tmr_->cancel();
 
-        /* Services */
+        // Services
         arm_srv_ = this->create_service<std_srvs::srv::SetBool>(
             "/canlink/chassis/arm", std::bind(&Chassis::ArmCb, this, _1, _2, _3));
         
         raw_motors_out_.reserve(4);
     }
+    
     else
     {
         RCLCPP_ERROR(this->get_logger(), "Chassis is not connected");
         motors_dvr_status_.connected = false;
 
-        /* Publishers */
+        // Publishers
         motors_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::State>(
             "/canlink/chassis/status", 10);
         motors_dvr_status_pub_->publish(motors_dvr_status_);
     }
+
 }
 
 /* ------------------------------------------------------------------------- */
@@ -120,7 +122,7 @@ bool Chassis::ArmCb(
         }
     }
 
-    if ((arm_req == false) && (motors_dvr_status_.armed == false))
+    if ((arm_req == false) && (motors_dvr_status_.armed == true))
     {
         /*
             Disarming command
@@ -256,7 +258,8 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
     if (std::abs(pitch_) > 0.3f && std::abs(pitch_) <= max_allowed_pitch_)
     {
         speed_pitch_factor_ = (1.0 - std::abs(pitch_) * 2.5f);
-        speed_pitch_factor_ = speed_pitch_factor_ < 0.0f ? (1.5 * speed_pitch_factor_ - 0.7) : speed_pitch_factor_;
+        speed_pitch_factor_ = speed_pitch_factor_ < 0.0f 
+            ? (1.5 * speed_pitch_factor_ - 0.7) : speed_pitch_factor_;
         if (speed_pitch_factor_ < 0.0)
         {
             moon_view_ = 2;
@@ -714,19 +717,17 @@ void Chassis::PublishMotorStatus(struct can_frame* frame)
     {
         directions[i] = directions_bool[i] ? 1 : -1;
     }
-    /* Motors RPMs */
+
+    // Motors RPMs 
     for (int i = 0; i < 4; ++i)
     {
         motors_status_.rpm[i] = ((float)directions[i] * (float)frame->data[i + 2]) * wheel_max_rpm_ / 255.0f;
     }
 
-    /*
-        - Checkpoint - It's diying
-    */
     motors_status_.header.stamp = this->now();
     motors_status_pub_->publish(motors_status_);
 
-    /* Publishing current values separately */
+    // Publishing current values separately
     if(publish_currents_separately_ == true)
     {
         for(int i = 0; i < 4; ++i)
@@ -743,7 +744,7 @@ void Chassis::PublishTestReport(struct can_frame* frame)
     RCLCPP_INFO(this->get_logger(), "----- Test completed -----");
     for (int i = 1; i < frame->can_dlc; ++i)
     {
-        // RCLCPP_WARN(this->get_logger(), "Test: %i, Result: %x", i, frame->data[i]);
+        RCLCPP_DEBUG(this->get_logger(), "Test: %i, Result: %x", i, frame->data[i]);
         test_motors_response_.status[i - 1] = frame->data[i];
     }
     test_motors_pub_->publish(test_motors_response_);
@@ -755,7 +756,6 @@ void Chassis::PublishTestReport(struct can_frame* frame)
 
 void Chassis::PublishChassisStatus(struct can_frame* frame)
 {
-    // RCLCPP_INFO(this->get_logger(), "I'm Publishing from Chassis");
 
     /* Check for Microcontroller status to restart and send the initial configuration */
     if (!motors_dvr_status_.connected)  /* False - Disconnected */

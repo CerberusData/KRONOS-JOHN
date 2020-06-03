@@ -1,3 +1,5 @@
+
+
 #include "motion_control/speed_controller.hpp"
 
 SpeedController::SpeedController(rclcpp::NodeOptions & options)
@@ -5,25 +7,29 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
 {
     RCLCPP_INFO(this->get_logger(), "Speed Controller constructor");
 
-    /* Publishers */
+    // Publishers
     output_cmd_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>(
         "/motion_control/speed_controller/output", 10);
 
-    /* Subscribers */
+    // Subscribers
     driving_cmd_fr_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
         "/freedom_client/joystick_commands", 10, std::bind(&SpeedController::CommandsCb, this, _1));
     odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/wheel_odometry/global_odometry", 50, std::bind(&SpeedController::OdometryCb, this, _1));
 
     prev_time_ = this->now();
+
+    // Soft Speed object
+    linear_soft_spline = std::make_shared<SoftSpeedSpline>(0.8f);
 }
 
 void SpeedController::OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-
     /*
-        Odometry callback to extract the current velocity and pose comming from Wheel odometry
-        We are using global wheel odometry, but I need to check if we should use the local one.
+        - Odometry callback to extract the current velocity and pose comming from 
+        Wheel odometry
+        - We are using global wheel odometry, but I need to check if we should 
+        use the local one.
     */
     robot_twist_.twist = msg->twist.twist;
 
@@ -45,13 +51,17 @@ void SpeedController::OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 
 void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
-    /* Reference commands for the robot motion */
+    // Reference commands for the robot motion
     reference_cmd_.header.stamp = this->now();
     reference_cmd_.twist = msg->twist;
 }
 
-float SpeedController::ThrottlePID(double ref_vx, double cur_vx, double dt)
+float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
 {
+    /*
+        (Reference, Current, dt)
+    */
+
     if (ref_vx == 0.0f)
     {
         return 0.0f;
@@ -59,10 +69,10 @@ float SpeedController::ThrottlePID(double ref_vx, double cur_vx, double dt)
 
     if (throttle_ctrl_ == true)
     {
-        double smooth_ff = 1.0f;
-        double e_k = ref_vx - cur_vx;
-        double prop_error = e_k;
-        double der_error = (dt != 0.0f) ? (e_k - e_k1_) / dt : 0.0f;
+        float smooth_ff = 1.0;
+        float e_k = ref_vx - cur_vx;
+        float prop_error = e_k;
+        float der_error = (dt != 0.0f) ? (e_k - e_k1_) / dt : 0.0f;
         int_error_ += int_error_ * dt;
         e_k1_ = e_k;
 
@@ -70,12 +80,12 @@ float SpeedController::ThrottlePID(double ref_vx, double cur_vx, double dt)
         if (((prev_ref_vx_ < 0.0f) && (ref_vx - prev_ref_vx_ > 0.0f)) 
             || ((prev_ref_vx_ > 0.0f) && (ref_vx - prev_ref_vx_ < 0.0f)))
         {   
-            smooth_ff = 0.5;
+            smooth_ff = 0.5f;
         }
 
         // PID command with predictive term (FF) and reactive term (FB)
         float u_cmd = (smooth_ff * kff_thr_ * cur_vx) 
-                    + (kp_thr_ * (prop_error + (ki_thr_ * int_error_) + (kd_thr_ * der_error)));
+            + (kp_thr_ * (prop_error + (ki_thr_ * int_error_) + (kd_thr_ * der_error)));
         prev_ref_vx_ = ref_vx;
         return u_cmd;
     }
@@ -86,24 +96,27 @@ float SpeedController::ThrottlePID(double ref_vx, double cur_vx, double dt)
     }
 }
 
-
 void SpeedController::Controller()
 {
     RCLCPP_DEBUG(this->get_logger(), "Controller function");
 
     auto output_cmd_msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
 
-    double lin_vx = reference_cmd_.twist.linear.x;
-    double ang_wz = reference_cmd_.twist.angular.z;
+    float lin_vx = reference_cmd_.twist.linear.x;
+    float ang_wz = reference_cmd_.twist.angular.z;
 
     rclcpp::Time curr_time = this->now();
     double dt = (curr_time - prev_time_).seconds();
     prev_time_ = this->now();
 
     // ToDo: Smart break conditions for handling the speed scaling factor
-    // ToDo: Soft speed curve
+    // ToDo: Implementation of soft speed curve
 
-    output_cmd_msg->twist.linear.x = ThrottlePID(lin_vx, robot_twist_.twist.linear.x, dt);
+    // (reference, acc_factor)
+    float vx_ref = linear_soft_spline->CalculateSoftSpeed(lin_vx, 1.0f);
+
+    // (reference, current, dt)
+    output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt);
     output_cmd_msg->twist.angular.z = ang_wz;
 
     output_cmd_pub_->publish(std::move(output_cmd_msg));
@@ -116,5 +129,6 @@ void SpeedController::Controller()
     // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
 
     // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: true}"
+    
     // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: false}"
     // ros2 service call /test/arm std_srvs/srv/SetBool "{data: true}"
