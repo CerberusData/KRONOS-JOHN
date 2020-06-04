@@ -13,7 +13,7 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
 
     // Subscribers
     driving_cmd_fr_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-        "/freedom_client/joystick_commands", 10, std::bind(&SpeedController::CommandsCb, this, _1));
+        "/freedom_client/cmd_vel", 10, std::bind(&SpeedController::CommandsCb, this, _1));
     odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/wheel_odometry/global_odometry", 50, std::bind(&SpeedController::OdometryCb, this, _1));
 
@@ -51,6 +51,10 @@ void SpeedController::OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 
 void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
+    // RCLCPP_INFO(this->get_logger(), "Linear: %0.4f, Angular: %0.4f",
+    //     msg->twist.linear.x,  msg->twist.angular.z);
+
+    //RCLCPP_INFO(this->get_logger(), "Linear: %0.4f", msg->twist.linear.x);
     // Reference commands for the robot motion
     reference_cmd_.header.stamp = this->now();
     reference_cmd_.twist = msg->twist;
@@ -114,11 +118,16 @@ void SpeedController::Controller()
 
     // (reference, acc_factor)
     float vx_ref = linear_soft_spline->CalculateSoftSpeed(lin_vx, 1.0f);
+    // RCLCPP_WARN(this->get_logger(), "Out: %0.4f", lin_vx);
+    // RCLCPP_WARN(this->get_logger(), "Out: %0.4f", ang_wz);
 
     // (reference, current, dt)
-    output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt);
-    output_cmd_msg->twist.angular.z = ang_wz;
+    output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); // This
+    // output_cmd_msg->twist.linear.x = ThrottlePID(lin_vx, robot_twist_.twist.linear.x, dt);
+    // RCLCPP_WARN(this->get_logger(), "Out: %0.4f", output_cmd_msg->twist.linear.x);
 
+
+    output_cmd_msg->twist.angular.z = ang_wz;
     output_cmd_pub_->publish(std::move(output_cmd_msg));
 }
 

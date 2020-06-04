@@ -34,3 +34,4 @@ def generate_launch_description():
             node_executable = 'speed_controller',
             output = 'screen'
         )
+])

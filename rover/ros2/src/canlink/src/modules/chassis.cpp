@@ -31,7 +31,7 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
         test_motors_pub_ = this->create_publisher<usr_msgs::msg::TestMotors>(
             "/canlink/chassis/test_response", 10);
         msg_pub_ = this->create_publisher<usr_msgs::msg::Messages>(
-            "/web_client/message", 512);
+            "/web_client/message", 512); // This message can be removed
 
         if(publish_currents_separately_)  /* Separate current Publishers */
         {
