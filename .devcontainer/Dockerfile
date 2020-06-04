@@ -207,7 +207,8 @@ RUN  \
 # -----------------------------------------------------------------------------
 # Add Python dependencies in here
 RUN \
-    pip install pyserial
+    python3 -m pip install pyserial \
+    socketIO-client3
 
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom roboticsp
