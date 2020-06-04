@@ -41,15 +41,29 @@ ip link set up can1
 sleep 5
 
 # -----------------------------------------------------------------------------
+# Start local client gui
+# Run Freedoom agent stuff
+# Freedom Robotics services
+if [ "$NODE_LOCAL_CLIENT" == "1" ]
+then 
+    echo "[INFO]: launching SocketIO for local client ..."
+    node /usr/src/app/socketio-server/index.js &
+    sleep 5
+    echo  "[INFO]: local client ip, start a browser in *:4567"
+    ip addr show | grep wlan0
+    echo  ""
+fi
+
+# -----------------------------------------------------------------------------
 # Run Freedoom agent stuff
 # Freedom Robotics services
 if [ "$FR_AGENT" == "1" ]
 then 
-    echo "launching freedom agent"
+    echo "[INFO]: launching freedom agent"
     python3 /usr/src/app/freedom_robotics/inject_freedom.py
     python3 /usr/src/app/freedom_robotics/keep_alive_freedom.py &
 else
-    echo "No fredoom robotics agent configured"
+    echo "[INFO]: No fredoom robotics agent configured"
 fi
 
 # -----------------------------------------------------------------------------
