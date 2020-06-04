@@ -8,11 +8,10 @@ int main(int argc, char *argv[])
 
     /* CAN Driver creation */
     std::string Mystr = "can0";
-    const char *interface_name_ = Mystr.c_str();    
-    // auto can_dvr_ = new CANDriver(interface_name_);
+    const char *interface_name_ = Mystr.c_str();
     
     auto can_dvr_ = std::make_shared<CANDriver>(interface_name_);
-    auto chassis = std::make_shared<Chassis>(options);  /* Chassis */
+    auto chassis = std::make_shared<Chassis>(options);
     auto test_node = std::make_shared<CANTest>(options, can_dvr_);
 
     RCLCPP_WARN(test_node->get_logger(), "Init Test");

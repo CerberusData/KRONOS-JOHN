@@ -34,12 +34,14 @@ void CANTest::TimerCb()
 
 void CANTest::LedsCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
+    (void) msg;
     RCLCPP_WARN(this->get_logger(), "Leds Callback");
     SendLeds();
 }
 
 void CANTest::ConfigurationCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
+    (void) msg;
     RCLCPP_WARN(this->get_logger(), "Configuration Callback");
     PIDConfiguration();
     sleep(0.5);
@@ -48,6 +50,7 @@ void CANTest::ConfigurationCb(const std_msgs::msg::Bool::SharedPtr msg)
 
 void CANTest::ChassisCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
+    (void) msg;
     RCLCPP_WARN(this->get_logger(), "Chassis Callback");
     chassis_flag_ = !chassis_flag_;
 }
@@ -105,6 +108,7 @@ bool CANTest::ArmCb(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
+    (void) request_header;
     bool arm_req = request->data;
 
     if (arm_req == true)

@@ -465,29 +465,17 @@ class ImuNode(Node):
                 self.imu_msg.linear_acceleration.y - gravity_y
             )
             self.imu_bot_msg.linear_acceleration_covariance = [
-                3e-1,
-                0.0,
-                0.0,
-                0.0,
-                3e-1,
-                0.0,
-                0.0,
-                0.0,
-                3e-1,
+                3e-1, 0.0, 0.0,
+                0.0, 3e-1, 0.0,
+                0.0, 0.0, 3e-1,
             ]
             self.imu_bot_msg.angular_velocity.x = self.imu_msg.angular_velocity.z
             self.imu_bot_msg.angular_velocity.y = self.imu_msg.angular_velocity.x
             self.imu_bot_msg.angular_velocity.z = self.imu_msg.angular_velocity.y
             self.imu_bot_msg.angular_velocity_covariance = [
-                1e-6,
-                0.0,
-                0.0,
-                0.0,
-                1e-6,
-                0.0,
-                0.0,
-                0.0,
-                1e-6,
+                1e-6, 0.0, 0.0,
+                0.0, 1e-6, 0.0,
+                0.0, 0.0, 1e-6,
             ]
 
             # IMU Euler angles
@@ -553,15 +541,9 @@ class ImuNode(Node):
             self.imu_bot_msg.orientation.z = quaternion_bot[2]
             self.imu_bot_msg.orientation.w = quaternion_bot[3]
             self.imu_bot_msg.orientation_covariance = [
-                1e-5,
-                0.0,
-                0.0,
-                0.0,
-                1e-5,
-                0.0,
-                0.0,
-                0.0,
-                1e-3,
+                1e-5, 0.0, 0.0,
+                0.0, 1e-5, 0.0,
+                0.0, 0.0, 1e-3,
             ]
 
             # --------------------------------------------------------------- #
@@ -580,15 +562,9 @@ class ImuNode(Node):
             self.imu_ekf_msg.orientation.z = quaternion_bot_ekf[2]
             self.imu_ekf_msg.orientation.w = quaternion_bot_ekf[3]
             self.imu_ekf_msg.orientation_covariance = [
-                1e-3,
-                0.0,
-                0.0,
-                0.0,
-                1e-3,
-                0.0,
-                0.0,
-                0.0,
-                1e-2,
+                1e-3, 0.0, 0.0,
+                0.0, 1e-3, 0.0,
+                0.0, 0.0, 1e-2,
             ]
 
             # --------------------------------------------------------------- #
@@ -661,7 +637,6 @@ def main(args=None):
     imu_node.ser.close()
     imu_node.destoy_node()
     rclpy.shutdown()
-
 
 # --------------------------------------------------------------------------- #
 if __name__ == "__main__":

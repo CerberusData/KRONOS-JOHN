@@ -23,6 +23,7 @@ bool Chassis::ArmCb(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
+    (void) request_header;
     bool arm_req = request->data;
 
     if ((arm_req == true))

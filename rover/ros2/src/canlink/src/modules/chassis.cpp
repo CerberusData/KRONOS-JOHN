@@ -705,7 +705,7 @@ void Chassis::SetErrorStatus(struct can_frame* frame)
 
 void Chassis::PublishMotorStatus(struct can_frame* frame)
 {
-    if (!motors_dvr_status_.connected) /* True */
+    if (!motors_dvr_status_.connected)
     {
         RCLCPP_INFO(this->get_logger(), "----- Chassis restarted -----");
         InitialConfig();
@@ -760,7 +760,7 @@ void Chassis::PublishChassisStatus(struct can_frame* frame)
     /* Check for Microcontroller status to restart and send the initial configuration */
     if (!motors_dvr_status_.connected)  /* False - Disconnected */
     {
-        RCLCPP_INFO(this->get_logger(), "----- Chassis restarted -----");
+        RCLCPP_INFO(this->get_logger(), "----- Chassis restarted -----"); // Check this message
         InitialConfig();
     }
 
