@@ -215,7 +215,7 @@ class WaypointSubscriber:
     def __init__(self, parent_node, extrinsic, intrinsic, webclient_control):
 
         # ---------------------------------------------------------------------
-        # Enviroment variables
+        # Environment variables
         self._GUI_WAYPOINT_AREA = int(os.getenv(key="GUI_WAYPOINT_AREA", default=1))
         self._LOCAL_LAUNCH = int(os.getenv(key="LOCAL_LAUNCH", default=1))
         self._GUI_WAYPOINT_DESCRIPTION = int(
@@ -272,6 +272,7 @@ class WaypointSubscriber:
         self.curvature = 1.0
         self.new_curvature = 0.0
         self.distord_lines = True  # Enable/Disable distord bot projection
+        self.prev_webclient_control_direction = -10000
 
         # ---------------------------------------------------------------------
         # Subscribers
@@ -421,6 +422,11 @@ class WaypointSubscriber:
 
             self.extrinsic.update["WaypointSuscriber"] = False
 
+        # ---------------------------------------------------------------------
+        if self.webclient_control.direction != self.prev_webclient_control_direction:
+            self.prev_webclient_control_direction = self.webclient_control.direction
+            self.new_curvature = self.webclient_control.direction * 3
+
         if self.new_curvature != self.curvature:
             self.curvature = self.new_curvature
         else:
@@ -539,8 +545,6 @@ class WaypointSubscriber:
 
         # ---------------------------------------------------------------------
         # Update params
-        if self.webclient_control.direction != 0.0:
-            self.new_curvature = self.webclient_control.direction * 3
         self.update_params()
 
         # ---------------------------------------------------------------------

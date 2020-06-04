@@ -11,6 +11,7 @@ Code Information:
 import numpy as np
 import time
 import json
+import os
 
 from threading import Thread, Event
 
@@ -20,6 +21,8 @@ from std_msgs.msg import Bool
 from std_msgs.msg import String
 from usr_msgs.msg import VisualMessage
 from usr_msgs.msg import PWMOut
+from usr_msgs.msg import State
+from usr_msgs.msg import CaptureStatus
 from geometry_msgs.msg import TwistStamped
 
 from socketIO_client import SocketIO
@@ -162,12 +165,15 @@ class RoverWSClient(object):
 
 
 class ClientNode(Node, Thread):
-    def __init__(self, debugger=False):
+    def __init__(self, debugger=True):
 
         # ---------------------------------------------------------------------
         super().__init__("ClientNode")
 
         Thread.__init__(self)
+
+        self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0))
+
 
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
@@ -207,9 +213,16 @@ class ClientNode(Node, Thread):
         )
 
         self.bool_msg = Bool()
-        self.pubs_streaming_idle_restart = self.create_publisher(
+        self.pub_streaming_idle_restart = self.create_publisher(
             Bool,
             "video_streaming/optimizer/idle_restart",
+            1,
+            callback_group=self.callback_group,
+        )
+
+        self.pub_data_capture = self.create_publisher(
+            Bool,
+            "data_capture/capture",
             1,
             callback_group=self.callback_group,
         )
@@ -224,6 +237,27 @@ class ClientNode(Node, Thread):
             callback_group=self.callback_group,
         )
 
+        self.data_capture_recording = False
+        self.data_capture_images = 0
+        self.data_capture_percentage = 100
+        self.sub_data_capture_status = self.create_subscription(
+            msg_type=CaptureStatus,
+            topic="data_capture/status",
+            callback=self.cb_data_capture_status,
+            qos_profile=5,
+            callback_group=self.callback_group,
+        )
+
+        self.armed = False
+        self.mode = "manual" # local
+        self.sub_canlink_chassis_status = self.create_subscription(
+            msg_type=State,
+            topic="canlink/chassis/status",
+            callback=self.cb_canlink_chassis_status,
+            qos_profile=5,
+            callback_group=self.callback_group,
+        )
+
         # ---------------------------------------------------------------------
         # Thread variables
         self.run_event = Event()
@@ -231,6 +265,28 @@ class ClientNode(Node, Thread):
         self.tick = time.time()
         # self.daemon = True
         self.start()
+
+    def cb_ws_client_message(self, msg):
+        try:
+            client_msg_str = json.dumps({"data": msg.data})
+            client_msg = json.loads(client_msg_str)
+            if msg.type == "INFO":
+                self.ws_client.emit(info=client_msg["data"])
+            elif msg.type == "WARN":
+                self._ws_client.emit(warning=client_msg["data"])
+        except Exception as e:
+            printlog(msg=e, msg_type="ERROR")
+
+    def cb_data_capture_status(self, msg):
+        try:
+            self.data_capture_recording = msg.recording
+            self.data_capture_images = msg.images
+            self.data_capture_percentage = msg.percentage
+        except Exception as e:
+            printlog(msg=e, msg_type="ERROR")
+
+    def cb_canlink_chassis_status(self, msg):
+        self.armed = msg.armed
 
     def run(self):
         """ Cycle of threads execution
@@ -250,7 +306,7 @@ class ClientNode(Node, Thread):
                         if key not in response.keys():
                             printlog(
                                 msg=f"{key} key no found in response dic",
-                                msg_type="ERROR",
+                                msg_type="WARN",
                                 flush=self.debugger,
                             )
                             self.we_client_params[key] = None
@@ -283,22 +339,31 @@ class ClientNode(Node, Thread):
                             if key == "lid_opened":
                                 self.pwm_msg.channels[2] = 2000 if resp else 0
                                 self.pub_pwm.publish(self.pwm_msg)
-                            if key == "lid_opened":
-                                pass
+                            elif key == "recording" and resp:
+                                self.pub_data_capture.publish(self.bool_msg)
+                            elif key == "enable_driving":
+                                self.pub_arm_request.publish(self.bool_msg)
+                            elif key == "autonomous" and resp:
+                                self.we_client_params["local"] = False
+                            elif key == "local" and resp:
+                                self.we_client_params["autonomous"] = False
+                                self.mode = "local"
 
                     self.ws_client.emit(
-                        # recording = False,
-                        # armed = False,
-                        # mode = "local",
-                        # auto_active = False,
+                        recording = self.data_capture_recording,
+                        armed = self.armed,
+                        mode = self.mode,
+                        auto_active = self.we_client_params["autonomous"],
                         # steering = 0,
-                        space_left=100,  # TODO:(JOHN) - Integrate
-                        number_images=0,  # TODO:(JOHN) - Integrate
+                        space_left=self.data_capture_percentage,
+                        number_images=self.data_capture_images,
                     )
 
-                    if control_update:
+                    if (control_update 
+                    and (self.we_client_params["local"] or self._LOCAL_RUN)
+                    and (self.armed or self._LOCAL_RUN)):
                         self.pub_control.publish(self.control_msg)
-                        self.pubs_streaming_idle_restart.publish(self.bool_msg)
+                        self.pub_streaming_idle_restart.publish(self.bool_msg)
                         control_update = False
 
                 # -------------------------------------------------------------
@@ -312,17 +377,6 @@ class ClientNode(Node, Thread):
 
             except Exception as e:
                 printlog(msg=e, msg_type="ERROR")
-
-    def cb_ws_client_message(self, msg):
-        try:
-            client_msg_str = json.dumps({"data": msg.data})
-            client_msg = json.loads(client_msg_str)
-            if msg.type == "INFO":
-                self.ws_client.emit(info=client_msg["data"])
-            elif msg.type == "WARN":
-                self._ws_client.emit(warning=client_msg["data"])
-        except Exception as e:
-            printlog(msg=e, msg_type="ERROR")
 
 
 # =============================================================================
