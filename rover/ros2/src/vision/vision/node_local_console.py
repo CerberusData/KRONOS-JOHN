@@ -289,18 +289,22 @@ class LocalConsoleNode(Node, Thread):
         # If pressed right key then move to right
         elif key == 81:
             self.web_client_control_msg.tilt = 100.0
+            self.pub_web_client_control.publish(self.web_client_control_msg)
         # If pressed up key then move to forward
         elif key == 82:
             self.web_client_control_msg.speed = 100.0
+            self.pub_web_client_control.publish(self.web_client_control_msg)
         # If pressed left key then move to left
         elif key == 83:
             self.web_client_control_msg.tilt = -100.0
+            self.pub_web_client_control.publish(self.web_client_control_msg)
         # If pressed down key then move to backwards
         elif key == 84:
             self.web_client_control_msg.speed = -100.0
         # If pressed A key then switch to left camera
         elif key == 97:
             self.web_client_control_msg.pan = -100.0
+            self.pub_web_client_control.publish(self.web_client_control_msg)
         # If pressed H key then print help
         elif key == 104:
             print(
@@ -330,6 +334,7 @@ class LocalConsoleNode(Node, Thread):
         # If pressed D key then switch to right camera
         elif key == 100.0:
             self.web_client_control_msg.pan = 100.0
+            self.pub_web_client_control.publish(self.web_client_control_msg)
         # If pressed P key then open the lid
         elif key == 112:
             self.pwm_msg.channels[2] = 2000 if self.pwm_msg.channels[2] < 300 else 0
@@ -378,9 +383,6 @@ class LocalConsoleNode(Node, Thread):
         # ---------------------------------------------------------------------
         if key != -1:
             self.pubs_streaming_idle_restart.publish(self.bool_msg)
-
-        # ---------------------------------------------------------------------
-        self.pub_web_client_control.publish(self.web_client_control_msg)
 
         # ---------------------------------------------------------------------
         if self.sim_dist_sensors:

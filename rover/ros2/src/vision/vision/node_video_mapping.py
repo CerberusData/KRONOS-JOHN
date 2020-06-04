@@ -361,7 +361,7 @@ class StreamingOptimizer:
             img: `cv2.math` image to reduce quality
         Returns:
         """
-
+        
         if self.inactive_timer < self.IDLE_TIME:
             self.inactive_timer = time.time() - self._time_tick
 
@@ -388,7 +388,6 @@ class StreamingOptimizer:
 
         return img
 
-    # TODO(JOHN): Integrate robot actions to reset idle time
     def cb_restart(self, msg):
         """     
             Reset inactive timer when a action coming from actuator reference
@@ -396,7 +395,6 @@ class StreamingOptimizer:
         Args:
         Returns:
         """
-
         self._time_tick = time.time()
         self.inactive_timer = 0
 
