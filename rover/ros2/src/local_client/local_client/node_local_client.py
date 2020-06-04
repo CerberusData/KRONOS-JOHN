@@ -360,7 +360,7 @@ class ClientNode(Node, Thread):
                     )
 
                     if (control_update 
-                    and (self.we_client_params["local"] or not self._LOCAL_RUN)
+                    and (self.we_client_params["local"] or self._LOCAL_RUN)
                     and (self.armed or self._LOCAL_RUN)):
                         self.pub_control.publish(self.control_msg)
                         self.pub_streaming_idle_restart.publish(self.bool_msg)
