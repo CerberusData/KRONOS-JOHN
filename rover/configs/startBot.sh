@@ -35,7 +35,8 @@ case "$1" in
       else
         echo "$FILE no exist, creating one"
         cp ${PWD%}/configs/cams_conf.yaml ${PWD%}/configs/cams_conf_local.yaml
-        sleep 5 && clear 
+        echo "cams_conf_local.yaml file created, run again script!"
+        exit 0 
       fi
 
       #  ----------------------------------------------------------------------
@@ -91,6 +92,8 @@ case "$1" in
             npm install socket.io@2.3.0
             npm install
             cd ..
+            echo "socketio-server installed, run again script!"
+            exit 0 
         fi
         node socketio-server/index.js &
         sleep 2 && clear 
