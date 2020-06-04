@@ -12,8 +12,12 @@
 export ROBOBOT_ID=666       # [int] Robot ID
                             # NOTE: Should be undefined in the robot
 export LOCAL_LAUNCH=1       # [int-bolean] Disable(1)/Enable(0) - Local launch mode (For pc launch)
-                            # NOTE: Should be zero in the robot
+                            # NOTE: Should be zero in the robot OR UNDEFINED
 export LOCAL_GUI=1          # [int-bolean] Disable(1)/Enable(0) - Local GUI launch
+                            # NOTE: Should be zero in the robot
+export DELETE_BUILD=0       # [int-bolean] Disable(1)/Enable(0) - Delte previous ROS2 build and stuff
+                            # NOTE: Should be zero in the robot
+export LOCAL_CLIENT=1       # [int-bolean] Disable(1)/Enable(0) - local client server
                             # NOTE: Should be zero in the robot
 export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
 
@@ -96,7 +100,7 @@ export RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1   # By default, info and debug log
 export FR_AGENT=1                   # [int-bolean] (1):Enable/(0):Disable freedom robotics agent 
 export FR_STREAMING_OPTIMIZER=1     # [int-bolean] (1):Enable/(0):Disable freedom video streaming optimizer
 export FR_STREAMING_FACTOR=0.6      # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is operative
-export FR_STREAMING_IDLE_TIME=60    # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
+export FR_STREAMING_IDLE_TIME=20    # [int-bolean] (1):Enable/(0):Disable freedom video streaming idle time 
 export FR_STREAMING_IDLE_FACTOR=0.4 # [int-bolean] (1):Enable/(0):Disable freedom video streaming scaling factor when robot is in standby 
 
 # -----------------------------------------------------------------------------

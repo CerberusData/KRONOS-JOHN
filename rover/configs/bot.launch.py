@@ -155,6 +155,14 @@ def generate_launch_description():
             "output": "screen",
             "launch": int(os.getenv(key="NODE_CANLINK_CABIN", default=0)),
         },
+        # ---------------------------------------------------------------------
+        # Local node
+        "NODE_LOCAL_CLIENT": {
+            "node_executable": "local_client",
+            "package": "local_client",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_LOCAL_CLIENT", default=0)),
+        },
     }
 
     if os.getenv(key="LOCAL_LAUNCH", default=0):
@@ -165,8 +173,10 @@ def generate_launch_description():
     for key, node_args in nodes.items():
         if node_args["launch"]:
             srt_ = srt_ + "\n\tNode {}\tfrom {} package".format(
-                node_args["node_name"] if "node_name" in node_args.keys() else "(Executable)", 
-                node_args["package"]
+                node_args["node_name"]
+                if "node_name" in node_args.keys()
+                else "(Executable)",
+                node_args["package"],
             )
     ld = launch.LaunchDescription([launch.actions.LogInfo(msg=srt_ + "\n"),])
 

@@ -38,18 +38,24 @@ class GraphicInterface:
 
         # ---------------------------------------------------------------------
         # Subscribers
+        self.sub_bot = RobotSubscriber(parent_node=parent_node)
+
+        self.sub_webclient_control = WebclientControl(parent_node=parent_node)
+
+        self.sub_chassis = ChassisSubscriber(parent_node=parent_node)
+
         self.sub_visual_debugger = VisualDebuggerSubscriber(parent_node=parent_node)
+
         self.sub_extrinsic = ExtrinsicSubscriber(
             parent_node=parent_node, cam_labels=cam_labels
         )
+
         self.sub_waypoint = WaypointSubscriber(
             parent_node=parent_node,
             extrinsic=self.sub_extrinsic.extrinsic,
             intrinsic=self.sub_extrinsic.intrinsic,
+            webclient_control=self.sub_webclient_control,
         )
-        self.sub_bot = RobotSubscriber(parent_node=parent_node)
-        self.sub_webclient_control = WebclientControl(parent_node=parent_node)
-        self.sub_chassis = ChassisSubscriber(parent_node=parent_node)
 
         self.subs_cliff_sensors = [
             CliffSensorSuscriber(parent_node=parent_node, topic_name=topic)
@@ -141,7 +147,7 @@ class GraphicInterface:
         # Robot properties
         throttle = self.sub_webclient_control.throttle
         pan = self.sub_webclient_control.pan
-        tilt = self.sub_webclient_control.tilt
+        direction = self.sub_webclient_control.direction
         rcam = False
 
         # ---------------------------------------------------------------------

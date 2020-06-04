@@ -168,15 +168,15 @@ class ExtrinsicSubscriber:
 class WebclientControl:
     def __init__(self, parent_node):
 
-        self.tilt = 0
         self.pan = 0
         self.throttle = 0
+        self.direction = 0.0
 
         self._sub_freedom_control = parent_node.create_subscription(
             topic="freedom_client/cmd_vel",
             msg_type=TwistStamped,
             callback=self.cb_sub_freedom_control,
-            qos_profile=1,
+            qos_profile=5,
             callback_group=parent_node.callback_group,
         )
 
@@ -184,21 +184,35 @@ class WebclientControl:
             topic="web_client/control",
             msg_type=WebControl,
             callback=self.cb_sub_web_client_control,
-            qos_profile=1,
+            qos_profile=5,
             callback_group=parent_node.callback_group,
         )
 
     def cb_sub_freedom_control(self, data):
-        self.throttle = int(data.twist.linear.x * (100.0 / 1.5))
+        try:
+            self.throttle = int(data.twist.linear.x * (100.0 / 1.5))  # [m/s]
+            self.direction = data.twist.angular.z * (np.pi / 1.5)  # [rad/s]
+
+        except Exception as e:
+            printlog(
+                msg="Error getting msg for WebclientControl class, {}".format(e),
+                msg_type="ERROR",
+            )
 
     def cb_sub_web_client_control(self, data):
-        self.pan = data.pan
-        self.throttle = data.speed
-        self.tilt = -data.tilt
+        try:
+            self.pan = data.pan
+            self.throttle = data.speed
+            self.direction = -data.tilt
+        except Exception as e:
+            printlog(
+                msg="Error getting msg for WebclientControl class, {}".format(e),
+                msg_type="ERROR",
+            )
 
 
 class WaypointSubscriber:
-    def __init__(self, parent_node, extrinsic, intrinsic):
+    def __init__(self, parent_node, extrinsic, intrinsic, webclient_control):
 
         # ---------------------------------------------------------------------
         # Enviroment variables
@@ -212,6 +226,7 @@ class WaypointSubscriber:
         self.extrinsic = extrinsic
         self.extrinsic.update["WaypointSuscriber"] = True
         self.intrinsic = intrinsic
+        self.webclient_control = webclient_control
 
         self.cam_label = "C"  # Camera label to get extrinsic
         self.x_norm = None  # Normalized X axis Waypoint coordinate
@@ -524,6 +539,8 @@ class WaypointSubscriber:
 
         # ---------------------------------------------------------------------
         # Update params
+        if self.webclient_control.direction != 0.0:
+            self.new_curvature = self.webclient_control.direction * 3
         self.update_params()
 
         # ---------------------------------------------------------------------
