@@ -22,8 +22,6 @@ setup(
     license="do whatever you want",
     # tests_require=["pytest"],
     entry_points={
-        "console_scripts": [
-            "local_client = local_client.node_local_client:main",
-        ],
+        "console_scripts": ["local_client = local_client.node_local_client:main",],
     },
 )

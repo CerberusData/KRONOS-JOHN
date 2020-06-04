@@ -809,8 +809,12 @@ class Stitcher:
                         or self.alpha_mask_LC.shape[0] != Ca.shape[0]
                     ):
                         new_size = (int(Ca.shape[1]), int(Ca.shape[0]))
-                        self.alpha_mask_LC = cv2.resize(self.alpha_mask_LC, new_size, int(cv2.INTER_NEAREST))
-                        self.alpha_mask_LC2 = cv2.resize(self.alpha_mask_LC2, new_size, int(cv2.INTER_NEAREST))
+                        self.alpha_mask_LC = cv2.resize(
+                            self.alpha_mask_LC, new_size, int(cv2.INTER_NEAREST)
+                        )
+                        self.alpha_mask_LC2 = cv2.resize(
+                            self.alpha_mask_LC2, new_size, int(cv2.INTER_NEAREST)
+                        )
 
                     Cr = (Ca * self.alpha_mask_LC + Cb * self.alpha_mask_LC2) * 255
 

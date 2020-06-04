@@ -190,14 +190,15 @@ class WebclientControl:
 
     def cb_sub_freedom_control(self, data):
         try:
-            self.throttle = int(data.twist.linear.x * (100.0 / 1.5)) # [m/s]
-            self.direction = data.twist.angular.z * (np.pi / 1.5) # [rad/s]
+            self.throttle = int(data.twist.linear.x * (100.0 / 1.5))  # [m/s]
+            self.direction = data.twist.angular.z * (np.pi / 1.5)  # [rad/s]
 
         except Exception as e:
             printlog(
                 msg="Error getting msg for WebclientControl class, {}".format(e),
                 msg_type="ERROR",
             )
+
     def cb_sub_web_client_control(self, data):
         try:
             self.pan = data.pan
@@ -208,6 +209,7 @@ class WebclientControl:
                 msg="Error getting msg for WebclientControl class, {}".format(e),
                 msg_type="ERROR",
             )
+
 
 class WaypointSubscriber:
     def __init__(self, parent_node, extrinsic, intrinsic, webclient_control):
@@ -538,7 +540,7 @@ class WaypointSubscriber:
         # ---------------------------------------------------------------------
         # Update params
         if self.webclient_control.direction != 0.0:
-            self.new_curvature = self.webclient_control.direction*3
+            self.new_curvature = self.webclient_control.direction * 3
         self.update_params()
 
         # ---------------------------------------------------------------------

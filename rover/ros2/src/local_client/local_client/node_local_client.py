@@ -32,7 +32,6 @@ from rclpy.executors import MultiThreadedExecutor
 
 # =============================================================================
 class WSClient(object):
-
     def __init__(self, host="localhost", port=4567):
         super(WSClient, self).__init__()
 
@@ -51,8 +50,8 @@ class WSClient(object):
 
         self._sio = SocketIO(self._host, self._port)
 
-        self._sio.on('steer', self._steer)
-        self._sio.on('connect', self._connect)
+        self._sio.on("steer", self._steer)
+        self._sio.on("connect", self._connect)
 
         self._thread = Thread(target=self._run)
         self._thread.daemon = True
@@ -71,10 +70,7 @@ class WSClient(object):
             f()
 
     def emit(self, **kwargs):
-        self._sio.emit(
-            "telemetry",
-            { key : str(value) for key, value in kwargs.items() }
-        )
+        self._sio.emit("telemetry", {key: str(value) for key, value in kwargs.items()})
 
     def on_message(self, f):
 
@@ -90,7 +86,6 @@ class WSClient(object):
 
 
 class RoverWSClient(object):
-
     def __init__(self, *args, **kwargs):
 
         super(RoverWSClient, self).__init__()
@@ -112,7 +107,7 @@ class RoverWSClient(object):
         self._socket_obj = WSClient(*args, **kwargs)
         self._socket_obj.on_message(self.on_message)
         self._socket_obj.start()
-        
+
         if self._emit_on_callback:
             self._socket_obj.emit(**self._command)
 
@@ -121,8 +116,10 @@ class RoverWSClient(object):
         if self._emit_on_callback:
             self._socket_obj.emit(**self._command)
 
-    def get_data(self, wait_next = None):
-        wait_next = wait_next if isinstance(wait_next, (bool, int, float)) else self._wait_next
+    def get_data(self, wait_next=None):
+        wait_next = (
+            wait_next if isinstance(wait_next, (bool, int, float)) else self._wait_next
+        )
 
         if wait_next:
             if isinstance(wait_next, bool):
@@ -163,20 +160,21 @@ class RoverWSClient(object):
     def initial_data(self):
         return dict()
 
+
 class ClientNode(Node, Thread):
     def __init__(self, debugger=False):
-        
+
         # ---------------------------------------------------------------------
         super().__init__("ClientNode")
-        
+
         Thread.__init__(self)
 
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
         self.debugger = debugger
-        self.rate = 15. 
+        self.rate = 15.0
 
-        self.ws_client = RoverWSClient(**{"host":"localhost", "port":4567})
+        self.ws_client = RoverWSClient(**{"host": "localhost", "port": 4567})
 
         self.we_client_params = {
             "lid_opened": False,
@@ -186,32 +184,35 @@ class ClientNode(Node, Thread):
             "local": False,
             "steering_angle": 0.0,
             "throttle": 0.0,
-            }
+        }
 
         # ---------------------------------------------------------------------
         # Publishers
         self.pub_arm_request = self.create_publisher(
-            Bool, "/canlink/chassis/arm", 5,
-            callback_group=self.callback_group,
+            Bool, "/canlink/chassis/arm", 5, callback_group=self.callback_group,
         )
 
         self.pwm_msg = PWMOut()
         self.pwm_msg.channels = [0, 0, 0, 0, 0]
         self.pub_pwm = self.create_publisher(
-            PWMOut, "pwm/output", 5,
-            callback_group=self.callback_group,
+            PWMOut, "pwm/output", 5, callback_group=self.callback_group,
         )
-        
+
         self.control_msg = TwistStamped()
         self.pub_control = self.create_publisher(
-            TwistStamped, "freedom_client/cmd_vel", 5,
+            TwistStamped,
+            "freedom_client/cmd_vel",
+            5,
             callback_group=self.callback_group,
         )
 
         self.bool_msg = Bool()
         self.pubs_streaming_idle_restart = self.create_publisher(
-            Bool, "video_streaming/optimizer/idle_restart", 1, 
-            callback_group=self.callback_group)
+            Bool,
+            "video_streaming/optimizer/idle_restart",
+            1,
+            callback_group=self.callback_group,
+        )
 
         # ---------------------------------------------------------------------
         # Subscribers
@@ -247,23 +248,27 @@ class ClientNode(Node, Thread):
                 if len(response):
                     for key, val in self.we_client_params.items():
                         if key not in response.keys():
-                            printlog(msg=f"{key} key no found in response dic", 
-                                msg_type="ERROR", flush=self.debugger)
+                            printlog(
+                                msg=f"{key} key no found in response dic",
+                                msg_type="ERROR",
+                                flush=self.debugger,
+                            )
                             self.we_client_params[key] = None
                             continue
 
-                        if (key == "steering_angle" 
-                            or key == "throttle"):
+                        if key == "steering_angle" or key == "throttle":
                             resp = float(response[key])
                             if val != resp:
                                 self.we_client_params[key] = resp
                                 printlog(
-                                    msg=f"{key}: val {round(val, 4)} -> {round(resp, 4)}", 
-                                    msg_type="INFO", flush=self.debugger)
+                                    msg=f"{key}: val {round(val, 4)} -> {round(resp, 4)}",
+                                    msg_type="INFO",
+                                    flush=self.debugger,
+                                )
                                 if key == "throttle":
-                                    self.control_msg.twist.linear.x = resp/1.5
+                                    self.control_msg.twist.linear.x = resp / 1.5
                                 elif key == "steering_angle":
-                                    self.control_msg.twist.angular.z = resp/np.pi
+                                    self.control_msg.twist.angular.z = resp / np.pi
                                 control_update = True
 
                         else:
@@ -271,8 +276,10 @@ class ClientNode(Node, Thread):
                             if val != resp:
                                 self.we_client_params[key] = resp
                                 printlog(
-                                    msg=f"{key}: val {val} -> {response[key]}", 
-                                    msg_type="INFO", flush=self.debugger)
+                                    msg=f"{key}: val {val} -> {response[key]}",
+                                    msg_type="INFO",
+                                    flush=self.debugger,
+                                )
                             if key == "lid_opened":
                                 self.pwm_msg.channels[2] = 2000 if resp else 0
                                 self.pub_pwm.publish(self.pwm_msg)
@@ -280,13 +287,13 @@ class ClientNode(Node, Thread):
                                 pass
 
                     self.ws_client.emit(
-                        # recording = False, 
+                        # recording = False,
                         # armed = False,
                         # mode = "local",
                         # auto_active = False,
-                        # steering = 0, 
-                        space_left = 100,   # TODO:(JOHN) - Integrate
-                        number_images = 0   # TODO:(JOHN) - Integrate
+                        # steering = 0,
+                        space_left=100,  # TODO:(JOHN) - Integrate
+                        number_images=0,  # TODO:(JOHN) - Integrate
                     )
 
                     if control_update:
@@ -308,7 +315,7 @@ class ClientNode(Node, Thread):
 
     def cb_ws_client_message(self, msg):
         try:
-            client_msg_str = json.dumps({"data":msg.data}) 
+            client_msg_str = json.dumps({"data": msg.data})
             client_msg = json.loads(client_msg_str)
             if msg.type == "INFO":
                 self.ws_client.emit(info=client_msg["data"])
@@ -316,6 +323,7 @@ class ClientNode(Node, Thread):
                 self._ws_client.emit(warning=client_msg["data"])
         except Exception as e:
             printlog(msg=e, msg_type="ERROR")
+
 
 # =============================================================================
 def main(args=None):

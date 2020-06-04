@@ -54,9 +54,9 @@ class GraphicInterface:
             parent_node=parent_node,
             extrinsic=self.sub_extrinsic.extrinsic,
             intrinsic=self.sub_extrinsic.intrinsic,
-            webclient_control = self.sub_webclient_control,
+            webclient_control=self.sub_webclient_control,
         )
-        
+
         self.subs_cliff_sensors = [
             CliffSensorSuscriber(parent_node=parent_node, topic_name=topic)
             for topic in ["/tf_mini_plus/cliff_sensor1", "/tf_mini_plus/cliff_sensor2",]

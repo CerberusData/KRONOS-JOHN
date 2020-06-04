@@ -145,8 +145,11 @@ class LocalConsoleNode(Node, Thread):
 
         self.bool_msg = Bool()
         self.pubs_streaming_idle_restart = self.create_publisher(
-            Bool, "video_streaming/optimizer/idle_restart", 1, 
-            callback_group=self.callback_group)
+            Bool,
+            "video_streaming/optimizer/idle_restart",
+            1,
+            callback_group=self.callback_group,
+        )
 
         # ---------------------------------------------------------------------
         # Thread variables

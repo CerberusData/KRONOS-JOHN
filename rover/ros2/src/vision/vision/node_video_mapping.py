@@ -301,8 +301,7 @@ class MappingNode(Node, Thread):
 
                 # Optimize image
                 if self._FR_STREAMING_OPTIMIZER:
-                    img=imgs_dic["P"] = self.img_optimizer.optimize(
-                        img=imgs_dic["P"])
+                    img = imgs_dic["P"] = self.img_optimizer.optimize(img=imgs_dic["P"])
 
                 # -------------------------------------------------------------
                 # Publish image
@@ -361,7 +360,7 @@ class StreamingOptimizer:
             img: `cv2.math` image to reduce quality
         Returns:
         """
-        
+
         if self.inactive_timer < self.IDLE_TIME:
             self.inactive_timer = time.time() - self._time_tick
 
@@ -373,7 +372,7 @@ class StreamingOptimizer:
                     int(img.shape[1] * self.STREAMING_IDLE_FACTOR),
                     int(img.shape[0] * self.STREAMING_IDLE_FACTOR),
                 ),
-                interpolation=int(cv2.INTER_NEAREST)
+                interpolation=int(cv2.INTER_NEAREST),
             )
             img = cv2.cvtColor(src=img, code=cv2.COLOR_GRAY2BGR)
         else:
@@ -383,7 +382,7 @@ class StreamingOptimizer:
                     int(img.shape[1] * self.STREAMING_FACTOR),
                     int(img.shape[0] * self.STREAMING_FACTOR),
                 ),
-                interpolation=int(cv2.INTER_NEAREST)
+                interpolation=int(cv2.INTER_NEAREST),
             )
 
         return img

@@ -173,8 +173,10 @@ def generate_launch_description():
     for key, node_args in nodes.items():
         if node_args["launch"]:
             srt_ = srt_ + "\n\tNode {}\tfrom {} package".format(
-                node_args["node_name"] if "node_name" in node_args.keys() else "(Executable)", 
-                node_args["package"]
+                node_args["node_name"]
+                if "node_name" in node_args.keys()
+                else "(Executable)",
+                node_args["package"],
             )
     ld = launch.LaunchDescription([launch.actions.LogInfo(msg=srt_ + "\n"),])
 
