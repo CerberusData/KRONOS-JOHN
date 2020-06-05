@@ -359,9 +359,10 @@ class ClientNode(Node, Thread):
                         number_images=self.data_capture_images,
                     )
 
-                    if (control_update 
-                    and (self.we_client_params["local"] or self._LOCAL_RUN)
-                    and (self.armed or self._LOCAL_RUN)):
+                    # if (control_update 
+                    # and (self.we_client_params["local"] or self._LOCAL_RUN)
+                    # and (self.armed or self._LOCAL_RUN)):
+                    if (control_update):
                         self.pub_control.publish(self.control_msg)
                         self.pub_streaming_idle_restart.publish(self.bool_msg)
                         control_update = False

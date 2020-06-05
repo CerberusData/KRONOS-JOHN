@@ -211,7 +211,8 @@ RUN \
     apt-get update && \
     apt-get install -y \
     htop \
-    can-utils
+    can-utils \
+    network-manager
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here

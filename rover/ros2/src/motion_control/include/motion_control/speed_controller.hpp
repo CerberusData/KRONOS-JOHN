@@ -47,8 +47,9 @@ class SpeedController : public rclcpp::Node
         rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr output_cmd_pub_;
 
         // Subscribers
-        rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr driving_cmd_fr_sub_;
+        rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr fr_cmd_sub_;
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
+        rclcpp::Subscription<std_msgs::msg::String>::SharedPtr imu_status_sub_;
 
         // Timers
         rclcpp::TimerBase::SharedPtr pub_timer_;
@@ -56,10 +57,14 @@ class SpeedController : public rclcpp::Node
         // Member functions
         void CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
         void OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg);
+        void ImuStatusCb(const std_msgs::msg::String::SharedPtr msg);
+
         float ThrottlePID(float ref_vx, float cur_vx, double dt);
+        float SteeringPID(float ref_wz, float cur_wz, double dt);
 
         // Environment variables
         bool throttle_ctrl_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL_ENABLE", true);
+        bool steering_ctrl_ = getEnv("SPEED_CONTROLLER_STEERING_CONTROL_ENABLE", true);
         double kp_thr_ = getEnv("SPEED_CONTROLLER_KP_THROTTLE", 0.2f);
         double ki_thr_ = getEnv("SPEED_CONTROLLER_KI_THROTTLE", 0.2f);
         double kd_thr_ = getEnv("SPEED_CONTROLLER_KD_THROTTLE", 0.0f);
@@ -74,6 +79,7 @@ class SpeedController : public rclcpp::Node
         rclcpp::Time prev_time_;
 
         bool first_yaw_value = false;
+        bool imu_status_ = true;
         double int_error_ = 0.0;
         double e_k1_ = 0.0;
         double prev_ref_vx_ = 0.0;

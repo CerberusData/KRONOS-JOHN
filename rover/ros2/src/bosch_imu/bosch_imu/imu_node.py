@@ -110,25 +110,25 @@ class ImuNode(Node):
 
         # Publishers
         self.pub_imu_data = self.create_publisher(
-            Imu, "imu/data", 1
+            Imu, "/imu/data", 1
         )  # Filtered data - imu_msg
         self.pub_imu_mag = self.create_publisher(
-            MagneticField, "imu/mag", 1
+            MagneticField, "/imu/mag", 1
         )  # Magnetometer data - mag_msg
         self.pub_imu_temp = self.create_publisher(
-            Temperature, "imu/temp", 1
+            Temperature, "/imu/temp", 1
         )  # Temperature data - tmp_msg
         self.pub_bot_data = self.create_publisher(
-            Imu, "imu/data_bot", 1
+            Imu, "/imu/data_bot", 1
         )  # Kiwibot filtered data - imu_bot_msg
         self.pub_bot_ekf = self.create_publisher(
-            Imu, "imu/data_bot_ekf", 1
+            Imu, "/imu/data_bot_ekf", 1
         )  # Kiwibot filtered data for EKF - imu_ekf_msg
         self.pub_bot_move = self.create_publisher(
-            Bool, "imu/move_state", 1
+            Bool, "/imu/move_state", 1
         )  # Kiwibot movement status - move_msg
         self.pub_imu_status = self.create_publisher(
-            String, "imu/status", 1
+            String, "/imu/status", 1
         )  # Kiwibot IMU status - status_msg
 
         """
@@ -592,7 +592,7 @@ class ImuNode(Node):
             self.tmp_msg.header.frame_id = self.frame_id
             self.tmp_msg.temperature = float(buf[44])
 
-            self.status_msg.data = "IMU Ok"
+            self.status_msg.data = "OK"
 
         else:
             self.status_msg.data = "Unavailable data"

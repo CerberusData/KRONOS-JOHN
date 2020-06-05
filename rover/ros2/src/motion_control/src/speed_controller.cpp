@@ -12,16 +12,30 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
         "/motion_control/speed_controller/output", 10);
 
     // Subscribers
-    driving_cmd_fr_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    fr_cmd_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
         "/freedom_client/cmd_vel", 10, std::bind(&SpeedController::CommandsCb, this, _1));
     odometry_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "/wheel_odometry/global_odometry", 50, std::bind(&SpeedController::OdometryCb, this, _1));
+    imu_status_sub_ = this->create_subscription<std_msgs::msg::String>(
+        "/imu/status", 1, std::bind(&SpeedController::ImuStatusCb, this, _1));
 
     prev_time_ = this->now();
 
     // Soft Speed object
     linear_soft_spline = std::make_shared<SoftSpeedSpline>(0.8f);
 }
+
+void SpeedController::ImuStatusCb(const std_msgs::msg::String::SharedPtr msg)
+{
+    bool status_update = ((msg->data).compare("OK") == 0);
+    if (status_update == false && imu_status_ == true)
+    {
+        RCLCPP_ERROR(this->get_logger(), "IMU not available for Speed Control");
+    }
+
+    imu_status_ = status_update;
+}
+
 
 void SpeedController::OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
@@ -59,6 +73,29 @@ void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedP
     reference_cmd_.header.stamp = this->now();
     reference_cmd_.twist = msg->twist;
 }
+
+float SpeedController::SteeringPID(float ref_wz, float cur_wz, double dt)
+{
+    /*
+        (Reference, Current, dt)
+    */
+    if (ref_wz == 0.0f)
+    {
+        return 0.0f;
+    }
+
+    // if(steering_ctrl_ == true && )
+    // {
+
+
+    // }
+
+    // else
+    // {
+    //     return ref_wz;
+    // }
+}
+
 
 float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
 {
@@ -125,7 +162,6 @@ void SpeedController::Controller()
     output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); // This
     // output_cmd_msg->twist.linear.x = ThrottlePID(lin_vx, robot_twist_.twist.linear.x, dt);
     // RCLCPP_WARN(this->get_logger(), "Out: %0.4f", output_cmd_msg->twist.linear.x);
-
 
     output_cmd_msg->twist.angular.z = ang_wz;
     output_cmd_pub_->publish(std::move(output_cmd_msg));
