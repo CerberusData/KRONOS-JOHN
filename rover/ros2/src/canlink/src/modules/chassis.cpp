@@ -17,12 +17,11 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
 
         /* Chassis and Motors status initialization */
         motors_out_msg_.info = motors_out_msg_.DEFAULT;  /* Double check*/
-        motors_dvr_status_.mode = "JETHAWK";  /* Double check*/
-        motors_dvr_status_.armed = false;
-        motors_dvr_status_.connected = true;
+        chassis_dvr_status_.armed = false;
+        chassis_dvr_status_.connected = true;
 
         /* Publishers */
-        motors_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::State>(
+        chassis_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::ChassisState>(
             "/canlink/chassis/status", 10);
         motors_out_pub_ = this->create_publisher<usr_msgs::msg::PWMOut>(
             "/canlink/chassis/motors_out", 10);
@@ -30,8 +29,8 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
             "/canlink/chassis/motors_status", 10);
         test_motors_pub_ = this->create_publisher<usr_msgs::msg::TestMotors>(
             "/canlink/chassis/test_response", 10);
-        msg_pub_ = this->create_publisher<usr_msgs::msg::Messages>(
-            "/web_client/message", 512); // This message can be removed
+        visual_debugger_pub_ = this->create_publisher<usr_msgs::msg::VisualMessage>(
+            "/video_streaming/visual_debugger", 512); // This message can be removed
 
         if(publish_currents_separately_)  /* Separate current Publishers */
         {
@@ -85,12 +84,12 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
     else
     {
         RCLCPP_ERROR(this->get_logger(), "Chassis is not connected");
-        motors_dvr_status_.connected = false;
+        chassis_dvr_status_.connected = false;
 
         // Publishers
-        motors_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::State>(
+        chassis_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::ChassisState>(
             "/canlink/chassis/status", 10);
-        motors_dvr_status_pub_->publish(motors_dvr_status_);
+        chassis_dvr_status_pub_->publish(chassis_dvr_status_);
     }
 
 }
@@ -107,7 +106,7 @@ bool Chassis::ArmCb(
     uint8_t data_arm[2];
     data_arm[0] = ARM_CMD_ID;
 
-    if ((arm_req == true) && (motors_dvr_status_.armed == false))
+    if ((arm_req == true) && (chassis_dvr_status_.armed == false))
     {
         /*
             Arming command
@@ -122,7 +121,7 @@ bool Chassis::ArmCb(
         }
     }
 
-    if ((arm_req == false) && (motors_dvr_status_.armed == true))
+    if ((arm_req == false) && (chassis_dvr_status_.armed == true))
     {
         /*
             Disarming command
@@ -269,10 +268,10 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
             if (!moon_first_time_)  /* False */
             {
                 moon_first_time_ = true;
-                auto info_msg = std::make_unique<usr_msgs::msg::Messages>();
-                info_msg->type = usr_msgs::msg::Messages::WARNING;
+                auto info_msg = std::make_unique<usr_msgs::msg::VisualMessage>();
+                info_msg->type = "WARN";
                 info_msg->data = "Deteniendo robot para evitar que se voltee";
-                msg_pub_->publish(std::move(info_msg));
+                visual_debugger_pub_->publish(std::move(info_msg));
             }
         }
     }
@@ -286,10 +285,10 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         if (!moon_first_time_)  /* False */
         {
             moon_first_time_ = true;
-            auto info_msg = std::make_unique<usr_msgs::msg::Messages>();
-            info_msg->type = usr_msgs::msg::Messages::WARNING;
+            auto info_msg = std::make_unique<usr_msgs::msg::VisualMessage>();
+            info_msg->type = "WARN";
             info_msg->data = "Deteniendo robot para evitar que se voltee";
-            msg_pub_->publish(std::move(info_msg));
+            visual_debugger_pub_->publish(std::move(info_msg));
         }
     }
 
@@ -302,10 +301,10 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         if(!moon_first_time_)  // False
         {
             moon_first_time_ = true;
-            auto info_msg = std::make_unique<usr_msgs::msg::Messages>();
-            info_msg->type = usr_msgs::msg::Messages::WARNING;
+            auto info_msg = std::make_unique<usr_msgs::msg::VisualMessage>();
+            info_msg->type = "WARN";
             info_msg->data = "Deteniendo robot para evitar que se voltee";
-            msg_pub_->publish(std::move(info_msg));
+            visual_debugger_pub_->publish(std::move(info_msg));
         }
     }
 
@@ -343,15 +342,15 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 // Timers Callbacks 
 void Chassis::HeartbeatTimerCb()
 {
-    auto info_message = std::make_unique<usr_msgs::msg::Messages>();
-    info_message->type = usr_msgs::msg::Messages::ERROR;
-    info_message->data = "Chassis desconectado!. Robot detenido";
-    msg_pub_->publish(std::move(info_message));
+    auto info_message = std::make_unique<usr_msgs::msg::VisualMessage>();
+    info_message->type = "ERROR";
+    info_message->data = "Chassis desconectado";
+    visual_debugger_pub_->publish(std::move(info_message));
 
-    RCLCPP_INFO(this->get_logger(), "------ CAN Link Heartbeat Timeout ------");
+    RCLCPP_INFO(this->get_logger(), "------ CAN link Heartbeat timeout ------");
 
     SendChassisConfiguration();
-    motors_dvr_status_.connected = false;
+    chassis_dvr_status_.connected = false;
     controls_.at(0) = 0.0f;
     controls_.at(1) = 0.0f;
 
@@ -363,7 +362,7 @@ void Chassis::HeartbeatTimerCb()
 
     motors_status_.header.stamp = this->now();
     motors_status_pub_->publish(motors_status_);
-    motors_dvr_status_pub_->publish(motors_dvr_status_);
+    chassis_dvr_status_pub_->publish(chassis_dvr_status_);
 }
 
 void Chassis::MoonTimerCb()
@@ -381,15 +380,15 @@ void Chassis::CurrentTimerCb()
         motors_current_ok_ = false;
     }
     current_timer_started_ = false;
-    auto info_message = std::make_unique<usr_msgs::msg::Messages>();
-    info_message->type = usr_msgs::msg::Messages::ERROR;
+    auto info_message = std::make_unique<usr_msgs::msg::VisualMessage>();
+    info_message->type = "ERROR";
     info_message->data = "Parar cuanto antes: Codigo de error en motores:"
                         + std::to_string(motor_error_[0]) + ", "
                         + std::to_string(motor_error_[1]) + ", "
                         + std::to_string(motor_error_[2]) + ", "
                         + std::to_string(motor_error_[3]);
 
-    msg_pub_->publish(std::move(info_message));
+    visual_debugger_pub_->publish(std::move(info_message));
     motors_status_.error_status = {motor_error_[0], motor_error_[1], motor_error_[2], motor_error_[3]};
     RCLCPP_INFO(this->get_logger(), "------ Motor Current Stall ------");
 }
@@ -519,8 +518,8 @@ bool Chassis::SendMotorsCmd()
         }
     }
 
-    if ((motors_dvr_status_.connected == true) 
-        && (motors_dvr_status_.armed == true) 
+    if ((chassis_dvr_status_.connected == true) 
+        && (chassis_dvr_status_.armed == true) 
         && (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL))
     {
         /* 
@@ -614,7 +613,7 @@ bool Chassis::SendMotorsCmd()
 
 bool Chassis::GetConnected()
 {
-    return motors_dvr_status_.connected;
+    return chassis_dvr_status_.connected;
 }
 
 void Chassis::SetMotorsCurrent(struct can_frame* frame)
@@ -705,7 +704,7 @@ void Chassis::SetErrorStatus(struct can_frame* frame)
 
 void Chassis::PublishMotorStatus(struct can_frame* frame)
 {
-    if (!motors_dvr_status_.connected)
+    if (!chassis_dvr_status_.connected)
     {
         RCLCPP_INFO(this->get_logger(), "----- Chassis restarted -----");
         InitialConfig();
@@ -758,7 +757,7 @@ void Chassis::PublishChassisStatus(struct can_frame* frame)
 {
 
     /* Check for Microcontroller status to restart and send the initial configuration */
-    if (!motors_dvr_status_.connected)  /* False - Disconnected */
+    if (!chassis_dvr_status_.connected)  /* False - Disconnected */
     {
         RCLCPP_INFO(this->get_logger(), "----- Chassis restarted -----"); // Check this message
         InitialConfig();
@@ -766,15 +765,15 @@ void Chassis::PublishChassisStatus(struct can_frame* frame)
 
     if (frame->data[1] == 0x01)  /* Status: Armed */
     {
-        motors_dvr_status_.armed = true;
+        chassis_dvr_status_.armed = true;
     }
 
     else if (frame->data[1] == 0x00)  /* Status: Disarmed */
     {
-        motors_dvr_status_.armed = false;
+        chassis_dvr_status_.armed = false;
     }
 
-    motors_dvr_status_.connected = true;
-    motors_dvr_status_pub_->publish(motors_dvr_status_);
+    chassis_dvr_status_.connected = true;
+    chassis_dvr_status_pub_->publish(chassis_dvr_status_);
     heartbeat_tmr_->reset();
 }

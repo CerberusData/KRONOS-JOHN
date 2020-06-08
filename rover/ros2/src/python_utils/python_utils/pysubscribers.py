@@ -47,7 +47,7 @@ class VisualDebuggerSubscriber:
 
         # Message to show in console
         self.msg = ""
-        # Type of message "info, err, warn"
+        # Type of message "INFO, ERROR, WARN"
         self.type = "INFO"
         self.font_scale = 0.5
 

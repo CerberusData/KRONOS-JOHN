@@ -65,9 +65,9 @@ class SpeedController : public rclcpp::Node
         // Environment variables
         bool throttle_ctrl_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL_ENABLE", true);
         bool steering_ctrl_ = getEnv("SPEED_CONTROLLER_STEERING_CONTROL_ENABLE", true);
-        double kp_thr_ = getEnv("SPEED_CONTROLLER_KP_THROTTLE", 0.2f);
-        double ki_thr_ = getEnv("SPEED_CONTROLLER_KI_THROTTLE", 0.2f);
-        double kd_thr_ = getEnv("SPEED_CONTROLLER_KD_THROTTLE", 0.0f);
+        double kp_thr_ = getEnv("SPEED_CONTROLLER_KP_THROTTLE", 0.43f);
+        double ki_thr_ = getEnv("SPEED_CONTROLLER_KI_THROTTLE", 0.21f);
+        double kd_thr_ = getEnv("SPEED_CONTROLLER_KD_THROTTLE", 0.11f);
         double kff_thr_ = getEnv("SPEED_CONTROLLER_FF_THROTTLE", 1.0f);
         
         /* -- */
@@ -81,7 +81,7 @@ class SpeedController : public rclcpp::Node
         bool first_yaw_value = false;
         bool imu_status_ = true;
         double int_error_ = 0.0;
-        double e_k1_ = 0.0;
+        double prev_prop_error_ = 0.0;
         double prev_ref_vx_ = 0.0;
         double yaw_set_point_ = 0.0;
         double bot_yaw_ = 0.0;

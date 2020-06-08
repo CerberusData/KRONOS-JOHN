@@ -179,6 +179,7 @@ class ImuNode(Node):
             math.pi / 180.0
         )
         self._move_factor = float(os.getenv("IMU_MOVING_FACTOR", 0.014))
+        self._error_ctr = 0
 
         # Open Serial Port
         self.get_logger().info("Opening Serial Port: " + self.port)
@@ -497,8 +498,7 @@ class ImuNode(Node):
             if self._azimuth != 0.0:
                 current_azimuth = (
                     ((current_azimuth - self._azimuth) + math.pi) % (2.0 * math.pi)
-                    - math.pi
-                    + self._azimuth
+                    - math.pi + self._azimuth
                 )
                 self._azimuth = ((1.0 - self._alpha) * current_azimuth) + (
                     self._alpha * self._azimuth
@@ -506,8 +506,8 @@ class ImuNode(Node):
 
                 if self._counter < 205:
                     self._counter += 1
-            else:
 
+            else:
                 if self.mag_msg.magnetic_field.x != 0.0:
                     self._azimuth = current_azimuth
 
@@ -592,10 +592,15 @@ class ImuNode(Node):
             self.tmp_msg.header.frame_id = self.frame_id
             self.tmp_msg.temperature = float(buf[44])
 
-            self.status_msg.data = "OK"
-
+            self._error_ctr = 0
+            
         else:
-            self.status_msg.data = "Unavailable data"
+            self._error_ctr += 1
+
+        if self._error_ctr < 5:
+                self.status_msg.data = "OK"
+        else:
+            self.status_msg.data = "Error"
 
     def cb_publish_imu(self):
         """

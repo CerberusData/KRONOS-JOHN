@@ -27,7 +27,7 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
 
 void SpeedController::ImuStatusCb(const std_msgs::msg::String::SharedPtr msg)
 {
-    bool status_update = ((msg->data).compare("OK") == 0);
+    bool status_update = (msg->data.compare("OK") == 0);
     if (status_update == false && imu_status_ == true)
     {
         RCLCPP_ERROR(this->get_logger(), "IMU not available for Speed Control");
@@ -100,6 +100,7 @@ float SpeedController::SteeringPID(float ref_wz, float cur_wz, double dt)
 float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
 {
     /*
+    Position velocity controller 
         (Reference, Current, dt)
     */
 
@@ -110,24 +111,32 @@ float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
 
     if (throttle_ctrl_ == true)
     {
-        float smooth_ff = 1.0;
-        float e_k = ref_vx - cur_vx;
-        float prop_error = e_k;
-        float der_error = (dt != 0.0f) ? (e_k - e_k1_) / dt : 0.0f;
-        int_error_ += int_error_ * dt;
-        e_k1_ = e_k;
+        float smooth_ff = 1.0f;
+
+        float prop_error = ref_vx - cur_vx;
+        float der_error = (dt != 0.0f)
+            ? ((prop_error - prev_prop_error_) / dt) : 0.0f;
+        int_error_ += prop_error * dt;
+        prev_prop_error_ = prop_error;
 
         // Smoothing the predictive term when changing direction
         if (((prev_ref_vx_ < 0.0f) && (ref_vx - prev_ref_vx_ > 0.0f)) 
             || ((prev_ref_vx_ > 0.0f) && (ref_vx - prev_ref_vx_ < 0.0f)))
         {   
-            smooth_ff = 0.5f;
+            smooth_ff = 0.75f;
         }
 
         // PID command with predictive term (FF) and reactive term (FB)
         float u_cmd = (smooth_ff * kff_thr_ * cur_vx) 
             + (kp_thr_ * (prop_error + (ki_thr_ * int_error_) + (kd_thr_ * der_error)));
         prev_ref_vx_ = ref_vx;
+
+        // Anti Wind-Up (To avoid increasing the error)
+        if (std::abs(ki_thr_ * int_error_) > 0.5f)
+        {
+            int_error_ -= prop_error * dt;
+        }
+
         return u_cmd;
     }
 
@@ -155,13 +164,8 @@ void SpeedController::Controller()
 
     // (reference, acc_factor)
     float vx_ref = linear_soft_spline->CalculateSoftSpeed(lin_vx, 1.0f);
-    // RCLCPP_WARN(this->get_logger(), "Out: %0.4f", lin_vx);
-    // RCLCPP_WARN(this->get_logger(), "Out: %0.4f", ang_wz);
-
     // (reference, current, dt)
-    output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); // This
-    // output_cmd_msg->twist.linear.x = ThrottlePID(lin_vx, robot_twist_.twist.linear.x, dt);
-    // RCLCPP_WARN(this->get_logger(), "Out: %0.4f", output_cmd_msg->twist.linear.x);
+    output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); 
 
     output_cmd_msg->twist.angular.z = ang_wz;
     output_cmd_pub_->publish(std::move(output_cmd_msg));

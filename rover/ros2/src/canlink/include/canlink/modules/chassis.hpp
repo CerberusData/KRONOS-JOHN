@@ -40,8 +40,8 @@
 #include "usr_msgs/msg/motors.hpp"
 #include "usr_msgs/msg/test_motors.hpp"
 #include "usr_msgs/msg/pwm_out.hpp"
-#include "usr_msgs/msg/state.hpp"
-#include "usr_msgs/msg/messages.hpp"
+#include "usr_msgs/msg/chassis_state.hpp"
+#include "usr_msgs/msg/visual_message.hpp"
 
 #define CHASSIS_ADDRESS 0x45A
 #define KIWIBOT_ADDRESS 0x469
@@ -99,18 +99,18 @@ class Chassis : public rclcpp::Node
 
     private:
         // Publishers
-        rclcpp::Publisher<usr_msgs::msg::State>::SharedPtr motors_dvr_status_pub_;
+        rclcpp::Publisher<usr_msgs::msg::ChassisState>::SharedPtr chassis_dvr_status_pub_;
         rclcpp::Publisher<usr_msgs::msg::PWMOut>::SharedPtr motors_out_pub_;
         rclcpp::Publisher<usr_msgs::msg::Motors>::SharedPtr motors_status_pub_;
         rclcpp::Publisher<usr_msgs::msg::TestMotors>::SharedPtr test_motors_pub_;
-        rclcpp::Publisher<usr_msgs::msg::Messages>::SharedPtr msg_pub_;
+        rclcpp::Publisher<usr_msgs::msg::VisualMessage>::SharedPtr visual_debugger_pub_;
         std::vector<rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> current_pub_;
 
         // Publishers messages
         usr_msgs::msg::PWMOut motors_out_msg_;
         usr_msgs::msg::Motors motors_status_;
         usr_msgs::msg::TestMotors test_motors_response_;
-        usr_msgs::msg::State motors_dvr_status_;
+        usr_msgs::msg::ChassisState chassis_dvr_status_;
 
         // Subscribers
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr speed_control_out_sub_;
