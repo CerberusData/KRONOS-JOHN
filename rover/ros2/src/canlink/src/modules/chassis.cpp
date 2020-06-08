@@ -15,12 +15,12 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
     {
         can_driver_ = can_driver;
 
-        /* Chassis and Motors status initialization */
-        motors_out_msg_.info = motors_out_msg_.DEFAULT;  /* Double check*/
+        // Chassis and Motors status initialization
+        motors_out_msg_.info = motors_out_msg_.DEFAULT;
         chassis_dvr_status_.armed = false;
         chassis_dvr_status_.connected = true;
 
-        /* Publishers */
+        // Publishers
         chassis_dvr_status_pub_ = this->create_publisher<usr_msgs::msg::ChassisState>(
             "/canlink/chassis/status", 10);
         motors_out_pub_ = this->create_publisher<usr_msgs::msg::PWMOut>(
@@ -30,9 +30,9 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
         test_motors_pub_ = this->create_publisher<usr_msgs::msg::TestMotors>(
             "/canlink/chassis/test_response", 10);
         visual_debugger_pub_ = this->create_publisher<usr_msgs::msg::VisualMessage>(
-            "/video_streaming/visual_debugger", 512); // This message can be removed
+            "/video_streaming/visual_debugger", 512); 
 
-        if(publish_currents_separately_)  /* Separate current Publishers */
+        if(publish_currents_separately_)
         {
             for(int i = 0; i < 4; ++i)
             {
@@ -43,7 +43,7 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
             }
         }
 
-        /* Subscribers */
+        // Subscribers
         speed_control_out_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
             "/motion_control/speed_controller/output", 10, std::bind(&Chassis::ActuatorControlCb, this, _1));
         speed_control_ref_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
@@ -59,7 +59,7 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
         odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
             "/wheel_odometry/global_odometry", 10, std::bind(&Chassis::OdomCb, this, _1));
 
-        /* Initial chassis setup */
+        // Initial chassis setup
         ConfigurePID();
         sleep(1.0);
         InitialConfig();
@@ -145,7 +145,7 @@ void Chassis::ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPt
 {
     float throttle = msg->twist.linear.x;
 
-    // Throttle limitation depending on the inclination to avoid moon launch position
+    // Throttle limitation depending on the inclination to avoid moon launch
     if ((throttle > 0.0f) && (pitch_ < 0.0f))
     {
         throttle = throttle > speed_pitch_factor_ ?  speed_pitch_factor_ : throttle;
@@ -158,30 +158,30 @@ void Chassis::ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPt
     // Downhill
     if(moon_view_ == 1)
     {
-        controls_.at(0) = 0.0f;  /* Angular velocity - Steering */
-        controls_.at(1) = throttle >= 0.0f ? 0.0f : throttle;  /* Linear velocity - Throttle */
+        controls_.at(0) = 0.0f;  // Ang. velocity
+        controls_.at(1) = throttle >= 0.0f ? 0.0f : throttle;  // Lin. velocity
     }
     
     // Moonlaunch
     else if (moon_view_ == -1) 
     {
-        controls_.at(0) = 0.0f; /* Angular velocity - Steering */
-        controls_.at(1) = throttle <= 0.0f ? 0.0f : throttle;  /* Linear velocity - Throttle */
+        controls_.at(0) = 0.0f; // Ang. velocity
+        controls_.at(1) = throttle <= 0.0f ? 0.0f : throttle;  // Lin. velocity
     }
 
     // Uphill
     else if (moon_view_ == 2)
     {
         throttle = pitch_ <= 0.2 ? 0.0f : throttle;
-        controls_.at(0) = 0.0f;  /* Angular velocity - Steering */
-        controls_.at(1) = throttle <= 0.0f ? 0.0f : throttle;  /* Linear velocity - Throttle */
+        controls_.at(0) = 0.0f;  // Ang. velocity
+        controls_.at(1) = throttle <= 0.0f ? 0.0f : throttle;  // Lin. velocity
     }
 
     // Normal
     else
     {
-        controls_.at(0) = msg->twist.angular.z;  /* Angular velocity - Steering */
-        controls_.at(1) = throttle;  /* Linear velocity - Throttle */
+        controls_.at(0) = msg->twist.angular.z;  // Ang. velocity
+        controls_.at(1) = throttle;  // Lin. velocity
     }
 
     // Send by CAN the motors commands
@@ -396,6 +396,7 @@ void Chassis::CurrentTimerCb()
 
 /* ------------------------------------------------------------------------- */
 // Functions
+
 void Chassis::SendChassisConfiguration()
 {
     /*
@@ -550,7 +551,7 @@ bool Chassis::SendMotorsCmd()
             moving_ = true;
         }
 
-        /* Decceleration checking */
+        // Decceleration checking 
         if((((throttle_prev_ < 0.0f) && (throttle_current_ - throttle_prev_ > 0.1f)) 
             || ((throttle_prev_ > 0.0f) && (throttle_current_ - throttle_prev_ < -0.1f))))
         {
@@ -568,7 +569,7 @@ bool Chassis::SendMotorsCmd()
             }      
         }
 
-        /* Checking for Errors in the motors (If error, send 0) */
+        // Checking for Errors in the motors (If error, send 0)
         uint8_t w_dig_1 = motors_status_.error_status[0] != 0 ? 0 : w_right_dig;
         uint8_t w_dig_2 = motors_status_.error_status[1] != 0 ? 0 : w_right_dig;
         uint8_t w_dig_3 = motors_status_.error_status[2] != 0 ? 0 : w_left_dig;
@@ -604,7 +605,7 @@ bool Chassis::SendMotorsCmd()
         }
     }
 
-    /* Publishing wheels velocities */
+    // Publishing wheels velocities
     motors_out_msg_.channels = raw_motors_out_;
     motors_out_pub_->publish(motors_out_msg_);
     throttle_prev_ = throttle_current_;
