@@ -522,17 +522,36 @@ class ImuNode(Node):
                 self._alpha = 0.75
                 self._first_orient = True
 
+            print("Azimuth: %0.4f", self._azimuth * 180/3.1416)
+            
             # --------------------------------------------------------------- #
             # Reassigning the value for the Robot axes
+            """
             self._pitch_bot = (math.pi / 2) - pitch_imu
             self._roll_bot = -roll_imu
             self._yaw_bot = (
                 math.atan2(math.sin(yaw_imu - math.pi), math.cos(yaw_imu - math.pi))
                 - self._initial_orient
             )
+            quaternion_bot = quaternion_from_euler(
+                pitch=self._pitch_bot, 
+                roll=self._roll_bot, 
+                yaw=self._yaw_bot
+            )
+            """
+
+            self._pitch_bot = (math.pi / 2) - pitch_imu
+            self._roll_bot = -roll_imu
+            self._yaw_bot = (
+                math.atan2(math.sin(yaw_imu), math.cos(yaw_imu))
+            )
+
+            print("Yaw: %0.4f", self._yaw_bot * 180/3.1416)
 
             quaternion_bot = quaternion_from_euler(
-                pitch=self._pitch_bot, roll=self._roll_bot, yaw=self._yaw_bot
+                pitch=self._pitch_bot, 
+                roll=self._roll_bot, 
+                yaw=self._yaw_bot
             )
 
             # Kiwibot filtered data
