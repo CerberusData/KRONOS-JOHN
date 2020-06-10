@@ -21,7 +21,7 @@ from std_msgs.msg import Bool
 from std_msgs.msg import String
 from usr_msgs.msg import VisualMessage
 from usr_msgs.msg import PWMOut
-from usr_msgs.msg import State
+from usr_msgs.msg import ChassisState
 from usr_msgs.msg import CaptureStatus
 from geometry_msgs.msg import TwistStamped
 
@@ -251,7 +251,7 @@ class ClientNode(Node, Thread):
         self.armed = False
         self.mode = "manual" # local
         self.sub_canlink_chassis_status = self.create_subscription(
-            msg_type=State,
+            msg_type=ChassisState,
             topic="canlink/chassis/status",
             callback=self.cb_canlink_chassis_status,
             qos_profile=5,
@@ -322,9 +322,9 @@ class ClientNode(Node, Thread):
                                     flush=self.debugger,
                                 )
                                 if key == "throttle":
-                                    self.control_msg.twist.linear.x = resp / 1.5
+                                    self.control_msg.twist.linear.x = 1.5 * resp
                                 elif key == "steering_angle":
-                                    self.control_msg.twist.angular.z = resp / np.pi
+                                    self.control_msg.twist.angular.z = resp
                                 control_update = True
 
                         else:
@@ -362,11 +362,12 @@ class ClientNode(Node, Thread):
                     # if (control_update 
                     # and (self.we_client_params["local"] or self._LOCAL_RUN)
                     # and (self.armed or self._LOCAL_RUN)):
+                    
                     if (control_update):
-                        self.pub_control.publish(self.control_msg)
                         self.pub_streaming_idle_restart.publish(self.bool_msg)
                         control_update = False
 
+                    self.pub_control.publish(self.control_msg)
                 # -------------------------------------------------------------
                 # Operate times for next frame iteration
                 tock = time.time() - self.tick

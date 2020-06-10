@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # --------------------------------------------------------------------------- #
 """
+https://www.w3.org/TR/magnetometer/
 Code Information:
     Programmer: Camilo Alvis B.
 	Mail: camiloalvis@kiwicampus.com
