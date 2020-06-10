@@ -144,8 +144,8 @@ class ImuNode(Node):
         self._move_pub = False
         self._first_orient = False
         self._initial_orient = 0.0
-        self._alpha = 0.995
         self._azimuth = 0.0
+        self._init_list = []
 
         # Parameters setup
         self.port = "/dev/ttyTHS2"
@@ -174,7 +174,7 @@ class ImuNode(Node):
         self._roll_bot = 0.0
         self._yaw_bot = 0.0
 
-        # Magnetic field for Berkeley - For Medellin it is -8.2 , -14.3
+        # Magnetic field: Berkeley (-14.3), Medellin (-8.2)
         self._mgn_decl = float(os.getenv("IMU_MAGNETIC_DECLINATION", -8.2)) * (
             math.pi / 180.0
         )
@@ -236,7 +236,7 @@ class ImuNode(Node):
             timer_period_sec=self.pub_rate, callback=self.cb_publish_imu
         )
 
-    # --------------------------------------------------------------------------- #
+    # ----------------------------------------------------------------------- #
     ## Member functions
     def _set_process_name(self, name):
         """
@@ -488,49 +488,35 @@ class ImuNode(Node):
             # Finding the current azimuth (Yaw)
             """
                 Azimuth is the angle (Between the current heading and the magnetic 
-                north) in the horizontal plane
+                north) in the horizontal plane. This will be used for the initial
+                orientation.
             """
-
-            current_azimuth = math.atan2(
-                self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z
-            )
-
-            if self._azimuth != 0.0:
-                current_azimuth = (
-                    ((current_azimuth - self._azimuth) + math.pi) % (2.0 * math.pi)
-                    - math.pi + self._azimuth
+            
+            
+            while (self._counter < 300):
+                current_azimuth = math.atan2(
+                    self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z
                 )
-                self._azimuth = ((1.0 - self._alpha) * current_azimuth) + (
-                    self._alpha * self._azimuth
-                )
+                self._init_list.append(current_azimuth)
+                self._counter += 1
+                
 
-                if self._counter < 205:
-                    self._counter += 1
-
-            else:
-                if self.mag_msg.magnetic_field.x != 0.0:
-                    self._azimuth = current_azimuth
-
-                # Else condition to handle an error in the IMU when calculating the orientation
-
-            if (
-                (not self._first_orient)
-                and (self._azimuth != 0.0)
-                and (self._counter > 200)
-            ):
-                self._initial_orient = -self._azimuth - self._mgn_decl
-                self._alpha = 0.75
+            if ((self._counter) == 300 and (self._first_orient == False)):
+                current_azimuth = np.mean(self._init_list)
+                self._init_list = []
+                # Negative magnetic declination
+                self._initial_orient = -current_azimuth - abs(self._mgn_decl)
                 self._first_orient = True
 
-            print("Azimuth: %0.4f", self._azimuth * 180/3.1416)
-            
+            self._azimuth = math.atan2(
+                self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z
+            )
             # --------------------------------------------------------------- #
             # Reassigning the value for the Robot axes
-            """
             self._pitch_bot = (math.pi / 2) - pitch_imu
             self._roll_bot = -roll_imu
             self._yaw_bot = (
-                math.atan2(math.sin(yaw_imu - math.pi), math.cos(yaw_imu - math.pi))
+                math.atan2(math.sin(yaw_imu), math.cos(yaw_imu))
                 - self._initial_orient
             )
             quaternion_bot = quaternion_from_euler(
@@ -538,7 +524,6 @@ class ImuNode(Node):
                 roll=self._roll_bot, 
                 yaw=self._yaw_bot
             )
-            """
 
             self._pitch_bot = (math.pi / 2) - pitch_imu
             self._roll_bot = -roll_imu
@@ -546,7 +531,7 @@ class ImuNode(Node):
                 math.atan2(math.sin(yaw_imu), math.cos(yaw_imu))
             )
 
-            print("Yaw: %0.4f", self._yaw_bot * 180/3.1416)
+            # print("Yaw: %0.4f", self._yaw_bot * 180/3.1416)
 
             quaternion_bot = quaternion_from_euler(
                 pitch=self._pitch_bot, 
@@ -630,10 +615,9 @@ class ImuNode(Node):
         self._update_imu_data()
         # Filtered data publisher
         self.pub_imu_data.publish(self.imu_msg)
-        # Filtered data publisher
-        if self._counter > 200:
-            self.pub_bot_data.publish(self.imu_bot_msg)
-            self.pub_bot_ekf.publish(self.imu_ekf_msg)
+        # Filtered bot data publisher
+        self.pub_bot_data.publish(self.imu_bot_msg)
+        self.pub_bot_ekf.publish(self.imu_ekf_msg)
         # Movement publisher
         if self._move_pub == True:
             self.pub_bot_move.publish(self.move_msg)

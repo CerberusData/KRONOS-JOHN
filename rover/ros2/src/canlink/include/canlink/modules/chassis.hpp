@@ -84,12 +84,12 @@ using std::placeholders::_3;
 class Chassis : public rclcpp::Node
 {
     public:
-        /* Constructor */
+        // Constructor
         Chassis(const rclcpp::NodeOptions & options, 
             std::shared_ptr<CANDriver> can_driver);
         ~Chassis(){};
 
-        /* Public functions */
+        // Public functions
         void PublishChassisStatus(struct can_frame* frame);
         void PublishMotorStatus(struct can_frame* frame);
         void PublishTestReport(struct can_frame* frame);
@@ -151,7 +151,6 @@ class Chassis : public rclcpp::Node
 
         // Objects
         std::shared_ptr<CANDriver> can_driver_;
-        // CANDriver *can_driver_;
 
         // Member Messages
         usr_msgs::msg::Configuration chassis_cfg_;
