@@ -56,7 +56,6 @@ case "$1" in
       if [ -d "${PWD%}/ros2/src/vision_opencv" ] 
       then
           echo "[INFO]: cv_bridge already exits" 
-          sleep 2 && clear 
       else
           cd ${PWD%}/ros2/src
           git clone https://github.com/ros-perception/vision_opencv.git
@@ -75,7 +74,7 @@ case "$1" in
       echo  "[INFO]: ROS2 Build successful ... "
       echo  "[INFO]: ROS2 sourcing ... "
       source /workspace/rover/ros2/install/setup.sh
-      sleep 2 && clear && cd ..
+      cd ..
 
       #  ----------------------------------------------------------------------
       #  Local client node
@@ -84,7 +83,6 @@ case "$1" in
         if [ -d "${PWD%}/socketio-server" ]
         then
             echo "[INFO]: socketio-server already exits"
-            sleep 2 && clear
         else
             git clone https://github.com/kiwicampus/socketio-server.git
             cd socketio-server
@@ -104,7 +102,7 @@ case "$1" in
 
       #  ----------------------------------------------------------------------
       #  ROS2 Launching
-      # sleep 2 && clear
+      clear
       echo  "[INFO]: ROS2 launching ... "
       ros2 launch "${PWD%}/configs/bot.launch.py"
 

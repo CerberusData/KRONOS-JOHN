@@ -11,10 +11,17 @@
     // "postCreateCommand": ". /workspace/scripts/add-keys.sh"
 
     "extensions": [
-        "ms-azuretools.vscode-docker",
-        "eamodio.gitlens",
-        "streetsidesoftware.code-spell-checker",
-        "oderwat.indent-rainbow",
-        "ms-vsliveshare.vsliveshare",
-    ]
+		"ms-azuretools.vscode-docker",
+		"eamodio.gitlens",
+		"streetsidesoftware.code-spell-checker",
+		"oderwat.indent-rainbow",
+		"ms-vsliveshare.vsliveshare",
+		"pkief.material-icon-theme",
+		"uloco.theme-bluloco-dark",
+		"ms-python.python",
+		"ms-vscode.cpptools",
+		"alefragnani.numbered-bookmarks",
+		"pnp.polacode",
+		"dbaeumer.vscode-eslint"
+	]
 }

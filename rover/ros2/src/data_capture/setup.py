@@ -22,8 +22,6 @@ setup(
     license="do whatever you want",
     # tests_require=["pytest"],
     entry_points={
-        "console_scripts": [
-            "data_capture = data_capture.node_data_capture:main",
-        ],
+        "console_scripts": ["data_capture = data_capture.node_data_capture:main",],
     },
 )

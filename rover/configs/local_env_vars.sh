@@ -35,6 +35,11 @@ export STITCHER=1               # [int-bolean](1):Enable/(0):Disable - Video Sti
 export STITCHER_SUP_MODE=1      # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
 
 # -----------------------------------------------------------------------------
+export DATA_CAPTURE_IMG_QUALITY=80
+export DATA_CAPTURE_WRITE_IMAGES=1
+export DATA_CAPTURE_WRITE_DATA=1
+
+# -----------------------------------------------------------------------------
 # Graphic user interface
 export VISUAL_DEBUGGER=1            # [int-bolean] (1):Enable/(0):Disable visual debugger messages 
 export VISUAL_DEBUGGER_TIME=10      # [int][sec] visual debugger message time
