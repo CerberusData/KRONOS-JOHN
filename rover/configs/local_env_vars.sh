@@ -22,7 +22,7 @@ export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
 # -----------------------------------------------------------------------------
 export LOCAL_CLIENT=1       # [int-bolean] Disable(1)/Enable(0) - local client server
                             # NOTE: Should be zero in the robot or undifined
-export LOCAL_CLIENT_DEBUG=0 # [int-bolean](1):Enable/(0):Disable - debugging logs
+export LOCAL_CLIENT_DEBUG=1 # [int-bolean](1):Enable/(0):Disable - debugging logs
 
 # -----------------------------------------------------------------------------
 # Video processing

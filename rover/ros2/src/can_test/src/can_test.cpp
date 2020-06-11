@@ -7,6 +7,9 @@ CANTest::CANTest(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
     // can_dvr_ = can_driver;
     can_dvr_ = can_driver;
 
+    // Subscribers
+    client_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+        "/test/client", 10, std::bind(&CANTest::ClientCb, this, _1));
     leds_sub_ = this->create_subscription<std_msgs::msg::Bool>(
         "/test/leds", 10, std::bind(&CANTest::LedsCb, this, _1));
     config_sub_ = this->create_subscription<std_msgs::msg::Bool>(
@@ -14,16 +17,22 @@ CANTest::CANTest(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
     chassis_sub_ = this->create_subscription<std_msgs::msg::Bool>(
         "/test/chassis", 10, std::bind(&CANTest::ChassisCb, this, _1));
 
+    // Timers
     sent_tmr_ = this->create_wall_timer(
         std::chrono::milliseconds(200), std::bind(&CANTest::TimerCb, this));
 
+    // Services
     arm_srv_ = this->create_service<std_srvs::srv::SetBool>(
         "/test/arm", std::bind(&CANTest::ArmCb, this, _1, _2, _3));
+
+    // Clients
+    arm_clt_ = this->create_client<std_srvs::srv::SetBool>("/test/arm");
 
     PIDConfiguration();
     sleep(0.5);
     Configuration();
 
+    // Thread to read Socket CAN
     read_thread_ = std::thread(&CANTest::StartCANBusRead, this);
 }
 
@@ -100,6 +109,21 @@ void CANTest::Configuration()
     can_dvr_->CANWrite(CHASSIS_ADDRESS, 2, data_soft_brake);
     RCLCPP_INFO(this->get_logger(), "Soft Brake sent");
     sleep(0.1);
+
+}
+
+void CANTest::ClientCb(const std_msgs::msg::Bool::SharedPtr msg)
+{
+    RCLCPP_INFO(this->get_logger(), "Client Callback");
+
+    // Checkpoint
+    // https://answers.ros.org/question/343279/ros2-how-to-implement-a-sync-service-client-in-a-node/
+    RCLCPP_WARN(this->get_logger(), "Activating client");
+    auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+    request->data = msg->data;
+    // auto result = arm_clt_->async_send_request(request);    
+    arm_clt_->async_send_request(request);    
+    // End of Checkpoint
 
 }
 

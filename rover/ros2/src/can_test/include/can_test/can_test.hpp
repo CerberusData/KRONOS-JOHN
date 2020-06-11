@@ -11,9 +11,11 @@
 
 #include "can_test/modules/chassis.hpp"
 
-/* ROS2 Messages */
+// ROS2 Messages
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
+
+// ROS2 Services
 #include "std_srvs/srv/set_bool.hpp"
 
 /* ROS2 Services */
@@ -77,14 +79,19 @@ class CANTest : public rclcpp::Node
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr leds_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr config_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr chassis_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr client_sub_;
 
-        /* Services */
+        // Services
         rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr arm_srv_;
+
+        // Clients
+        rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr arm_clt_;
 
         /* Timers */
         rclcpp::TimerBase::SharedPtr sent_tmr_;
 
         /* Member functions */
+        void ClientCb(const std_msgs::msg::Bool::SharedPtr msg);
         void LedsCb(const std_msgs::msg::Bool::SharedPtr msg);
         void ChassisCb(const std_msgs::msg::Bool::SharedPtr msg);
         void ConfigurationCb(const std_msgs::msg::Bool::SharedPtr msg);

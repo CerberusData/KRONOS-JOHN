@@ -18,10 +18,33 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+
+include_directories(include)
+
+set(DEPENDENCIES
+  rclcpp
+  std_msgs
+  std_srvs
+)
+
+add_executable(supervisor
+  src/main.cpp
+  src/supervisor.cpp
+)
+
+ament_target_dependencies(supervisor ${DEPENDENCIES})
+
+install(TARGETS
+  supervisor
+  DESTINATION lib/${PROJECT_NAME} 
+)
 
 install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
 )
 
+ament_export_include_directories(include)
 ament_package()

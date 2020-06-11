@@ -176,8 +176,10 @@ void SpeedController::Controller()
     // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
     // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -0.5}}}"
     // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
+    // ros2 topic pub --once /test/client std_msgs/msg/Bool "{data: true}"
 
     // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: true}"
     
     // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: false}"
+    // ros2 topic pub --once /local_client/arm std_msgs/msg/Bool "{data: true}"
     // ros2 service call /test/arm std_srvs/srv/SetBool "{data: true}"

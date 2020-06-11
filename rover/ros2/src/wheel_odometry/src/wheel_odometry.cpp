@@ -96,8 +96,8 @@ void WheelOdometry::MotorStatusCb(const usr_msgs::msg::Motors::SharedPtr msg)
 void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
     /*
-        Callback for the topic /imu/data_bot. It updates a Quaternion to extract
-        the current eualer angles.
+        Callback for the topic /imu/data_bot. 
+        It updates a Quaternion to extract the current euler angles.
     */
 
     tf2::Quaternion q(msg->orientation.x, 
@@ -107,12 +107,8 @@ void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
 
     tf2::Matrix3x3 m(q);
     m.getRPY(imu_roll_, imu_pitch_, imu_yaw_);
-    // RCLCPP_INFO(this->get_logger(), "Pitch: %0.4f", imu_pitch_);
-    // RCLCPP_INFO(this->get_logger(), "Roll: %0.4f", imu_roll_);
-    // RCLCPP_INFO(this->get_logger(), "Yaw: %0.4f", imu_yaw_);
-
     imu_omega_ = msg->angular_velocity.z;
-
+    
     if (imu_published_ == false)
     {
         /*
@@ -120,6 +116,12 @@ void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
         */
         imu_published_ = true;
     }
+
+    RCLCPP_DEBUG(this->get_logger(), 
+        "Roll: %0.4f, Pitch: %0.4f, Yaw: %0.4f", 
+        imu_roll_, imu_pitch_, imu_yaw_);
+
+
 }
 
 /* ------------------------------------------------------------------------- */
