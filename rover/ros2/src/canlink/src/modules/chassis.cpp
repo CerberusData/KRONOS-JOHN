@@ -711,7 +711,13 @@ void Chassis::PublishMotorStatus(struct can_frame* frame)
         InitialConfig();
     }
     uint8_t dir_b = frame->data[1];
-    bool directions_bool[4] = {((dir_b & RIGHT_FRONT_WHEEL) == 0x00), ((dir_b & RIGHT_REAR_WHEEL) == 0x00), ((dir_b & LEFT_REAR_WHEEL) == 0x00), ((dir_b & LEFT_FRONT_WHEEL) == 0x00)};
+    bool directions_bool[4] = {
+        ((dir_b & RIGHT_FRONT_WHEEL) == 0x00), 
+        ((dir_b & RIGHT_REAR_WHEEL) == 0x00), 
+        ((dir_b & LEFT_REAR_WHEEL) == 0x00), 
+        ((dir_b & LEFT_FRONT_WHEEL) == 0x00)
+    };
+
     int directions[4];
     for (int i = 0; i < 4; ++i)
     {
@@ -721,7 +727,8 @@ void Chassis::PublishMotorStatus(struct can_frame* frame)
     // Motors RPMs 
     for (int i = 0; i < 4; ++i)
     {
-        motors_status_.rpm[i] = ((float)directions[i] * (float)frame->data[i + 2]) * wheel_max_rpm_ / 255.0f;
+        motors_status_.rpm[i] = (
+            (float)directions[i] * (float)frame->data[i + 2]) * wheel_max_rpm_ / 255.0f;
     }
 
     motors_status_.header.stamp = this->now();

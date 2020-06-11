@@ -34,8 +34,8 @@ sleep 10
 # -----------------------------------------------------------------------------
 # CAN Interfaces setup and initialization
 ip link set can0 type can bitrate 500000
-ip link set can1 type can bitrate 500000 sjw 4 dbitrate 5000000 dsjw 4 berr-reporting on fd on
 ip link set up can0
+ip link set can1 type can bitrate 500000 sjw 4 dbitrate 5000000 dsjw 4 berr-reporting on fd on
 ip link set up can1
 
 sleep 5
