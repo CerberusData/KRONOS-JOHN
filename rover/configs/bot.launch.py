@@ -163,6 +163,14 @@ def generate_launch_description():
             "output": "screen",
             "launch": int(os.getenv(key="NODE_LOCAL_CLIENT", default=0)),
         },
+        # ---------------------------------------------------------------------
+        # Data Capture
+        "NODE_DATA_CAPTURE": {
+            "node_executable": "data_capture",
+            "package": "data_capture",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_DATA_CAPTURE", default=0)),
+        },
     }
 
     if os.getenv(key="LOCAL_LAUNCH", default=0):

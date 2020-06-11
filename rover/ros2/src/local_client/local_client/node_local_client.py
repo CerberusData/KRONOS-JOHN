@@ -165,7 +165,7 @@ class RoverWSClient(object):
 
 
 class ClientNode(Node, Thread):
-    def __init__(self, debugger=True):
+    def __init__(self):
 
         # ---------------------------------------------------------------------
         super().__init__("ClientNode")
@@ -173,11 +173,11 @@ class ClientNode(Node, Thread):
         Thread.__init__(self)
 
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0))
-
+        self.debugger = int(os.getenv(key="LOCAL_CLIENT_DEBUG", default=1))
 
         # Allow callbacks to be executed in parallel without restriction.
         self.callback_group = ReentrantCallbackGroup()
-        self.debugger = debugger
+
         self.rate = 15.0
 
         self.ws_client = RoverWSClient(**{"host": "localhost", "port": 4567})
@@ -221,10 +221,7 @@ class ClientNode(Node, Thread):
         )
 
         self.pub_data_capture = self.create_publisher(
-            Bool,
-            "data_capture/capture",
-            1,
-            callback_group=self.callback_group,
+            Bool, "data_capture/capture", 1, callback_group=self.callback_group,
         )
 
         # ---------------------------------------------------------------------
@@ -249,7 +246,7 @@ class ClientNode(Node, Thread):
         )
 
         self.armed = False
-        self.mode = "manual" # local
+        self.mode = "manual"  # local
         self.sub_canlink_chassis_status = self.create_subscription(
             msg_type=ChassisState,
             topic="canlink/chassis/status",
@@ -263,7 +260,7 @@ class ClientNode(Node, Thread):
         self.run_event = Event()
         self.run_event.set()
         self.tick = time.time()
-        # self.daemon = True
+        self.daemon = True
         self.start()
 
     def cb_ws_client_message(self, msg):
@@ -350,13 +347,13 @@ class ClientNode(Node, Thread):
                                 self.mode = "local"
 
                     self.ws_client.emit(
-                        recording = self.data_capture_recording,
-                        armed = self.armed,
-                        mode = self.mode,
-                        auto_active = self.we_client_params["autonomous"],
-                        # steering = 0,
+                        auto_active=self.we_client_params["autonomous"],
+                        recording=self.data_capture_recording,
                         space_left=self.data_capture_percentage,
                         number_images=self.data_capture_images,
+                        armed=self.armed,
+                        mode=self.mode,
+                        # steering = 0,
                     )
 
                     # if (control_update 

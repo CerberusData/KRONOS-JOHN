@@ -203,7 +203,7 @@ class WebclientControl:
         try:
             self.pan = data.pan
             self.throttle = data.speed
-            self.direction = -data.tilt
+            self.direction = -data.tilt / 100
         except Exception as e:
             printlog(
                 msg="Error getting msg for WebclientControl class, {}".format(e),
@@ -275,7 +275,7 @@ class WaypointSubscriber:
         self.prev_webclient_control_direction = -10000
 
         # ---------------------------------------------------------------------
-        # Subscribers
+        # Publishers
         self._sub_screen_point = parent_node.create_subscription(
             msg_type=Waypoint,
             topic="video_streaming/waypoint_pt",
@@ -284,12 +284,24 @@ class WaypointSubscriber:
             callback_group=parent_node.callback_group,
         )
 
+        # ---------------------------------------------------------------------
+        # Publishers
         self.WaypointZoom_msg = Waypoint()
         self.pub_waypoint_zoom = parent_node.create_publisher(
             Waypoint, "video_streaming/zoom", 1
         )
 
+        self.bool_msg = Bool()
+        self.pub_streaming_idle_restart = parent_node.create_publisher(
+            Bool,
+            "video_streaming/optimizer/idle_restart",
+            1,
+            callback_group=parent_node.callback_group,
+        )
+
     def cb_screen_point(self, msg):
+
+        self.pub_streaming_idle_restart.publish(self.bool_msg)
 
         try:
             self.x_norm = msg.x

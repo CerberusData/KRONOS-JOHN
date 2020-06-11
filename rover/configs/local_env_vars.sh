@@ -17,9 +17,12 @@ export LOCAL_GUI=1          # [int-bolean] Disable(1)/Enable(0) - Local GUI laun
                             # NOTE: Should be zero in the robot
 export DELETE_BUILD=0       # [int-bolean] Disable(1)/Enable(0) - Delte previous ROS2 build and stuff
                             # NOTE: Should be zero in the robot
-export LOCAL_CLIENT=1       # [int-bolean] Disable(1)/Enable(0) - local client server
-                            # NOTE: Should be zero in the robot
 export CONF_PATH="${PWD%}/configs" # [string] absolute path to config files
+
+# -----------------------------------------------------------------------------
+export LOCAL_CLIENT=1       # [int-bolean] Disable(1)/Enable(0) - local client server
+                            # NOTE: Should be zero in the robot or undifined
+export LOCAL_CLIENT_DEBUG=0 # [int-bolean](1):Enable/(0):Disable - debugging logs
 
 # -----------------------------------------------------------------------------
 # Video processing
@@ -30,6 +33,11 @@ export VIDEO_HEIGHT=360         # [int][pix] Cameras Video height
 # Stitcher
 export STITCHER=1               # [int-bolean](1):Enable/(0):Disable - Video Stitching
 export STITCHER_SUP_MODE=1      # [int-bolean](1):Enable/(0):Disable - smooth transitions in stitched image
+
+# -----------------------------------------------------------------------------
+export DATA_CAPTURE_IMG_QUALITY=80
+export DATA_CAPTURE_WRITE_IMAGES=1
+export DATA_CAPTURE_WRITE_DATA=1
 
 # -----------------------------------------------------------------------------
 # Graphic user interface

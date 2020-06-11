@@ -105,7 +105,7 @@ RUN \
     apt-get install -y curl \ 
     gnupg2 \ 
     lsb-release && \ 
-    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
     apt update && \ 
     # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
@@ -216,6 +216,12 @@ RUN \
 # USER ada 
 RUN \
     curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
+
+# -----------------------------------------------------------------------------
+# For wifi configuration and settings
+ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
+RUN  \
+    apt-get install -y network-manager
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get

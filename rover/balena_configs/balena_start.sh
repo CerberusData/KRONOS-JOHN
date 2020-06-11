@@ -10,6 +10,9 @@
 clear
 
 # -----------------------------------------------------------------------------
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket # For Wifi
+
+# -----------------------------------------------------------------------------
 # Use the maximum frequency of the CPU
 # nvpmodel -m 0 #--verbose
 
