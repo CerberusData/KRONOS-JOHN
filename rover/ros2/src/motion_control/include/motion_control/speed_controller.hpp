@@ -63,13 +63,18 @@ class SpeedController : public rclcpp::Node
         float SteeringPID(float ref_wz, float cur_wz, double dt);
 
         // Environment variables
-        bool throttle_ctrl_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL_ENABLE", true);
-        bool steering_ctrl_ = getEnv("SPEED_CONTROLLER_STEERING_CONTROL_ENABLE", true);
-        double kp_thr_ = getEnv("SPEED_CONTROLLER_KP_THROTTLE", 0.43f);
-        double ki_thr_ = getEnv("SPEED_CONTROLLER_KI_THROTTLE", 0.21f);
-        double kd_thr_ = getEnv("SPEED_CONTROLLER_KD_THROTTLE", 0.11f);
-        double kff_thr_ = getEnv("SPEED_CONTROLLER_FF_THROTTLE", 1.0f);
-        
+        bool throttle_ctrl_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL", true);
+        bool steering_ctrl_ = getEnv("SPEED_CONTROLLER_STEERING_CONTROL", true);
+        float kp_thr_ = getEnv("SPEED_CONTROLLER_KP_THROTTLE", 0.43f);
+        float ki_thr_ = getEnv("SPEED_CONTROLLER_KI_THROTTLE", 0.21f);
+        float kd_thr_ = getEnv("SPEED_CONTROLLER_KD_THROTTLE", 0.11f);
+        float kff_thr_ = getEnv("SPEED_CONTROLLER_FF_THROTTLE", 1.0f);
+        float kp_str_ = getEnv("SPEED_CONTROLLER_KP_STEERING", 0.5f);
+        float ki_str_ = getEnv("SPEED_CONTROLLER_KI_STEERING", 1.0f);
+        float kd_str_ = getEnv("SPEED_CONTROLLER_KD_STEERING", 0.1f);
+        float kff_str_ = getEnv("SPEED_CONTROLLER_FF_STEERING", 3.0f);
+
+
         /* -- */
         geometry_msgs::msg::TwistStamped robot_twist_;
         geometry_msgs::msg::TwistStamped reference_cmd_;
@@ -82,9 +87,12 @@ class SpeedController : public rclcpp::Node
         bool imu_status_ = true;
         double int_error_ = 0.0;
         double prev_prop_error_ = 0.0;
-        double prev_ref_vx_ = 0.0;
         double yaw_set_point_ = 0.0;
         double bot_yaw_ = 0.0;
+        float prev_ref_vx_ = 0.0f;
+
+        double wz_int_error_ = 0.0;
+        double wz_prop_ek1_ = 0.0;
 
 };
 #endif

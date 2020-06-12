@@ -8,16 +8,19 @@ SoftSpeedSpline::SoftSpeedSpline(float avg_acc)
 
 float SoftSpeedSpline::CalculateSoftSpeed(float reference_vel, float acc_factor)
 {
+    /*
+        Description:
+        - The Soft speed profile proposed is divided intro three different stages
+        - The overall profile shape is a second order polynomial
+        Arguments:
+        - reference_vel: Reference velocity (Given by the speed controller)
+        - acc_factor: Acceleration factor (Modifies the time to reach "Steady")
+        Returns:
+        - out_vel_: Reference velocity given by the speed profile
+    */
     (void)acc_factor;
     if (soft_speed_ == true)
     {
-        // if (std::abs(reference_vel - out_vel_) >= 0.28f)
-        // {
-        //     manual_cmd_ = true;
-        // }
-
-        // if (manual_cmd_ == true)
-        // {
         switch (curve_stage_)
         {
             case steady:
@@ -48,7 +51,7 @@ float SoftSpeedSpline::CalculateSoftSpeed(float reference_vel, float acc_factor)
                     return out_vel_;
                 }
                 
-                // If the robot has reached the reference and is in "Steady"
+                // If the robot has reached the reference and is "Steady"
                 else
                 {
                     curve_stage_ = steady;
@@ -59,15 +62,6 @@ float SoftSpeedSpline::CalculateSoftSpeed(float reference_vel, float acc_factor)
             default:
                 return out_vel_;
         }
-        // }
-
-        // Reference velocity is coming from Waypoint
-        // else
-        // {
-        //     curve_stage_ = steady;
-        //     out_vel_ = reference_vel;
-        //     return out_vel_;
-        // }
     }
 
     else
@@ -79,6 +73,14 @@ float SoftSpeedSpline::CalculateSoftSpeed(float reference_vel, float acc_factor)
 
 float SoftSpeedSpline::SoftSpeedValue(double curr_time)
 {
+    /*
+        Description:
+        - The Soft speed profile proposed is divided intro three different stages
+        - The overall profile shape is a second order polynomial
+        Arguments:
+        - curr_time: Current time in the speed profile (Spline)
+    */
+
     float soft_speed = 0.0;
     // 1st acceleration
     if ((curr_time >= 0.0) && (curr_time < time_1_))
@@ -106,6 +108,16 @@ float SoftSpeedSpline::SoftSpeedValue(double curr_time)
 
 void SoftSpeedSpline::SplineCoefficients(float init_v, float final_v, float init_acc)
 {
+    /*
+        Description:
+        - Coefficients calculation for the Soft speed profile
+        Arguments:
+        - init_v: Initial velocity
+        - final_v: Final velocity
+        - initial_acc: Initial acceleration
+        Returns:
+        - Parameters to a global variable
+    */
     double final_t = std::abs(final_v - init_v) / avg_acc_;
     time_1_ = final_t / 3.0;
     time_2_ = final_t / 3.0;
@@ -114,6 +126,7 @@ void SoftSpeedSpline::SplineCoefficients(float init_v, float final_v, float init
     spline_params[0][1] = init_acc / 2.0;
     spline_params[0][2] = (2.0 * (final_v - init_v - (init_acc * time_1_) 
         - (init_acc * time_2_))) / (6.0 * time_1_ * (time_1_ + time_2_));
+
     // 2nd acceleration
     spline_params[1][0] = (2.0 * ((final_v * time_1_) + (init_v * time_2_)
         + (init_acc * time_1_ * time_2_))) / (2.0 * (time_1_ + time_2_));
@@ -121,6 +134,7 @@ void SoftSpeedSpline::SplineCoefficients(float init_v, float final_v, float init
         / (2.0 * (time_1_ + time_2_));
     spline_params[1][2] = -(2.0 * (final_v - init_v) - (init_acc * time_1_)) 
         / (6.0 * time_2_ * (time_1_ + time_2_));
+
     // Final velocity
     spline_params[2][0] = final_v;
     spline_params[2][1] = 0.0;

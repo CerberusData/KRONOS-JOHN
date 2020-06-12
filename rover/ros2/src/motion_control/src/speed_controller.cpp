@@ -84,16 +84,25 @@ float SpeedController::SteeringPID(float ref_wz, float cur_wz, double dt)
         return 0.0f;
     }
 
-    // if(steering_ctrl_ == true && )
-    // {
+    if(steering_ctrl_ == true)
+    {
+        float prop_error = ref_wz - cur_wz;
+        float der_error = (dt != 0.0f) 
+            ? ((prop_error - wz_prop_ek1_) / dt) : 0.0f;
+        wz_int_error_ += prop_error * dt;
+        wz_prop_ek1_ = prop_error;
 
+        // PID command with predictive term (FF) and reactive term (FB)
+        float u_cmd = (kff_str_ * ref_wz) 
+            + (kp_str_ * (prop_error + (ki_str_ * int_error_) + (kd_str_ * der_error)));
 
-    // }
+        return u_cmd;
+    }
 
-    // else
-    // {
-    //     return ref_wz;
-    // }
+    else
+    {
+        return ref_wz;
+    }
 }
 
 
@@ -103,23 +112,24 @@ float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
     Position velocity controller 
         (Reference, Current, dt)
     */
-
+    
     if (ref_vx == 0.0f)
     {
+        // Condition used to avoid small movements in the robot
         return 0.0f;
     }
 
     if (throttle_ctrl_ == true)
     {
         float smooth_ff = 1.0f;
-
-        float prop_error = ref_vx - cur_vx;
+        // Proportional, Integral and Derivative errors for PID implementation
+        float prop_error = (ref_vx - cur_vx) < 0.05f ? (ref_vx - cur_vx) : 0.0f;
         float der_error = (dt != 0.0f)
             ? ((prop_error - prev_prop_error_) / dt) : 0.0f;
         int_error_ += prop_error * dt;
         prev_prop_error_ = prop_error;
 
-        // Smoothing the predictive term when changing direction
+        // Smoothing the predictive term when changing direction (Dynamic)
         if (((prev_ref_vx_ < 0.0f) && (ref_vx - prev_ref_vx_ > 0.0f)) 
             || ((prev_ref_vx_ > 0.0f) && (ref_vx - prev_ref_vx_ < 0.0f)))
         {   
@@ -127,8 +137,9 @@ float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
         }
 
         // PID command with predictive term (FF) and reactive term (FB)
-        float u_cmd = (smooth_ff * kff_thr_ * cur_vx) 
+        float u_cmd = (smooth_ff * kff_thr_ * ref_vx) 
             + (kp_thr_ * (prop_error + (ki_thr_ * int_error_) + (kd_thr_ * der_error)));
+
         prev_ref_vx_ = ref_vx;
 
         // Anti Wind-Up (To avoid increasing the error)
@@ -166,8 +177,8 @@ void SpeedController::Controller()
     float vx_ref = linear_soft_spline->CalculateSoftSpeed(lin_vx, 1.0f);
     // (reference, current, dt)
     output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); 
-
-    output_cmd_msg->twist.angular.z = ang_wz;
+    output_cmd_msg->twist.angular.z = SteeringPID(ang_wz, robot_twist_.twist.angular.z, dt); 
+    //output_cmd_msg->twist.angular.z = ang_wz;
     output_cmd_pub_->publish(std::move(output_cmd_msg));
 }
 
@@ -179,7 +190,6 @@ void SpeedController::Controller()
     // ros2 topic pub --once /test/client std_msgs/msg/Bool "{data: true}"
 
     // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: true}"
-    
     // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: false}"
     // ros2 topic pub --once /local_client/arm std_msgs/msg/Bool "{data: true}"
     // ros2 service call /test/arm std_srvs/srv/SetBool "{data: true}"
