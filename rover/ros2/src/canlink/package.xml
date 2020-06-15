@@ -3,7 +3,7 @@
 <package format="3">
   <name>canlink</name>
   <version>0.0.1</version>
-  <description>Canlink node for Medussa prokect</description>
+  <description>Canlink node for Medussa Project</description>
   <maintainer email="camiloalvis@kiwibot.com">ada</maintainer>
   <license>Apache License 2.0</license>
 
@@ -12,10 +12,11 @@
   <build_depend>usr_msgs</build_depend>
 
   <depend>rclcpp</depend>
-  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>utils</depend>
 
   <exec_depend>usr_msgs</exec_depend>

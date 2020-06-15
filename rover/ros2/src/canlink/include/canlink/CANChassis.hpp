@@ -25,7 +25,8 @@
 class CANChassis : public rclcpp::Node
 {
     public:
-        CANChassis(const rclcpp::NodeOptions & options, CANDriver *can_driver);
+        CANChassis(const rclcpp::NodeOptions & options,
+            std::shared_ptr<CANDriver> can_driver, std::shared_ptr<Chassis> chassis);
         ~CANChassis(){};
 
         /* Functions */
@@ -40,25 +41,26 @@ class CANChassis : public rclcpp::Node
         std_msgs::msg::String can_dvr_status_msg_;
 
         /* Modules */
-        Battery* battery_;
-        Chassis* chassis_;
-        Lights* lights_;
-        CANDriver* can_driver_;
+        std::shared_ptr<Battery> battery_;
+        std::shared_ptr<Chassis> chassis_;
+        std::shared_ptr<Lights> lights_;
+        std::shared_ptr<CANDriver> can_driver_;
 
         /* Member functions */
         void PublishCANInfo(struct can_frame *frame);
 
         /* Thread to Listen CAN port */
-        std::thread read_thread_;
+        std::thread
+        read_thread_;
 
         /* Double check */
         // const char *interface_name_ = getEnv("CANLINK_CHASSIS_INTERFACE", "can0").c_str();
         std::string Mystr = "can0";
         const char *interface_name_ = Mystr.c_str();
 
+
         //rclcpp::TimerBase::SharedPtr pub_timer_; // RMV
         //void Pub_Cb_();  // RMV
-
 };
 #endif  /* End of CAN_CHASSIS_H_INCLUDED */ 
  

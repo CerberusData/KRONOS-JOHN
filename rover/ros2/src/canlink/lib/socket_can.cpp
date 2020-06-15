@@ -57,7 +57,6 @@ struct can_frame *CANDriver::ReadSocket()
     return &rx_frame_;
 }
  
- 
 int CANDriver::CANWrite(int can_id, int can_data_length, uint8_t *data)
 {
     frame_.can_id = can_id;

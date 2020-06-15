@@ -18,6 +18,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -27,8 +28,19 @@ find_package(utils REQUIRED)
 
 include_directories(include)
 
-add_library(${PROJECT_NAME}_lib 
+add_library(${PROJECT_NAME} 
   lib/socket_can.cpp
+)
+
+set(DEPENDENCIES
+  rclcpp
+  std_srvs
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+  nav_msgs
+  usr_msgs
+  utils
 )
 
 add_executable(canlink_chassis 
@@ -43,16 +55,6 @@ add_executable(canlink_cabin
   src/can_cabin.cpp
   src/modules/lock_system.cpp
   lib/socket_can.cpp
-)
-
-set(DEPENDENCIES
-  rclcpp
-  std_msgs
-  geometry_msgs
-  sensor_msgs
-  nav_msgs
-  usr_msgs
-  utils
 )
 
 target_link_libraries(canlink_chassis utils::utils)

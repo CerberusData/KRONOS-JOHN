@@ -8,9 +8,10 @@ services:
     user: "ada"
     working_dir: /home/ada
 
-    # ports:
-    #   - 5353:5353
-
+    ports:
+      # - "0.0.0.0:8080:8080/tcp"
+      - 0.0.0.0:4567:4567/tcp
+      
     init: true
 
     environment: 
@@ -32,10 +33,10 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
 
     # Add devices to be share in container
-    devices: 
-      - /dev/video0
-      - /dev/video1
-      - /dev/video2
+    # devices: 
+      # - /dev/video0
+      # - /dev/video1
+      # - /dev/video2
       # - /dev/video3
       # - /dev/video4
       # - /dev/video5

@@ -1,10 +1,10 @@
 /*
     - File name:chassis.h
     - This library defines members and member functions for the CAN communication with the chassis
-    - By: Juan David Galvis
-    - Email: juangalvis@kiwicampus.com
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
 */
- 
+
 #ifndef CAN_CHASSIS_H_INCLUDED
 #define CAN_CHASSIS_H_INCLUDED
 
@@ -32,13 +32,16 @@
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
+/* ROS2 Services */
+#include "std_srvs/srv/set_bool.hpp"
+
 /* Custom Messages */
 #include "usr_msgs/msg/configuration.hpp"
 #include "usr_msgs/msg/motors.hpp"
 #include "usr_msgs/msg/test_motors.hpp"
 #include "usr_msgs/msg/pwm_out.hpp"
-#include "usr_msgs/msg/state.hpp"
-#include "usr_msgs/msg/messages.hpp"
+#include "usr_msgs/msg/chassis_state.hpp"
+#include "usr_msgs/msg/visual_message.hpp"
 
 #define CHASSIS_ADDRESS 0x45A
 #define KIWIBOT_ADDRESS 0x469
@@ -75,37 +78,41 @@
 #define LEFT_FRONT_WHEEL 0x08
  
 using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
 
 class Chassis : public rclcpp::Node
 {
     public:
-    Chassis(const rclcpp::NodeOptions & options, CANDriver *can_driver);
-    ~Chassis(){};
+        // Constructor
+        Chassis(const rclcpp::NodeOptions & options, 
+            std::shared_ptr<CANDriver> can_driver);
+        ~Chassis(){};
 
-    void PublishChassisStatus(struct can_frame* frame);
-    void PublishMotorStatus(struct can_frame* frame);
-    void PublishTestReport(struct can_frame* frame);
-    void SetErrorStatus(struct can_frame* frame);
-    void SetMotorsCurrent(struct can_frame* frame);
-
-    bool GetConnected();
+        // Public functions
+        void PublishChassisStatus(struct can_frame* frame);
+        void PublishMotorStatus(struct can_frame* frame);
+        void PublishTestReport(struct can_frame* frame);
+        void SetErrorStatus(struct can_frame* frame);
+        void SetMotorsCurrent(struct can_frame* frame);
+        bool GetConnected();
 
     private:
-        /* Publishers */
-        rclcpp::Publisher<usr_msgs::msg::State>::SharedPtr motors_dvr_status_pub_;
+        // Publishers
+        rclcpp::Publisher<usr_msgs::msg::ChassisState>::SharedPtr chassis_dvr_status_pub_;
         rclcpp::Publisher<usr_msgs::msg::PWMOut>::SharedPtr motors_out_pub_;
         rclcpp::Publisher<usr_msgs::msg::Motors>::SharedPtr motors_status_pub_;
         rclcpp::Publisher<usr_msgs::msg::TestMotors>::SharedPtr test_motors_pub_;
-        rclcpp::Publisher<usr_msgs::msg::Messages>::SharedPtr msg_pub_;
+        rclcpp::Publisher<usr_msgs::msg::VisualMessage>::SharedPtr visual_debugger_pub_;
         std::vector<rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> current_pub_;
 
-        /* Publishers messages */
+        // Publishers messages
         usr_msgs::msg::PWMOut motors_out_msg_;
         usr_msgs::msg::Motors motors_status_;
         usr_msgs::msg::TestMotors test_motors_response_;
-        usr_msgs::msg::State motors_dvr_status_;
+        usr_msgs::msg::ChassisState chassis_dvr_status_;
 
-        /* Subscribers */
+        // Subscribers
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr speed_control_out_sub_;
         rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr speed_control_ref_sub_;
         rclcpp::Subscription<usr_msgs::msg::Configuration>::SharedPtr chassis_config_sub_;
@@ -114,7 +121,7 @@ class Chassis : public rclcpp::Node
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr chassis_restart_sub_;
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 
-        /* Subscribers callbacks */
+        // Subscribers callbacks
         void ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
         void ActuatorReferenceCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
         void ChassisConfigCb(const usr_msgs::msg::Configuration::SharedPtr msg);
@@ -123,34 +130,39 @@ class Chassis : public rclcpp::Node
         void ChassisRestartCb(const std_msgs::msg::Bool::SharedPtr msg); 
         void OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg);
 
-        /* Timers */
+        // Services
+        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr arm_srv_;
+
+        // Services callbacks
+        bool ArmCb(
+            const std::shared_ptr<rmw_request_id_t> request_header,
+            const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+            std::shared_ptr<std_srvs::srv::SetBool::Response> response);
+
+        // Timers
         rclcpp::TimerBase::SharedPtr heartbeat_tmr_;
         rclcpp::TimerBase::SharedPtr moon_tmr_;
         rclcpp::TimerBase::SharedPtr current_tmr_;
 
-        /* Timers callbacks */
+        // Timers callbacks
         void HeartbeatTimerCb();
         void MoonTimerCb();
         void CurrentTimerCb();
 
-        /* Objects */
-        CANDriver *can_driver_;
+        // Objects
+        std::shared_ptr<CANDriver> can_driver_;
 
-        /* Member Messages */
-        usr_msgs::msg::Configuration chassis_cfg_;  /* To Do: Use as a shared pointer */
+        // Member Messages
+        std::shared_ptr<usr_msgs::msg::Configuration> chassis_cfg_;
 
-        /* Member Functions */
+        // Member Functions
+        bool SendMotorsCmd();
+        uint8_t RadsToDigital(float control);
         void ConfigurePID();
         void InitialConfig();
         void SendChassisConfiguration();
-        bool SendMotorsCmd();
-        uint8_t RadsToDigital(float control);
 
-        /* Environment variables */
-        float kp_ = getEnv("CANLINK_CHASSIS_KP_WHEELS", 5.5f);
-        float ki_ = getEnv("CANLINK_CHASSIS_KI_WHEELS", 0.35f);
-        float kd_ = getEnv("CANLINK_CHASSIS_KD_WHEELS", 0.0f);
-        int overcur_tmr_duration_ = getEnv("CANLINK_CHASSIS_MOTOR_ERROR_DURATION", 4000);
+        // Environment variables
         bool stop_on_motor_anomaly_ = getEnv("CANLINK_CHASSIS_STOP_ON_MOTOR_ANOMALY", false);
         float current_slope_ = getEnv("CANLINK_CHASSIS_CURRENT_SLOPE", 0.00555067f);
         float current_intercept_ = getEnv("CANLINK_CHASSIS_CURRENT_INTERCEPT", -1.8746168f);
@@ -160,28 +172,31 @@ class Chassis : public rclcpp::Node
         float robot_length_ = getEnv("CANLINK_CHASSIS_ROBOT_TRACK", 0.4f);
         float radius_ = getEnv("CANLINK_CHASSIS_WHEEL_RADIUS", 0.074f);
         float max_allowed_pitch_ = getEnv("CANLINK_CHASSIS_MAX_PITCH", 40.0f) * 3.1416f/180.0f;
+        float kp_ = getEnv("CANLINK_CHASSIS_KP_WHEELS", 5.5f);
+        float ki_ = getEnv("CANLINK_CHASSIS_KI_WHEELS", 0.35f);
+        float kd_ = getEnv("CANLINK_CHASSIS_KD_WHEELS", 0.0f);
+        int overcur_tmr_duration_ = getEnv("CANLINK_CHASSIS_MOTOR_ERROR_DURATION", 4000);
         
-        /* Constants */
+        // Constants
         bool publish_currents_separately_ = false;
 
-        /* Variables */
-        int moon_view_ = 0;
-        int motor_error_state_ = 0;
-        float throttle_prev_ = 0.0f;
-        float throttle_current_ = 0.0f;
-        float speed_pitch_factor_ = 100.0f;
-        double pitch_ = 0.0f;
+        // Variables
         bool moving_ = true;
         bool moon_first_time_ = false;
         bool motors_current_ok_ = true;
         bool current_timer_started_ = false;
         bool accelerating_ = false;
         bool soft_brake_ = true;
-        std::vector<float> controls_ = {0.0f, 0.0f, 0.0f};
-        std::vector<uint16_t> raw_motors_out_;
-        uint16_t motor_error_[4] = {0, 0, 0, 0};  /* Double check if it makes sense */
+        double pitch_ = 0.0f;
+        float throttle_prev_ = 0.0f;
+        float throttle_current_ = 0.0f;
+        float speed_pitch_factor_ = 100.0f;
+        int moon_view_ = 0;
+        int motor_error_state_ = 0;
 
+        // Motors vectors
+        std::vector<float> controls_ = {0.0, 0.0, 0.0};
+        std::vector<uint16_t> raw_motors_out_ = {0, 0, 0, 0};
+        std::vector<uint16_t> motor_error_ = {0, 0, 0, 0};
 };
-#endif  /* End of CAN_CHASSIS_H_INCLUDED */ 
- 
- 
+#endif  // End of CAN_CHASSIS_H_INCLUDED 

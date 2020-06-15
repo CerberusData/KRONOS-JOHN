@@ -14,7 +14,7 @@ ARG USER_GID=$USER_UID
 ENV DEBIAN_FRONTEND=noninteractive
 
 # -----------------------------------------------------------------------------
-RUN echo "update"
+RUN echo "Devcontainer"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-utils \
     dialog \
@@ -105,7 +105,7 @@ RUN \
     apt-get install -y curl \ 
     gnupg2 \ 
     lsb-release && \ 
-    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
     apt update && \ 
     # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
@@ -192,7 +192,8 @@ RUN  \
     libblkid-dev \
     e2fslibs-dev \
     libboost-all-dev \
-    libaudit-dev
+    libaudit-dev  \
+    can-utils
 
 RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
     export PATH="${PATH}:/home/ada/.local/bin"
@@ -204,11 +205,23 @@ RUN  \
     libcanberra-gtk3-module
 
 # -----------------------------------------------------------------------------
+# Add Python dependencies in here
+RUN \
+    python3 -m pip install pyserial \
+    socketIO-client3
+
+# -----------------------------------------------------------------------------
 # Install stuff of freedoom roboticsp
 # https://docs.freedomrobotics.ai/docs/install
 # USER ada 
 RUN \
     curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
+
+# -----------------------------------------------------------------------------
+# For wifi configuration and settings
+ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
+RUN  \
+    apt-get install -y network-manager
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get

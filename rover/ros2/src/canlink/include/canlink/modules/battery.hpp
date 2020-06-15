@@ -1,8 +1,8 @@
 /*
     - File name: battery.h
     - This library defines members and member functions for the battery module's communication through CAN
-    - By: Juan David Galvis
-    - Email: juangalvis@kiwicampus.com
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
 */
  
 #ifndef CAN_BATTERY_H_INCLUDED
@@ -23,11 +23,13 @@
 class Battery : public rclcpp::Node
 {
     public:
-        Battery(const rclcpp::NodeOptions & options, CANDriver *can_driver);
+        Battery(const rclcpp::NodeOptions & options, 
+            std::shared_ptr<CANDriver> can_driver);
         ~Battery(){};
 
         /* Public functions */
-        void PublishBatteryStatus(uint8_t integer_msg, uint8_t decimal_msg, float current);
+        void PublishBatteryStatus(uint8_t integer_msg, uint8_t decimal_msg, 
+            float current);
 
     private:
         /* Publishers */
@@ -36,6 +38,6 @@ class Battery : public rclcpp::Node
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr battery_status_pub_;
         
         /* Objects */ 
-        CANDriver *can_driver_;
+        std::shared_ptr<CANDriver> can_driver_;
 };
 #endif

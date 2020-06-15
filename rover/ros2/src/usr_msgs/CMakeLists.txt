@@ -34,14 +34,16 @@ set(MSG_FILES
   "msg/canlink/Motors.msg"
   "msg/canlink/PWMOut.msg"
   "msg/canlink/TestMotors.msg"
-  # Mavros
-  "msg/mavros/State.msg"
+  "msg/canlink/ChassisState.msg"
   # Vision
   "msg/vision/CamerasStatus.msg"
   "msg/vision/Extrinsic.msg"
+  "msg/vision/Waypoint.msg"
   "msg/vision/VisualMessage.msg"
   # Web client
-  "msg/web_client/Messages.msg"
+  "msg/web_client/Control.msg"
+  # Data Capture
+  "msg/data_capture/CaptureStatus.msg"
 )
 
 # Message generation

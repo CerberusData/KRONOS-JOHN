@@ -4,13 +4,13 @@
     - By: Juan David Galvis
     - Email: juangalvis@kiwicampus.com
 */
- 
+
 #include "canlink/modules/lights.hpp"
 
-Lights::Lights(const rclcpp::NodeOptions & options, CANDriver *can_driver)
-: Node("lights", options)
+Lights::Lights(const rclcpp::NodeOptions & options, 
+    std::shared_ptr<CANDriver> can_driver) : Node("lights", options)
 {
-    RCLCPP_INFO(this->get_logger(), "Lights init");
+    RCLCPP_DEBUG(this->get_logger(), "Lights init");
     can_driver_ = can_driver;
     
     uint8_t data[3] = {LIGHTS_ADDRESS, led1_sts_, led2_sts_}; 
@@ -23,4 +23,4 @@ Lights::Lights(const rclcpp::NodeOptions & options, CANDriver *can_driver)
         can_driver_->CANWrite(CHASSIS_ADDRESS, 3, data);
     }
 }
- 
+

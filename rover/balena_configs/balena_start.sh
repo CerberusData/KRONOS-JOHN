@@ -10,6 +10,9 @@
 clear
 
 # -----------------------------------------------------------------------------
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket # For Wifi
+
+# -----------------------------------------------------------------------------
 # Use the maximum frequency of the CPU
 # nvpmodel -m 0 #--verbose
 
@@ -32,15 +35,38 @@ ros2 launch /usr/src/app/configs/bot.launch.py &
 sleep 10
 
 # -----------------------------------------------------------------------------
+# CAN Interfaces setup and initialization
+ip link set can0 type can bitrate 500000
+ip link set up can0
+ip link set can1 type can bitrate 500000 sjw 4 dbitrate 5000000 dsjw 4 berr-reporting on fd on
+ip link set up can1
+
+sleep 5
+
+# -----------------------------------------------------------------------------
+# Start local client gui
+# Run Freedoom agent stuff
+# Freedom Robotics services
+if [ "$NODE_LOCAL_CLIENT" == "1" ]
+then 
+    echo "[INFO]: launching SocketIO for local client ..."
+    node /usr/src/app/socketio-server/index.js &
+    sleep 5
+    echo  "[INFO]: local client ip, start a browser in *:4567"
+    ip addr show | grep wlan0
+    echo  ""
+fi
+
+# -----------------------------------------------------------------------------
 # Run Freedoom agent stuff
 # Freedom Robotics services
 if [ "$FR_AGENT" == "1" ]
 then 
-    echo "launching freedom agent"
+    echo "[INFO]: launching freedom agent"
     python3 /usr/src/app/freedom_robotics/inject_freedom.py
     python3 /usr/src/app/freedom_robotics/keep_alive_freedom.py &
 else
-    echo "No fredoom robotics agent configured"
+    echo "[INFO]: No fredoom robotics agent configured"
 fi
 
 # -----------------------------------------------------------------------------

@@ -18,7 +18,7 @@ def main(args=None):
     # Initialize ROS communications for a given context.
     rclpy.init(args=args)
 
-    # Execute work and block until the context associated with the 
+    # Execute work and block until the context associated with the
     # executor is shutdown.
     print("hello from video particle", flush=True)
 
@@ -28,8 +28,9 @@ def main(args=None):
     # minimal_publisher.destroy_node()
     rclpy.shutdown()
 
+
 # =============================================================================
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 # =============================================================================

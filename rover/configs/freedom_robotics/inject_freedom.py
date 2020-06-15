@@ -1,6 +1,6 @@
 import os
 import json
-import logging 
+import logging
 import subprocess
 
 from freedomrobotics.management import register_initd_service
@@ -9,8 +9,10 @@ from freedomrobotics.management import register_systemd_service
 CREDENTIALS_PATH = os.path.expanduser("~/.config/freedomrobotics/credentials")
 CREDENTIALS_DIR = os.path.dirname(CREDENTIALS_PATH)
 
+
 def get_env_var(var):
     return subprocess.check_output("echo $" + var, shell=True).strip()
+
 
 def execute(cmd):
     try:
@@ -18,27 +20,28 @@ def execute(cmd):
     except Exception as e:
         return None
 
+
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
     credentials = {
-        "account": str(get_env_var("FR_ACCOUNT"),'utf-8'),
-        "device": str(get_env_var("FR_DEVICE"),'utf-8'),
-        "token": str(get_env_var("FR_TOKEN"),'utf-8'),
-        "secret": str(get_env_var("FR_SECRET"),'utf-8'),
-        "install_elements" : ["webrtc"],
-        }
+        "account": str(get_env_var("FR_ACCOUNT"), "utf-8"),
+        "device": str(get_env_var("FR_DEVICE"), "utf-8"),
+        "token": str(get_env_var("FR_TOKEN"), "utf-8"),
+        "secret": str(get_env_var("FR_SECRET"), "utf-8"),
+        "install_elements": ["webrtc"],
+    }
 
     if not os.path.exists(CREDENTIALS_DIR):
         os.makedirs(CREDENTIALS_DIR)
 
-    with open(CREDENTIALS_PATH, 'w') as f:
+    with open(CREDENTIALS_PATH, "w") as f:
         f.write(json.dumps(credentials, indent=4))
 
     systemd_pid = execute("pidof systemd")
     logger.debug("PID of Systemd: " + str(systemd_pid))
 
-    # Try to register the service for 
+    # Try to register the service for
     register_initd_service.install(logger)
