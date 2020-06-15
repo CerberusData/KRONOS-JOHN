@@ -153,8 +153,7 @@ class Chassis : public rclcpp::Node
         std::shared_ptr<CANDriver> can_driver_;
 
         // Member Messages
-        // This one could be a shared pointer
-        usr_msgs::msg::Configuration chassis_cfg_;
+        std::shared_ptr<usr_msgs::msg::Configuration> chassis_cfg_;
 
         // Member Functions
         bool SendMotorsCmd();
@@ -195,9 +194,9 @@ class Chassis : public rclcpp::Node
         int moon_view_ = 0;
         int motor_error_state_ = 0;
 
-        /* Motors vectors */
+        // Motors vectors
         std::vector<float> controls_ = {0.0, 0.0, 0.0};
         std::vector<uint16_t> raw_motors_out_ = {0, 0, 0, 0};
         std::vector<uint16_t> motor_error_ = {0, 0, 0, 0};
 };
-#endif  /* End of CAN_CHASSIS_H_INCLUDED */ 
+#endif  // End of CAN_CHASSIS_H_INCLUDED 

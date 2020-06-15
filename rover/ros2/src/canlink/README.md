@@ -11,7 +11,7 @@ Socket CAN library is required for reading and writing to the defined socket.
 ## **Publishers**
 
 | Topic name                      | Message type                    | Module   |
-|---------------------------------|:-------------------------------:|---------:|
+|:--------------------------------|:-------------------------------:|---------:|
 | /canlink/chassis/status         | usr_msgs::msg::ChassisStatus    | Chassis  |
 | /canlink/chassis/motors_out     | usr_msgs::msg::PWMOut           | Chassis  |
 | /canlink/chassis/motors_status  | usr_msgs::msg::Motors           | Chassis  |
@@ -26,7 +26,7 @@ Socket CAN library is required for reading and writing to the defined socket.
 ## **Subscribers**
 
 | Topic name                                | Message type                      | Module   |
-|-------------------------------------------|:---------------------------------:|---------:|
+|:------------------------------------------|:---------------------------------:|---------:|
 | /canlink/chassis/configuration            | usr_msgs::msg::Configuration      | Chassis  |
 | /canlink/chassis/sleep                    | std_msgs::msg::Bool               | Chassis  |
 | /canlink/chassis/test                     | std_msgs::msg::Bool               | Chassis  |
@@ -38,7 +38,7 @@ Socket CAN library is required for reading and writing to the defined socket.
 ## **Services**
 
 | Service name          | Service type              | Module   |
-|-----------------------|:-------------------------:|---------:|
+|:----------------------|:-------------------------:|---------:|
 | /canlink/chassis/arm  | std_srvs::srv::SetBool    | Chassis  |
 
 ## **Socket CAN configuration**
@@ -61,10 +61,10 @@ Canlink Node (Including Chassis and Cabin) is the base of the Kiwibot, so it is 
 * **ARM:** 45A [02 01] 
 
 ### **Commands**
-Use candump `ca_id`n to hear the desired Socket CAN.
+Use candump `can_id`n to hear the desired Socket CAN.
 > candump can0
 
-Use cansend `ca_id` `dir#data`
+Use cansend `can_id` `dir#data`
 > cansend can0 45a#0C057F0059000000
 
 

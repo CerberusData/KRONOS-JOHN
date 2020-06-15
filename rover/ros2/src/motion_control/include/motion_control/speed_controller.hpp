@@ -51,48 +51,50 @@ class SpeedController : public rclcpp::Node
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
         rclcpp::Subscription<std_msgs::msg::String>::SharedPtr imu_status_sub_;
 
-        // Timers
-        rclcpp::TimerBase::SharedPtr pub_timer_;
-
-        // Member functions
+        // Subscribers callbacks
         void CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
         void OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg);
         void ImuStatusCb(const std_msgs::msg::String::SharedPtr msg);
 
+        // Timers
+        rclcpp::TimerBase::SharedPtr pub_timer_;
+
+        // Member fuctions
         float ThrottlePID(float ref_vx, float cur_vx, double dt);
         float SteeringPID(float ref_wz, float cur_wz, double dt);
 
         // Environment variables
         bool throttle_ctrl_ = getEnv("SPEED_CONTROLLER_THROTTLE_CONTROL", true);
         bool steering_ctrl_ = getEnv("SPEED_CONTROLLER_STEERING_CONTROL", true);
+        // Throttle
         float kp_thr_ = getEnv("SPEED_CONTROLLER_KP_THROTTLE", 0.43f);
         float ki_thr_ = getEnv("SPEED_CONTROLLER_KI_THROTTLE", 0.21f);
         float kd_thr_ = getEnv("SPEED_CONTROLLER_KD_THROTTLE", 0.11f);
         float kff_thr_ = getEnv("SPEED_CONTROLLER_FF_THROTTLE", 1.0f);
-        float kp_str_ = getEnv("SPEED_CONTROLLER_KP_STEERING", 0.5f);
-        float ki_str_ = getEnv("SPEED_CONTROLLER_KI_STEERING", 1.0f);
-        float kd_str_ = getEnv("SPEED_CONTROLLER_KD_STEERING", 0.1f);
-        float kff_str_ = getEnv("SPEED_CONTROLLER_FF_STEERING", 3.0f);
+        // Steering
+        float kp_str_ = getEnv("SPEED_CONTROLLER_KP_STEERING", 0.40f);
+        float ki_str_ = getEnv("SPEED_CONTROLLER_KI_STEERING", 0.70f);
+        float kd_str_ = getEnv("SPEED_CONTROLLER_KD_STEERING", 0.15f);
+        float kff_str_ = getEnv("SPEED_CONTROLLER_FF_STEERING", 2.5f);
 
+        // Objects
+        std::shared_ptr<SoftSpeedSpline> linear_soft_spline;
 
-        /* -- */
+        // Member attributes
+        rclcpp::Time prev_time_;
         geometry_msgs::msg::TwistStamped robot_twist_;
         geometry_msgs::msg::TwistStamped reference_cmd_;
 
-        std::shared_ptr<SoftSpeedSpline> linear_soft_spline;
-
-        rclcpp::Time prev_time_;
-
+        // Variables
         bool first_yaw_value = false;
         bool imu_status_ = true;
-        double int_error_ = 0.0;
         double prev_prop_error_ = 0.0;
         double yaw_set_point_ = 0.0;
         double bot_yaw_ = 0.0;
-        float prev_ref_vx_ = 0.0f;
-
         double wz_int_error_ = 0.0;
-        double wz_prop_ek1_ = 0.0;
-
+        double vx_int_error_ = 0.0;
+        float wz_prop_ek1_ = 0.0f;
+        float vx_prop_ek1_ = 0.0f;
+        float prev_ref_vx_ = 0.0f;
 };
 #endif
