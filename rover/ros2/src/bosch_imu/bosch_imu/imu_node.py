@@ -8,8 +8,8 @@ Code Information:
 	Kiwibot AI Team
 
 Note:
-    Wrapper for the IMU Bosch BNO055 in ROS 2. Wrapper implemented for UART 
-    communication.
+    Wrapper for the IMU Bosch BNO055 in ROS 2.
+    Implemented for UART communication.
 
 Sources:
     Original version: https://github.com/mdrwiega/bosch_imu_driver

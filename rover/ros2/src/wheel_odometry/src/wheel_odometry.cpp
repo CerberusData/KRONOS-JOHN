@@ -121,7 +121,6 @@ void WheelOdometry::ImuCb(const sensor_msgs::msg::Imu::SharedPtr msg)
         "Roll: %0.4f, Pitch: %0.4f, Yaw: %0.4f", 
         imu_roll_, imu_pitch_, imu_yaw_);
 
-
 }
 
 /* ------------------------------------------------------------------------- */

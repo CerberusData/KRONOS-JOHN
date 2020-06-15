@@ -1,10 +1,10 @@
 /*
     - File name:chassis.h
     - This library defines members and member functions for the CAN communication with the chassis
-    - By: Juan David Galvis
-    - Email: juangalvis@kiwicampus.com
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
 */
- 
+
 #ifndef CAN_CHASSIS_H_INCLUDED
 #define CAN_CHASSIS_H_INCLUDED
 

@@ -1,8 +1,8 @@
 /*
     - File name: battery.h
     - This library defines members and member functions for the battery module's communication through CAN
-    - By: Juan David Galvis
-    - Email: juangalvis@kiwicampus.com
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
 */
  
 #ifndef CAN_BATTERY_H_INCLUDED

@@ -1,4 +1,8 @@
-
+/*
+    - File name: speed_controller.cpp.
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
+*/
 
 #include "motion_control/speed_controller.hpp"
 
