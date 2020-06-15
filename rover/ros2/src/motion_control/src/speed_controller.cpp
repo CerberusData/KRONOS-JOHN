@@ -159,8 +159,6 @@ float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
 
 void SpeedController::Controller()
 {
-    RCLCPP_DEBUG(this->get_logger(), "Controller function");
-
     auto output_cmd_msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
 
     float lin_vx = reference_cmd_.twist.linear.x;
