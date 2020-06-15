@@ -153,6 +153,7 @@ class Chassis : public rclcpp::Node
         std::shared_ptr<CANDriver> can_driver_;
 
         // Member Messages
+        // This one could be a shared pointer
         usr_msgs::msg::Configuration chassis_cfg_;
 
         // Member Functions
