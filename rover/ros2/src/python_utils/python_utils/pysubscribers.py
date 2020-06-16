@@ -19,7 +19,7 @@ from usr_msgs.msg import VisualMessage
 from usr_msgs.msg import Waypoint
 from usr_msgs.msg import PWMOut
 from usr_msgs.msg import Motors
-from usr_msgs.msg import State
+from usr_msgs.msg import ChassisState
 from std_msgs.msg import Bool
 from sensor_msgs.msg import Range
 from geometry_msgs.msg import TwistStamped
@@ -935,7 +935,7 @@ class ChassisSubscriber:
         )
 
         self._sub_chassis_status = parent_node.create_subscription(
-            msg_type=State,
+            msg_type=ChassisState,
             topic="/canlink/chassis/status",
             callback=self.cb_chassis_module,
             qos_profile=1,
