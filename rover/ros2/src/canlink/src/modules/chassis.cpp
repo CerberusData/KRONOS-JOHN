@@ -1,8 +1,8 @@
 /*
     - File name: chassis.cpp.
-    - This library defines members and member functions for the CAN communication with the chassis
-    - By: Juan David Galvis
-    - Email: juangalvis@kiwicampus.com
+    - Chassis submodule - ROS2
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
 */
 #include "canlink/modules/chassis.hpp"
 
@@ -61,7 +61,7 @@ Chassis::Chassis(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
 
         // Initial chassis setup
         ConfigurePID();
-        sleep(1.0);
+        sleep(2.0);
         InitialConfig();
 
         // Timers
@@ -101,6 +101,12 @@ bool Chassis::ArmCb(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
+    /*
+        - Service: /canlink/chassis/arm
+        - Type: std_srvs::srv::SetBool
+        - Action: Arms or Disarms the Kieibot when client calls the service
+    */
+    
     (void) request_header;
     bool arm_req = request->data;
     uint8_t data_arm[2];
@@ -108,14 +114,12 @@ bool Chassis::ArmCb(
 
     if ((arm_req == true) && (chassis_dvr_status_.armed == false))
     {
-        /*
-            Arming command
-        */
+        // Arming command - 45A [02 01]
         data_arm[1] = 0x01; 
-        if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
+        if (chassis_cfg_->operation_mode == OPERATION_MODE_NORMAL)
         {
             RCLCPP_INFO(this->get_logger(), "----- Arming chassis -----");
-            can_driver_->CANWrite(CHASSIS_ADDRESS, 2, data_arm);
+            can_driver_->CANWrite(CHASSIS_ADDRESS, 2, data_arm); 
             response->success = true;
             response->message = "Armed";
         }
@@ -123,11 +127,9 @@ bool Chassis::ArmCb(
 
     if ((arm_req == false) && (chassis_dvr_status_.armed == true))
     {
-        /*
-            Disarming command
-        */
+        // Disarming command - 45A [02 00]
         data_arm[1] = 0x00; 
-        if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
+        if (chassis_cfg_->operation_mode == OPERATION_MODE_NORMAL)
         {
             RCLCPP_INFO(this->get_logger(), "----- Disarming Chassis -----");
             can_driver_->CANWrite(CHASSIS_ADDRESS, 2, data_arm);
@@ -143,6 +145,15 @@ bool Chassis::ArmCb(
 // Subscribers callbacks
 void Chassis::ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
+    /*
+        - Topic: /motion_control/speed_controller/output
+        - Type: geometry_msgs::msg::TwistStamped
+        - Action: 
+            * Extracts velocity commands
+            * Assigns a moon launch positions
+            * Sends data to mottors
+    */
+
     float throttle = msg->twist.linear.x;
 
     // Throttle limitation depending on the inclination to avoid moon launch
@@ -190,20 +201,39 @@ void Chassis::ActuatorControlCb(const geometry_msgs::msg::TwistStamped::SharedPt
 
 void Chassis::ActuatorReferenceCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
+    /*
+        - Topic: /motion_control/speed_controller/reference
+        - Type: geometry_msgs::msg::TwistStamped
+        - Action: Extracts the linear velocity given from the speed controller
+    */
+
     throttle_current_ = msg->twist.linear.x;
 }
 
 void Chassis::ChassisConfigCb(const usr_msgs::msg::Configuration::SharedPtr msg)
 {
-    chassis_cfg_ = *msg;
+    /*
+        - Topic: /canlink/chassis/configuration
+        - Type: usr_msgs::msg::Configuration
+        - Action: Calls *SendChassisConfiguration()* when requested
+    */
+
+    chassis_cfg_ = msg;
     SendChassisConfiguration();
     RCLCPP_INFO(this->get_logger(), "----- Chassis Configured -----");
 }
 
 void Chassis::MotorsSleepCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
+    /*
+        - Topic: /canlink/chassis/sleep
+        - Type: std_msgs::msg::Bool
+        - Action: Sends the command to sleep the motors 
+    */
+    
     if (msg->data)
     {
+        // Sleeping command - 45A [02 02]
         uint8_t data[2] = {ARM_CMD_ID, 0x02};
         can_driver_->CANWrite(CHASSIS_ADDRESS, 2, data);
         sleep(0.5);
@@ -213,17 +243,33 @@ void Chassis::MotorsSleepCb(const std_msgs::msg::Bool::SharedPtr msg)
 
 void Chassis::ChassisTestCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
-    (void)msg;
+    /*
+        - Topic: /canlink/chassis/test
+        - Type: std_msgs::msg::Bool
+        - Action:
+            * Test mode for chassis (Routine execution) 
+            * Sets the OPERATION_MODE_TEST and then calls *SendChassisConfiguration()* 
+    */
+    
+    (void) msg;
     RCLCPP_INFO(this->get_logger(), "----- Chassis configured in Test mode -----");
-    chassis_cfg_.operation_mode = OPERATION_MODE_TEST;
+    chassis_cfg_->operation_mode = OPERATION_MODE_TEST;
     SendChassisConfiguration();
 }
 
 void Chassis::ChassisRestartCb(const std_msgs::msg::Bool::SharedPtr msg)
 {
-    (void)msg;
+    /*
+        - Topic: /canlink/chassis/restart
+        - Type: std_msgs::msg::Bool
+        - Action:
+            * Resets the Chassis 
+            * Sets the OPERATION_MODE_RESET and then calls *SendChassisConfiguration()* 
+    */
+    (void) msg;
     RCLCPP_INFO(this->get_logger(), "----- Restarting Chassis -----");
-    /* Restarting motor status */ 
+    
+    // Restarting motor status 
     for(int i = 0; i < 4; ++i)
     {
         motor_error_[i] = 0;
@@ -231,18 +277,26 @@ void Chassis::ChassisRestartCb(const std_msgs::msg::Bool::SharedPtr msg)
     motor_error_state_ = 0;
     motors_current_ok_ = true;
     
+    // Restarts the overcurrent timer
     current_tmr_->cancel();
     
-    /* Restarting chassis board */
-    chassis_cfg_.operation_mode = OPERATION_MODE_RESET;
+    // Restarting chassis board 
+    chassis_cfg_->operation_mode = OPERATION_MODE_RESET;
     SendChassisConfiguration();
-    chassis_cfg_.operation_mode = OPERATION_MODE_NORMAL;
-    sleep(0.5);
+    chassis_cfg_->operation_mode = OPERATION_MODE_NORMAL;
+    sleep(1.0);
 }
 
 void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-    
+    /*
+        - Topic: /wheel_odometry/global_odometry
+        - Type: nav_msgs::msg::Odometry
+        - Action:
+            * Extracts Kieibot angles coming from Odometry 
+            *  Acts on the moon timer
+    */
+
     double roll = 0.0f;
     double yaw = 0.0f;
 
@@ -259,13 +313,14 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         speed_pitch_factor_ = (1.0 - std::abs(pitch_) * 2.5f);
         speed_pitch_factor_ = speed_pitch_factor_ < 0.0f 
             ? (1.5 * speed_pitch_factor_ - 0.7) : speed_pitch_factor_;
+        
         if (speed_pitch_factor_ < 0.0)
         {
             moon_view_ = 2;
             moon_tmr_->reset();
 
-            /* Deploying warning message to the console */
-            if (!moon_first_time_)  /* False */
+            // Deploying warning message to the console
+            if (moon_first_time_ == false) 
             {
                 moon_first_time_ = true;
                 auto info_msg = std::make_unique<usr_msgs::msg::VisualMessage>();
@@ -281,8 +336,9 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         moon_view_ = 1;
         moon_tmr_->reset();
-        /* Deploying warning message to the console */
-        if (!moon_first_time_)  /* False */
+
+        // Deploying warning message to the console
+        if (moon_first_time_ == false)
         {
             moon_first_time_ = true;
             auto info_msg = std::make_unique<usr_msgs::msg::VisualMessage>();
@@ -297,8 +353,9 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         moon_view_ = -1;
         moon_tmr_->reset();
-        /* Deploying warning message to the console */
-        if(!moon_first_time_)  // False
+
+        // Deploying warning message to the console
+        if (moon_first_time_ == false)
         {
             moon_first_time_ = true;
             auto info_msg = std::make_unique<usr_msgs::msg::VisualMessage>();
@@ -308,17 +365,17 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
 
-    // Normal (Flat land)
+    // Normal position
     else
     {
         speed_pitch_factor_ = 100.0f;
-        // Strong inclination
+        // Inclination
         if (std::abs(pitch_) > 0.15f)
         { 
             // Checking the soft brake flag and Throttle value (Linear velocity)
-            if (soft_brake_ && controls_.at(1) == 0.0f)
+            if ((soft_brake_ == true) && (controls_.at(1) == 0.0f))
             {
-                if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
+                if (chassis_cfg_->operation_mode == OPERATION_MODE_NORMAL)
                 {
                     soft_brake_ = false;
                 }
@@ -326,10 +383,10 @@ void Chassis::OdomCb(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
 
         // False
-        else if (!soft_brake_)
+        else if (soft_brake_ == false)
         {
             // Soft brake activation
-            if (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL)
+            if (chassis_cfg_->operation_mode == OPERATION_MODE_NORMAL)
             {
                 soft_brake_ = true;
             }
@@ -382,36 +439,42 @@ void Chassis::CurrentTimerCb()
     current_timer_started_ = false;
     auto info_message = std::make_unique<usr_msgs::msg::VisualMessage>();
     info_message->type = "ERROR";
-    info_message->data = "Parar cuanto antes: Codigo de error en motores:"
-                        + std::to_string(motor_error_[0]) + ", "
-                        + std::to_string(motor_error_[1]) + ", "
-                        + std::to_string(motor_error_[2]) + ", "
-                        + std::to_string(motor_error_[3]);
+    info_message->data = 
+        "Parar cuanto antes: Codigo de error en motores:"
+        + std::to_string(motor_error_[0]) + ", "
+        + std::to_string(motor_error_[1]) + ", "
+        + std::to_string(motor_error_[2]) + ", "
+        + std::to_string(motor_error_[3]);
 
     visual_debugger_pub_->publish(std::move(info_message));
-    motors_status_.error_status = {motor_error_[0], motor_error_[1], motor_error_[2], motor_error_[3]};
+    motors_status_.error_status = {
+        motor_error_[0], 
+        motor_error_[1], 
+        motor_error_[2], 
+        motor_error_[3]};
     RCLCPP_INFO(this->get_logger(), "------ Motor Current Stall ------");
 }
 
 
 /* ------------------------------------------------------------------------- */
 // Functions
-
 void Chassis::SendChassisConfiguration()
 {
     /*
-    - Sends the initial chassis configuration
-        + Values defined within *InitialConfig()*
-    - Writes the data configuration through the *CANWrite()* (Def at socket_can.cpp)
+        Args: NaN
+        Returns: NaN
+        Desc:
+            * Sends the initial chassis configuration *InitialConfig()*
+            * Writes the data configuration through the *CANWrite()* (socket_can.cpp)
     */
     uint8_t data[8] = {CONFIGURATION_CMD_ID,
-                    chassis_cfg_.wheels_baudrate,
-                    chassis_cfg_.battery_status_baudrate,
-                    chassis_cfg_.wheel_control_mode,
-                    chassis_cfg_.operation_mode,
-                    chassis_cfg_.number_battery_cells,
-                    chassis_cfg_.motors_model,
-                    chassis_cfg_.motors_current_baudrate};
+                    chassis_cfg_->wheels_baudrate,
+                    chassis_cfg_->battery_status_baudrate,
+                    chassis_cfg_->wheel_control_mode,
+                    chassis_cfg_->operation_mode,
+                    chassis_cfg_->number_battery_cells,
+                    chassis_cfg_->motors_model,
+                    chassis_cfg_->motors_current_baudrate};
     can_driver_->CANWrite(CHASSIS_ADDRESS, 8, data);
 }
 
@@ -443,13 +506,13 @@ void Chassis::InitialConfig()
         - Softbrake activation - Writes the data through the *CANWrite()* 
         (Def at socket_can.cpp)
     */
-    chassis_cfg_.wheels_baudrate = WHEELS_BAUDRATE_DEFAULT;
-    chassis_cfg_.battery_status_baudrate = BATTERY_STATUS_BAUDRATE_DEFAULT;
-    chassis_cfg_.wheel_control_mode = WHEEL_CONTROL_MODE_RPM;
-    chassis_cfg_.operation_mode = OPERATION_MODE_NORMAL;
-    chassis_cfg_.number_battery_cells = NUMBER_BATTERY_CELLS_DEFAULT;
-    chassis_cfg_.motors_model = MOTORS_MODEL_DEFAULT;
-    chassis_cfg_.motors_current_baudrate = MOTORS_CURRENT_DEFAULT;
+    chassis_cfg_->wheels_baudrate = WHEELS_BAUDRATE_DEFAULT;
+    chassis_cfg_->battery_status_baudrate = BATTERY_STATUS_BAUDRATE_DEFAULT;
+    chassis_cfg_->wheel_control_mode = WHEEL_CONTROL_MODE_RPM;
+    chassis_cfg_->operation_mode = OPERATION_MODE_NORMAL;
+    chassis_cfg_->number_battery_cells = NUMBER_BATTERY_CELLS_DEFAULT;
+    chassis_cfg_->motors_model = MOTORS_MODEL_DEFAULT;
+    chassis_cfg_->motors_current_baudrate = MOTORS_CURRENT_DEFAULT;
     SendChassisConfiguration();
 
     // Motors state initialization
@@ -491,7 +554,7 @@ bool Chassis::SendMotorsCmd()
     uint8_t w_left_dig = RadsToDigital(w_left);
     uint8_t w_right_dig = RadsToDigital(w_right);
     uint8_t directions = 0xAA;  // Brake on all motors
-   
+
     // Positive Left wheel speed
     if (w_left > 0)
     {
@@ -521,7 +584,7 @@ bool Chassis::SendMotorsCmd()
 
     if ((chassis_dvr_status_.connected == true) 
         && (chassis_dvr_status_.armed == true) 
-        && (chassis_cfg_.operation_mode == OPERATION_MODE_NORMAL))
+        && (chassis_cfg_->operation_mode == OPERATION_MODE_NORMAL))
     {
         /* 
         - This conditional checks three things
@@ -578,7 +641,7 @@ bool Chassis::SendMotorsCmd()
         raw_motors_out_ = {w_dig_1, w_dig_2, w_dig_3, w_dig_4};
 
         // Checking the current chassis wheel control mode 
-        if (chassis_cfg_.wheel_control_mode == WHEEL_CONTROL_MODE_RPM)
+        if (chassis_cfg_->wheel_control_mode == WHEEL_CONTROL_MODE_RPM)
         {
             uint8_t data_cmd[6] = {
                 WHEELS_CONTROL_RPM_ID, 
@@ -591,7 +654,7 @@ bool Chassis::SendMotorsCmd()
             can_driver_->CANWrite(CHASSIS_ADDRESS, 6, data_cmd);
         }
 
-        else if (chassis_cfg_.wheel_control_mode == WHEEL_CONTROL_MODE_RAW)
+        else if (chassis_cfg_->wheel_control_mode == WHEEL_CONTROL_MODE_RAW)
         {
             uint8_t data_cmd[6] = {
                 MOTORS_CONTROL_RAW_ID, 
@@ -755,7 +818,7 @@ void Chassis::PublishTestReport(struct can_frame* frame)
         test_motors_response_.status[i - 1] = frame->data[i];
     }
     test_motors_pub_->publish(test_motors_response_);
-    chassis_cfg_.operation_mode = OPERATION_MODE_NORMAL;
+    chassis_cfg_->operation_mode = OPERATION_MODE_NORMAL;
     SendChassisConfiguration();
     sleep(0.5);
     moving_ = true;

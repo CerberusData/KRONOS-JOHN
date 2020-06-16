@@ -1,11 +1,15 @@
-
+/*
+    - File name: speed_controller.cpp.
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
+*/
 
 #include "motion_control/speed_controller.hpp"
 
 SpeedController::SpeedController(rclcpp::NodeOptions & options)
 : Node("speed_controller", options)
 {
-    RCLCPP_INFO(this->get_logger(), "Speed Controller constructor");
+    RCLCPP_DEBUG(this->get_logger(), "Speed Controller Init");
 
     // Publishers
     output_cmd_pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>(
@@ -19,6 +23,7 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
     imu_status_sub_ = this->create_subscription<std_msgs::msg::String>(
         "/imu/status", 1, std::bind(&SpeedController::ImuStatusCb, this, _1));
 
+    // Time to detect the dt inside the control loop
     prev_time_ = this->now();
 
     // Soft Speed object
@@ -27,6 +32,11 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
 
 void SpeedController::ImuStatusCb(const std_msgs::msg::String::SharedPtr msg)
 {
+    /*
+        - Topic: /imu/status
+        - Type: std_msgs::msg::String
+        - Action: Checks the current IMU State
+    */
     bool status_update = (msg->data.compare("OK") == 0);
     if (status_update == false && imu_status_ == true)
     {
@@ -40,10 +50,11 @@ void SpeedController::ImuStatusCb(const std_msgs::msg::String::SharedPtr msg)
 void SpeedController::OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
     /*
-        - Odometry callback to extract the current velocity and pose comming from 
-        Wheel odometry
-        - We are using global wheel odometry, but I need to check if we should 
-        use the local one.
+        - Topic: /wheel_odometry/global_odometry
+        - Type: nav_msgs::msg::Odometry
+        - Actions: 
+            * Extracts current Kiwibot Pose and Velocities
+            * It provides the Yaw angle for control purposes 
     */
     robot_twist_.twist = msg->twist.twist;
 
@@ -65,11 +76,11 @@ void SpeedController::OdometryCb(const nav_msgs::msg::Odometry::SharedPtr msg)
 
 void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
 {
-    // RCLCPP_INFO(this->get_logger(), "Linear: %0.4f, Angular: %0.4f",
-    //     msg->twist.linear.x,  msg->twist.angular.z);
-
-    //RCLCPP_INFO(this->get_logger(), "Linear: %0.4f", msg->twist.linear.x);
-    // Reference commands for the robot motion
+    /*
+        - Topic: /freedom_client/cmd_vel
+        - Type: geometry_msgs::msg::TwistStamped
+        - Action: Receives velocity commands from Freedom Robotics console
+    */
     reference_cmd_.header.stamp = this->now();
     reference_cmd_.twist = msg->twist;
 }
@@ -77,49 +88,74 @@ void SpeedController::CommandsCb(const geometry_msgs::msg::TwistStamped::SharedP
 float SpeedController::SteeringPID(float ref_wz, float cur_wz, double dt)
 {
     /*
-        (Reference, Current, dt)
+        Args:
+            * ref_wz = Angular reference velocity (Z-axis)
+            * cur_wz = Current Kiwibot angular velocity (Z-axis)
+            * dt = Delta time
+        Returns: Angular velocity control command 
+        Desc: A PID controller (Feedforward + Feedback) calculate the control 
+            command for the specified velocity.
     */
+
     if (ref_wz == 0.0f)
     {
+        wz_int_error_  = 0.0;
         return 0.0f;
     }
 
-    // if(steering_ctrl_ == true && )
-    // {
+    if(steering_ctrl_ == true)
+    {
+        float prop_error = ref_wz - cur_wz;
 
+        float der_error = (dt != 0.0f) 
+            ? ((prop_error - wz_prop_ek1_) / dt) : 0.0f;
+        wz_int_error_ += prop_error * dt;
+        wz_prop_ek1_ = prop_error;
 
-    // }
+        // PID command with predictive term (FF) and reactive term (FB)
+        float u_cmd = (kff_str_ * ref_wz) 
+            + (kp_str_ * (prop_error + (ki_str_ * vx_int_error_) + (kd_str_ * der_error)));
 
-    // else
-    // {
-    //     return ref_wz;
-    // }
+        return u_cmd;
+    }
+
+    else
+    {
+        return ref_wz;
+    }
 }
 
 
 float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
 {
     /*
-    Position velocity controller 
-        (Reference, Current, dt)
+        Args:
+            * ref_vx = Linear reference velocity (X-axis)
+            * cur_vx = Current Kiwibot linear velocity (X-axis)
+            * dt = Delta time
+        Returns: Linear velocity control command 
+        Desc: A PID controller (Feedforward + Feedback) calculate the control 
+            command for the specified velocity.
     */
-
+    
     if (ref_vx == 0.0f)
     {
+        // Condition used to avoid small movements in the robot
+        vx_int_error_ = 0.0;
         return 0.0f;
     }
 
     if (throttle_ctrl_ == true)
     {
         float smooth_ff = 1.0f;
-
-        float prop_error = ref_vx - cur_vx;
+        // Proportional, Integral and Derivative errors for PID implementation
+        float prop_error = (ref_vx - cur_vx) < 0.05f ? (ref_vx - cur_vx) : 0.0f;
         float der_error = (dt != 0.0f)
-            ? ((prop_error - prev_prop_error_) / dt) : 0.0f;
-        int_error_ += prop_error * dt;
-        prev_prop_error_ = prop_error;
+            ? ((prop_error - vx_prop_ek1_) / dt) : 0.0f;
+        vx_int_error_ += prop_error * dt;
+        vx_prop_ek1_ = prop_error;
 
-        // Smoothing the predictive term when changing direction
+        // Smoothing the predictive term when changing direction (Dynamic)
         if (((prev_ref_vx_ < 0.0f) && (ref_vx - prev_ref_vx_ > 0.0f)) 
             || ((prev_ref_vx_ > 0.0f) && (ref_vx - prev_ref_vx_ < 0.0f)))
         {   
@@ -127,14 +163,15 @@ float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
         }
 
         // PID command with predictive term (FF) and reactive term (FB)
-        float u_cmd = (smooth_ff * kff_thr_ * cur_vx) 
-            + (kp_thr_ * (prop_error + (ki_thr_ * int_error_) + (kd_thr_ * der_error)));
+        float u_cmd = (smooth_ff * kff_thr_ * ref_vx) 
+            + (kp_thr_ * (prop_error + (ki_thr_ * vx_int_error_) + (kd_thr_ * der_error)));
+
         prev_ref_vx_ = ref_vx;
 
         // Anti Wind-Up (To avoid increasing the error)
-        if (std::abs(ki_thr_ * int_error_) > 0.5f)
+        if (std::abs(ki_thr_ * vx_int_error_) > 0.25f)
         {
-            int_error_ -= prop_error * dt;
+            vx_int_error_ -= prop_error * dt;
         }
 
         return u_cmd;
@@ -148,8 +185,11 @@ float SpeedController::ThrottlePID(float ref_vx, float cur_vx, double dt)
 
 void SpeedController::Controller()
 {
-    RCLCPP_DEBUG(this->get_logger(), "Controller function");
-
+    /*
+        Args: NaN
+        Returns: NaN 
+        Desc: Main function which performs velocity control (Linear and angular).
+    */
     auto output_cmd_msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
 
     float lin_vx = reference_cmd_.twist.linear.x;
@@ -159,25 +199,14 @@ void SpeedController::Controller()
     double dt = (curr_time - prev_time_).seconds();
     prev_time_ = this->now();
 
-    // ToDo: Smart break conditions for handling the speed scaling factor
-    // ToDo: Implementation of soft speed curve
-
-    // (reference, acc_factor)
+    // Arguments: (Reference, Acceleration Factor)
     float vx_ref = linear_soft_spline->CalculateSoftSpeed(lin_vx, 1.0f);
-    // (reference, current, dt)
-    output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); 
+    output_cmd_msg->header.stamp = this->now();
 
-    output_cmd_msg->twist.angular.z = ang_wz;
+    // Arguments: (Reference, Current, dt)
+    output_cmd_msg->twist.angular.z = SteeringPID(ang_wz, robot_twist_.twist.angular.z, dt); 
+    output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); 
     output_cmd_pub_->publish(std::move(output_cmd_msg));
 }
 
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 1.0}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: -1.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: -0.5}}}"
-    // ros2 topic pub -r 10 /motion_control/speed_controller/output geometry_msgs/msg/TwistStamped "{twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"
-
-    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: true}"
-    
-    // ros2 service call /canlink/chassis/arm std_srvs/srv/SetBool "{data: false}"
-    // ros2 service call /test/arm std_srvs/srv/SetBool "{data: true}"
+// ToDo: Smart break conditions for handling the speed scaling factor

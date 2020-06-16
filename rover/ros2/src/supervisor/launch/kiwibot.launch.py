@@ -13,7 +13,7 @@ def generate_launch_description():
             package = 'canlink',
             node_executable = 'canlink_chassis',
             output = 'screen',
-            arguments = [('__log_level:=warn')]
+            arguments = [('__log_level:=info')]
         ),
         # Node(
         #     package = 'can_test',
@@ -24,18 +24,24 @@ def generate_launch_description():
             package = 'bosch_imu',
             node_executable = 'imu',
             output = 'screen',
-            arguments = [('__log_level:=warn')]
+            arguments = [('__log_level:=info')]
         ),
         Node(
             package = 'wheel_odometry',
             node_executable = 'wheel_odometry',
             output = 'screen',
-            arguments = [('__log_level:=warn')]
+            arguments = [('__log_level:=info')]
         ),
         Node(
             package = 'motion_control',
             node_executable = 'speed_controller',
             output = 'screen',
-            arguments = [('__log_level:=warn')]
+            arguments = [('__log_level:=info')]
+        ),
+        Node(
+            package = 'supervisor',
+            node_executable = 'supervisor',
+            output = 'screen',
+            arguments = [('__log_level:=info')]
         )
 ])

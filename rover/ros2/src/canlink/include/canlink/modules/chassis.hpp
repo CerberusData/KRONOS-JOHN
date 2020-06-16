@@ -1,10 +1,10 @@
 /*
     - File name:chassis.h
     - This library defines members and member functions for the CAN communication with the chassis
-    - By: Juan David Galvis
-    - Email: juangalvis@kiwicampus.com
+    - By: Camilo Andrès Alvis and Juan David Galvis
+    - Email: camiloalvis@kiwibot.com
 */
- 
+
 #ifndef CAN_CHASSIS_H_INCLUDED
 #define CAN_CHASSIS_H_INCLUDED
 
@@ -153,7 +153,7 @@ class Chassis : public rclcpp::Node
         std::shared_ptr<CANDriver> can_driver_;
 
         // Member Messages
-        usr_msgs::msg::Configuration chassis_cfg_;
+        std::shared_ptr<usr_msgs::msg::Configuration> chassis_cfg_;
 
         // Member Functions
         bool SendMotorsCmd();
@@ -194,9 +194,9 @@ class Chassis : public rclcpp::Node
         int moon_view_ = 0;
         int motor_error_state_ = 0;
 
-        /* Motors vectors */
+        // Motors vectors
         std::vector<float> controls_ = {0.0, 0.0, 0.0};
         std::vector<uint16_t> raw_motors_out_ = {0, 0, 0, 0};
         std::vector<uint16_t> motor_error_ = {0, 0, 0, 0};
 };
-#endif  /* End of CAN_CHASSIS_H_INCLUDED */ 
+#endif  // End of CAN_CHASSIS_H_INCLUDED 

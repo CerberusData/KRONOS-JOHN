@@ -8,8 +8,8 @@ Code Information:
 	Kiwibot AI Team
 
 Note:
-    Wrapper for the IMU Bosch BNO055 in ROS 2. Wrapper implemented for UART 
-    communication.
+    Wrapper for the IMU Bosch BNO055 in ROS 2.
+    Implemented for UART communication.
 
 Sources:
     Original version: https://github.com/mdrwiega/bosch_imu_driver
@@ -512,6 +512,9 @@ class ImuNode(Node):
             self._azimuth = math.atan2(
                 self.mag_msg.magnetic_field.x, self.mag_msg.magnetic_field.z
             )
+            self.get_logger().debug(
+                "Orientation: %0.4f" %(self._azimuth * 180 / 3.1416)
+            )
             # --------------------------------------------------------------- #
             # Reassigning the value for the Robot axes
             self._pitch_bot = (math.pi / 2) - pitch_imu
@@ -520,19 +523,15 @@ class ImuNode(Node):
                 math.atan2(math.sin(yaw_imu), math.cos(yaw_imu))
                 - self._initial_orient
             )
+            self.get_logger().debug(
+                "Yaw Kiwibot: %0.4f" %(self._yaw_bot * 180 / 3.1416)
+            )
+
             quaternion_bot = quaternion_from_euler(
                 pitch=self._pitch_bot, 
                 roll=self._roll_bot, 
                 yaw=self._yaw_bot
             )
-
-            self._pitch_bot = (math.pi / 2) - pitch_imu
-            self._roll_bot = -roll_imu
-            self._yaw_bot = (
-                math.atan2(math.sin(yaw_imu), math.cos(yaw_imu))
-            )
-
-            # print("Yaw: %0.4f", self._yaw_bot * 180/3.1416)
 
             quaternion_bot = quaternion_from_euler(
                 pitch=self._pitch_bot, 

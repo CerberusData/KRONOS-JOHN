@@ -172,6 +172,7 @@ class ClientNode(Node, Thread):
 
         Thread.__init__(self)
 
+        
         self._LOCAL_RUN = int(os.getenv(key="LOCAL_LAUNCH", default=0))
         self.debugger = int(os.getenv(key="LOCAL_CLIENT_DEBUG", default=1))
 
@@ -405,6 +406,7 @@ def main(args=None):
 
 # =============================================================================
 if __name__ == "__main__":
+
     main()
 
 # =============================================================================

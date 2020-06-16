@@ -50,7 +50,8 @@ class CANChassis : public rclcpp::Node
         void PublishCANInfo(struct can_frame *frame);
 
         /* Thread to Listen CAN port */
-        std::thread read_thread_;
+        std::thread
+        read_thread_;
 
         /* Double check */
         // const char *interface_name_ = getEnv("CANLINK_CHASSIS_INTERFACE", "can0").c_str();

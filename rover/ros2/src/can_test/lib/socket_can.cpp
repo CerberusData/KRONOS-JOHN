@@ -16,6 +16,7 @@ CANDriver::CANDriver(const char *interface_name)
         perror("Error while opening socket");
     }
     
+    printf("All ok");
     strcpy(ifr_.ifr_name, ifname_);
     ioctl(sckt_, SIOCGIFINDEX, &ifr_);
 
@@ -28,7 +29,7 @@ CANDriver::CANDriver(const char *interface_name)
         perror("Error in socket bind.");
     }
 }
- 
+
 void CANDriver::ListenSocket()
 {
     struct can_frame rxmsg;
@@ -39,7 +40,7 @@ void CANDriver::ListenSocket()
         new_msg_rx = true;
     }
 }
- 
+
 struct can_frame *CANDriver::ReadMsg()
 {
     if (new_msg_rx)
@@ -49,15 +50,14 @@ struct can_frame *CANDriver::ReadMsg()
     }
     return NULL;
 }
- 
+
 struct can_frame *CANDriver::ReadSocket()
 {
     struct can_frame rxmsg;
     read(sckt_, &rx_frame_, sizeof(rxmsg));
     return &rx_frame_;
 }
- 
- 
+
 int CANDriver::CANWrite(int can_id, int can_data_length, uint8_t *data)
 {
     frame_.can_id = can_id;
@@ -69,4 +69,3 @@ int CANDriver::CANWrite(int can_id, int can_data_length, uint8_t *data)
     nbytes_ = write(sckt_, &frame_, sizeof(struct can_frame));
     return 0;
 }
-
