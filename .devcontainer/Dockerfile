@@ -105,7 +105,8 @@ RUN \
     apt-get install -y curl \ 
     gnupg2 \ 
     lsb-release && \ 
-    apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    # apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+    curl -sSL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC1CF6E31E6BADE8868B172B4F42ED6FBAB17C654' | apt-key add - && \
     sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
     apt update && \ 
     # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
