@@ -100,24 +100,23 @@ ENV ROS_DISTRO=dashing
 # Editors and so on
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
-RUN \ 
-    apt update && \ 
-    apt-get install -y curl \ 
+RUN apt update && apt install -y \
+    curl \
     gnupg2 \ 
     lsb-release && \ 
     apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
-    apt update && \ 
+    #apt update && \ 
     # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
     # command line tools. No GUI tools.
-    apt-get install -y ros-dashing-ros-base \ 
+    # apt-get install -y 
+    ros-dashing-ros-base \ 
     python3-colcon-common-extensions \ 
     # ROS 2 command line tools use argcomplete to autocompletion
     python3-argcomplete
 
 # Rosedep
-RUN \ 
-    pip3 install rosdep && \ 
+RUN pip3 install rosdep && \ 
     rosdep init && rosdep update
 
 # Logging variables
@@ -187,20 +186,27 @@ RUN \
 
 # -----------------------------------------------------------------------------
 # for cv_bridge package
-RUN  \
-    apt-get install -y cmake \ 
+RUN apt update && apt install -y\
+    cmake \ 
     libblkid-dev \
     e2fslibs-dev \
     libboost-all-dev \
-    libaudit-dev  \
-    can-utils
+    libaudit-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
+# Sensors and perpection dependencies in here
+RUN apt update && apt install -y \
+    can-utils \
+    libasio-dev \
+    ros-dashing-diagnostic-updater \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
     export PATH="${PATH}:/home/ada/.local/bin"
 
 # http://wiki.ros.org/docker/Tutorials/GUI
-RUN  \
-    sudo apt install -y \
+RUN apt update && apt install -y \
     libcanberra-gtk-module \
     libcanberra-gtk3-module
 
