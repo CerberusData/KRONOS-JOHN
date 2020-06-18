@@ -107,11 +107,10 @@ RUN apt update && apt install -y \
     # apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     curl -sSL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC1CF6E31E6BADE8868B172B4F42ED6FBAB17C654' | apt-key add - && \
     sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
-    #apt update && \ 
+    apt update && \ 
     # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
     # command line tools. No GUI tools.
-    # apt-get install -y 
-    ros-dashing-ros-base \ 
+    apt-get install -y ros-dashing-ros-base \ 
     python3-colcon-common-extensions \ 
     # ROS 2 command line tools use argcomplete to autocompletion
     python3-argcomplete
@@ -224,11 +223,16 @@ RUN \
 RUN \
     curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
 
+# RUN groupadd gpsusers && \
+#     echo 'SUBSYSTEM=="usb", SYSFS{idVendor}=="1546", SYSFS{idProduct}=="01a8", ACTION=="add", GROUP="gpsusers", MODE="0664"' | tee -a /etc/udev/rules.d/30-gpsdevice.rules && \
+#     usermod -a -G gpsusers ${USERNAME}
+
+RUN adduser ${USERNAME} dialout    
 # -----------------------------------------------------------------------------
 # For wifi configuration and settings
 ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
-RUN  \
-    apt-get install -y network-manager
+RUN apt install --no-install-recommends -y network-manager \
+    && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get
