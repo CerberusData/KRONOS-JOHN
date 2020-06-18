@@ -65,14 +65,22 @@ class DataCaptureNode(Node, Thread):
         sub_folder_path = "data"  # Get base path
         usb_devices = self.get_mount_points()  # Get connected usb devices
         if len(usb_devices):
+            usb_device = str(usb_devices[-1][0])
             # Get absolute path to root in usb device
-            if usb_devices[-1][0][1:].split("/")[0] == "dev":
+            if ("dev" in usb_device.split("/")  
+                and "sd" in usb_device.split("/")[-1]):
                 self.dest_folder = usb_devices[-1][-1]
                 device = usb_devices[-1][0]  # Get usb device
                 self.dest_folder = os.path.join(
                     self.dest_folder, "data_capture-{}".format(date)
                 )
-                printlog(msg=f"USB Detected: {device}", msg_type="INFO")
+                printlog(
+                    msg=f"USB Detected: {device}, path:{self.dest_folder}", 
+                    msg_type="INFO")
+            else:
+                printlog(
+                    msg="No USB storage device detected", 
+                    msg_type="WARN")
 
         # ---------------------------------------------------------------------
         # Thread variables
@@ -122,13 +130,19 @@ class DataCaptureNode(Node, Thread):
             return []
 
     def get_mount_points(self, devices=None):
-        devices = devices or self.get_usb_devices()
-        output = subprocess.check_output(["mount"]).splitlines()
-        print("*"*100, output, flush=True)
-        is_usb = lambda path: any(dev in path for dev in devices)
-        usb_info = (line for line in output if is_usb(line.split()[0]))
-        return [(info.split()[0], info.split()[2]) for info in usb_info]
 
+        try:
+            devices = devices or self.get_usb_devices()
+            output = subprocess.check_output(["mount"]).splitlines()
+            output = [str(out) for out in output]
+            #print(output, flush=True)
+            is_usb = lambda path: any(dev in path for dev in devices)
+            usb_info = (line for line in output if is_usb(line.split()[0]))
+            return [(info.split()[0], info.split()[2]) for info in usb_info]
+        except Exception as e:
+            printlog(msg=e, msg_type="ERROR")
+            return []
+            
     def usb_space_left(self, device_path, percentage=True):
         """ calculates left space in device
         Args:
