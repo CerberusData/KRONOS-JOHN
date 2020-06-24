@@ -28,7 +28,7 @@ find_package(ublox_serialization REQUIRED)
 
 include_directories(include)
 
-# build node
+# Build node
 add_library(ublox_gps
   src/adr_udr_product.cpp
   src/gnss.cpp
@@ -46,7 +46,9 @@ add_library(ublox_gps
   src/ublox_firmware7.cpp
   src/ublox_firmware8.cpp
   src/ublox_firmware9.cpp)
-ament_target_dependencies(ublox_gps
+
+# Dependencies for GPS node
+set(DEPENDENCIES
   "asio"
   "diagnostic_msgs"
   "diagnostic_updater"
@@ -61,19 +63,21 @@ ament_target_dependencies(ublox_gps
   "ublox_serialization"
 )
 
-install(TARGETS ublox_gps
+ament_target_dependencies(ublox_gps ${DEPENDENCIES})
+
+install(TARGETS 
+  ublox_gps
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
+# Build GPS node
 add_executable(ublox_gps_node src/node_main.cpp)
-ament_target_dependencies(ublox_gps_node
-  "rclcpp"
-)
+ament_target_dependencies(ublox_gps_node "rclcpp")
 target_link_libraries(ublox_gps_node ublox_gps)
 
-# build logger node
+# Build logger node
 add_executable(ublox_logger_node src/logger_node_pa.cpp src/raw_data_pa.cpp)
 set_target_properties(ublox_logger_node PROPERTIES OUTPUT_NAME ublox_logger)
 ament_target_dependencies(ublox_logger_node
@@ -81,15 +85,29 @@ ament_target_dependencies(ublox_logger_node
   "std_msgs"
 )
 
+# Target installation at lib
 install(TARGETS
-  ublox_gps_node ublox_logger_node
+  ublox_gps_node 
+  ublox_logger_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
-rclcpp_components_register_nodes(ublox_gps
-  "ublox_node::UbloxNode")
+# Directories installation (Linked at share)
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
-install(DIRECTORY include/
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# Composable GPS node (If required)
+rclcpp_components_register_nodes(ublox_gps "ublox_node::UbloxNode")
+
+install(DIRECTORY 
+  include/
   DESTINATION include
 )
 
