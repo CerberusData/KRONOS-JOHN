@@ -100,25 +100,27 @@ ENV ROS_DISTRO=dashing
 # Editors and so on
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
-RUN \ 
-    apt update && \ 
-    apt-get install -y curl \ 
+RUN apt update && apt install -y \
+    curl \
     gnupg2 \ 
     lsb-release && \ 
     # apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
     curl -sSL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC1CF6E31E6BADE8868B172B4F42ED6FBAB17C654' | apt-key add - && \
     sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
-    apt update && \ 
-    # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
-    # command line tools. No GUI tools.
-    apt-get install -y ros-dashing-ros-base \ 
+    rm -rf /var/lib/apt/lists/*
+
+
+RUN apt update && apt-get install -y \ 
+    # Base Installation (Bare Bones): Communication libraries, message packages.
+    ros-dashing-ros-base \     
+    ros-dashing-diagnostic-updater \ 
     python3-colcon-common-extensions \ 
-    # ROS 2 command line tools use argcomplete to autocompletion
-    python3-argcomplete
+    # ROS 2 CLI use argcomplete to autocompletion
+    python3-argcomplete && \ 
+    rm -rf /var/lib/apt/lists/*
 
 # Rosedep
-RUN \ 
-    pip3 install rosdep && \ 
+RUN pip3 install rosdep && \ 
     rosdep init && rosdep update
 
 # Logging variables
@@ -138,8 +140,7 @@ ENV RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1
 ENV OPENCV_VERSION=3.3.0
 ENV OPENCV_CONTRIB_VERSION=3.3.0
 ENV OPENCV_LOG_LEVEL=ERROR
-RUN  \ 
-    apt install -y \
+RUN apt update && apt install -y \
     build-essential \
     cmake \
     git \
@@ -157,14 +158,14 @@ RUN  \
     gfortran  \
     openexr \
     libatlas-base-dev \
-    # python3-dev \
     python3-numpy \
     libtbb2 \
     libtbb-dev \
     libdc1394-22-dev \
-    udev
-RUN \
-    mkdir ~/opencv_build && \
+    udev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir ~/opencv_build && \
     cd ~/opencv_build && \
     git clone -q --branch $OPENCV_VERSION https://github.com/opencv/opencv.git && \
     git clone -q --branch $OPENCV_CONTRIB_VERSION https://github.com/opencv/opencv_contrib.git && \
@@ -188,41 +189,51 @@ RUN \
 
 # -----------------------------------------------------------------------------
 # for cv_bridge package
-RUN  \
-    apt-get install -y cmake \ 
+RUN apt update && apt install -y\
+    cmake \ 
     libblkid-dev \
     e2fslibs-dev \
     libboost-all-dev \
-    libaudit-dev  \
-    can-utils
+    libaudit-dev && \
+    rm -rf /var/lib/apt/lists/*
 
+# -----------------------------------------------------------------------------
+# Sensors and perpection dependencies in here
+RUN apt update && apt install --no-install-recommends -y \
+    can-utils \
+    # Install Fast-RTPS dependencies
+    libasio-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
 RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
     export PATH="${PATH}:/home/ada/.local/bin"
 
 # http://wiki.ros.org/docker/Tutorials/GUI
-RUN  \
-    sudo apt install -y \
+RUN apt update && apt install -y \
     libcanberra-gtk-module \
     libcanberra-gtk3-module
 
 # -----------------------------------------------------------------------------
 # Add Python dependencies in here
-RUN \
-    python3 -m pip install pyserial \
+RUN python3 -m pip install pyserial \
     socketIO-client3
 
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom roboticsp
 # https://docs.freedomrobotics.ai/docs/install
 # USER ada 
-RUN \
-    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
+RUN curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
+
+# -----------------------------------------------------------------------------
+# ${USERNAME} as a user for dialout devices
+RUN adduser ${USERNAME} dialout
 
 # -----------------------------------------------------------------------------
 # For wifi configuration and settings
 ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
-RUN  \
-    apt-get install -y network-manager
+RUN apt install --no-install-recommends -y network-manager \
+    && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get
