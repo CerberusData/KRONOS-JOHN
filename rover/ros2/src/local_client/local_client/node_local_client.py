@@ -221,6 +221,7 @@ class ClientNode(Node, Thread):
             callback_group=self.callback_group,
         )
 
+        self.data_capture_status = None
         self.pub_data_capture = self.create_publisher(
             Bool, "data_capture/capture", 1, callback_group=self.callback_group,
         )
@@ -337,8 +338,13 @@ class ClientNode(Node, Thread):
                             if key == "lid_opened":
                                 self.pwm_msg.channels[2] = 2000 if resp else 0
                                 self.pub_pwm.publish(self.pwm_msg)
-                            elif key == "recording" and resp:
-                                self.pub_data_capture.publish(self.bool_msg)
+                            elif key == "recording":
+                                if self.data_capture_status is None:
+                                    self.data_capture_status=resp
+                                if self.data_capture_status != resp:
+                                    self.bool_msg.data = self.data_capture_status
+                                    self.pub_data_capture.publish(self.bool_msg)
+                                    self.data_capture_status = resp
                             elif key == "enable_driving":
                                 self.pub_arm_request.publish(self.bool_msg)
                             elif key == "autonomous" and resp:
@@ -360,12 +366,12 @@ class ClientNode(Node, Thread):
                     # if (control_update 
                     # and (self.we_client_params["local"] or self._LOCAL_RUN)
                     # and (self.armed or self._LOCAL_RUN)):
-                    
                     if (control_update):
                         self.pub_streaming_idle_restart.publish(self.bool_msg)
                         control_update = False
 
                     self.pub_control.publish(self.control_msg)
+
                 # -------------------------------------------------------------
                 # Operate times for next frame iteration
                 tock = time.time() - self.tick
