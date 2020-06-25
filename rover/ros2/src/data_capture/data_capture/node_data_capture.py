@@ -12,6 +12,7 @@ import subprocess
 import datetime
 import time
 import cv2
+import csv
 import os
 
 from glob import glob
@@ -23,6 +24,9 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
 from threading import Thread, Event
+
+from usr_msgs.msg import CaptureStatus
+from std_msgs.msg import Bool
 
 from vision.utils.vision_utils import printlog
 
@@ -64,6 +68,7 @@ class DataCaptureNode(Node, Thread):
         device = None
         sub_folder_path = "data"  # Get base path
         usb_devices = self.get_mount_points()  # Get connected usb devices
+        # print(usb_devices, flush=True)
         if len(usb_devices):
             usb_device = str(usb_devices[-1][0])
             # Get absolute path to root in usb device
@@ -81,6 +86,55 @@ class DataCaptureNode(Node, Thread):
                 printlog(
                     msg="No USB storage device detected", 
                     msg_type="WARN")
+                return 
+
+        # If path already exits then rename destination folder with new index
+        if self.dest_folder is not None:
+            if os.path.isdir(self.dest_folder):
+                i = 1
+                axu_dest = self.dest_folder + "({})".format(i)
+                while os.path.isdir(axu_dest):
+                    i += 1
+                    axu_dest = self.dest_folder + "({})".format(i)
+                self.dest_folder = axu_dest
+            # Create subfolder to save images
+            sub_folder_path = os.path.join(self.dest_folder, sub_folder_path)
+            if not os.path.isdir(sub_folder_path):
+                os.makedirs(str(sub_folder_path))
+
+        try:  # Create data.csv headers if it not exists
+            printlog(
+                msg="Destination folder: {}".format(self.dest_folder), 
+                msg_type="INFO")
+            self.csv_file = self.create_folder_csv_4data_capture()
+        except Exception as err:
+            self.csv_file = None
+            printlog(
+                msg=f"Error creating csv file, {err}", 
+                msg_type="ERROR")
+
+        # ---------------------------------------------------------------------
+        # Subscribers
+        self.recording = False
+        self._sub_data_capture_capture = self.create_subscription(
+            topic="data_capture/capture",
+            msg_type=Bool,
+            callback=self.cb_data_capture_capture,
+            qos_profile=5,
+            callback_group=self.callback_group,
+        )
+
+        # ---------------------------------------------------------------------
+        # Publishers
+        
+        self.capture_status_msg = CaptureStatus()
+        self.pub_data_capture_status = self.create_publisher(
+            CaptureStatus,
+            "data_capture/status",
+            1,
+            callback_group=self.callback_group,
+        )
+        timer = self.create_timer(1.0, self.tm_cb_data_capture_status)
 
         # ---------------------------------------------------------------------
         # Thread variables
@@ -89,6 +143,21 @@ class DataCaptureNode(Node, Thread):
         self.tick = time.time()
         # self.daemon = True
         self.start()
+
+    def cb_data_capture_capture(self, msg):
+        try:
+            self.recording = msg.data
+        except Exception as e:
+            printlog(msg=e, msg_type="ERROR")
+
+    def tm_cb_data_capture_status(self):
+        try:
+            self.capture_status_msg.percentage = int(self.space_left)
+            self.capture_status_msg.recording = bool(self.recording)
+            self.capture_status_msg.images = int(self.num_imgs)
+            self.pub_data_capture_status.publish(self.capture_status_msg)
+        except Exception as e:
+            printlog(msg=e, msg_type="ERROR")
 
     def create_folder_csv_4data_capture(self):
         """ creates data.csv headers if it not exists and Creates folder for 
@@ -100,10 +169,10 @@ class DataCaptureNode(Node, Thread):
         """
 
         # Create folder if does not exits
-        if os.path.exists(self.dest_folder):
-            message = "Folder for datacapture exists"
-        else:
-            message = "Folder for datacapture does not exist"
+        if not os.path.exists(self.dest_folder):
+            printlog(
+                msg="Folder for datacapture does not exist", 
+                msg_type="WARN")
             os.mkdir(self.dest_folder)
 
         # Path to csv file
@@ -115,7 +184,7 @@ class DataCaptureNode(Node, Thread):
                 writer = csv.writer(fd)
                 writer.writerow(self.csv_header)
 
-        return csv_file, message
+        return csv_file
 
     def get_usb_devices(self):
         sdb_devices = list(map(os.path.realpath, glob("/sys/block/sd*")))
@@ -201,6 +270,7 @@ class DataCaptureNode(Node, Thread):
         Returns:
         """
 
+        self.ready = True
         while True:
             self.tick = time.time()
             try:
