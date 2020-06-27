@@ -212,7 +212,8 @@ RUN \
     htop \
     can-utils \
     network-manager \
-    libasio-dev
+    libasio-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # Add personalized dependencies in here
