@@ -206,9 +206,7 @@ RUN \
 
 # -----------------------------------------------------------------------------
 # Add development, debugging utils/dependencies here
-RUN \
-    apt-get update && \
-    apt-get install -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     htop \
     can-utils \
     network-manager \
@@ -254,12 +252,13 @@ RUN  \
     git clone https://github.com/ros-perception/vision_opencv.git && \ 
     cd vision_opencv && \ 
     git checkout ros2
-RUN  \
-    apt-get install -y cmake \ 
+RUN apt update && apt install --no-install-recommends -y \ 
+    cmake \ 
     libblkid-dev \
     e2fslibs-dev \
     libboost-all-dev \
-    libaudit-dev
+    libaudit-dev \  
+    && rm -rf /var/lib/apt/lists/*
 
 # Compiling ROS2 workspace
 WORKDIR /usr/src/app/dev_ws
@@ -271,9 +270,10 @@ RUN  \
 
 # -----------------------------------------------------------------------------
 # Install Node
-RUN \
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
-    apt-get install -y nodejs
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt update && apt install --no-install-recommends -y \
+    nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 # Local client
 WORKDIR /usr/src/app
