@@ -517,19 +517,20 @@ void UbloxNode::subscribe() {
   // subscribe messages
 
   // Nav Messages
-  if (getRosBoolean(this, "publish.nav.status")) {
-    gps_->subscribe<ublox_msgs::msg::NavSTATUS>([this](const ublox_msgs::msg::NavSTATUS &m) { nav_status_pub_->publish(m); },
-                                           1);
+  if (getRosBoolean(this, "publish.nav.status")) 
+  {
+    gps_->subscribe<ublox_msgs::msg::NavSTATUS>([this](const ublox_msgs::msg::NavSTATUS &m) 
+    { nav_status_pub_->publish(m); }, 1);
   }
 
   if (getRosBoolean(this, "publish.nav.posecef")) {
-    gps_->subscribe<ublox_msgs::msg::NavPOSECEF>([this](const ublox_msgs::msg::NavPOSECEF &m) { nav_posecef_pub_->publish(m); },
-                                            1);
+    gps_->subscribe<ublox_msgs::msg::NavPOSECEF>([this](const ublox_msgs::msg::NavPOSECEF &m)
+    { nav_posecef_pub_->publish(m); }, 1);
   }
 
   if (getRosBoolean(this, "publish.nav.clock")) {
-    gps_->subscribe<ublox_msgs::msg::NavCLOCK>([this](const ublox_msgs::msg::NavCLOCK &m) { nav_clock_pub_->publish(m); },
-                                          1);
+    gps_->subscribe<ublox_msgs::msg::NavCLOCK>([this](const ublox_msgs::msg::NavCLOCK &m) 
+    { nav_clock_pub_->publish(m); }, 1);
   }
 
   // INF messages
@@ -570,27 +571,29 @@ void UbloxNode::subscribe() {
 
   // AID messages
   if (getRosBoolean(this, "publish.aid.alm")) {
-    gps_->subscribe<ublox_msgs::msg::AidALM>([this](const ublox_msgs::msg::AidALM &m) { aid_alm_pub_->publish(m); },
-                                        1);
+    gps_->subscribe<ublox_msgs::msg::AidALM>([this](const ublox_msgs::msg::AidALM &m) 
+    { aid_alm_pub_->publish(m); }, 1);
   }
 
   if (getRosBoolean(this, "publish.aid.eph")) {
-    gps_->subscribe<ublox_msgs::msg::AidEPH>([this](const ublox_msgs::msg::AidEPH &m) { aid_eph_pub_->publish(m); },
-                                        1);
+    gps_->subscribe<ublox_msgs::msg::AidEPH>([this](const ublox_msgs::msg::AidEPH &m) 
+    { aid_eph_pub_->publish(m); }, 1);
   }
 
   if (getRosBoolean(this, "publish.aid.hui")) {
-    gps_->subscribe<ublox_msgs::msg::AidHUI>([this](const ublox_msgs::msg::AidHUI &m) { aid_hui_pub_->publish(m); },
-                                        1);
+    gps_->subscribe<ublox_msgs::msg::AidHUI>([this](const ublox_msgs::msg::AidHUI &m) 
+    { aid_hui_pub_->publish(m); }, 1);
   }
 
-  for (const std::shared_ptr<ComponentInterface> & component : components_) {
+  for (const std::shared_ptr<ComponentInterface> & component : components_) 
+  {
     component->subscribe(gps_);
   }
 }
 
 void UbloxNode::initializeRosDiagnostics() {
-  for (const std::shared_ptr<ComponentInterface> & component : components_) {
+  for (const std::shared_ptr<ComponentInterface> & component : components_) 
+  {
     component->initializeRosDiagnostics();
   }
 }
@@ -827,8 +830,6 @@ void UbloxNode::initialize() {
   // configure diagnostic updater for frequency
   freq_diag_ = std::make_shared<FixDiagnostic>(std::string("fix"), kFixFreqTol,
                                                kFixFreqWindow, kTimeStampStatusMin, nav_rate_, meas_rate_, updater_);
-
-
   initializeIo();
   // Must process Mon VER before setting firmware/hardware params
   processMonVer();
@@ -844,7 +845,8 @@ void UbloxNode::initialize() {
   // Do this last
   initializeRosDiagnostics();
 
-  if (configureUblox()) {
+  if (configureUblox()) 
+  {
     RCLCPP_INFO(this->get_logger(), "U-Blox configured successfully.");
     // Subscribe to all U-Blox messages
     subscribe();

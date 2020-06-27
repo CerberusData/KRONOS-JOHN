@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <inttypes.h>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -53,8 +54,10 @@ class UbloxFirmware7Plus : public UbloxFirmware {
    * is published. This function also calls the ROS diagnostics updater.
    * @param m the message to publish
    */
-  void callbackNavPvt(const NavPVT& m) {
-    if (getRosBoolean(node_, "publish.nav.pvt")) {
+  void callbackNavPvt(const NavPVT& m) 
+  {
+    if (getRosBoolean(node_, "publish.nav.pvt")) 
+    {
       // NavPVT publisher
       nav_pvt_pub_->publish(m);
     }
@@ -112,14 +115,17 @@ class UbloxFirmware7Plus : public UbloxFirmware {
 
     fix_pub_->publish(fix);
 
-    //
+    /*
+      m.p_dop containd the degradation of precision  see NavPVT7.msg
+      printf("%" PRIu16 "\n",m.p_dop);
+    */
+
     // Twist message
-    //
     geometry_msgs::msg::TwistWithCovarianceStamped velocity;
     velocity.header.stamp = fix.header.stamp;
     velocity.header.frame_id = frame_id_;
 
-    // convert to XYZ linear velocity [m/s] in ENU
+    // Convert to XYZ linear velocity [m/s] in ENU
     velocity.twist.twist.linear.x = m.vel_e * 1e-3;
     velocity.twist.twist.linear.y = m.vel_n * 1e-3;
     velocity.twist.twist.linear.z = -m.vel_d * 1e-3;
