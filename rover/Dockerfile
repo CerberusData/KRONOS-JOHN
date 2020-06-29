@@ -28,7 +28,7 @@ RUN dpkg -i cuda-repo-l4t-10-0-local-10.0.326_1.0-1_arm64.deb \
     sudo apt-key add /var/cuda-repo-10-0-local-10.0.326/7fa2af80.pub && \
     apt-get update && \
     apt-get install --no-install-recommends -y apt-utils && \
-    apt-get install -y cuda-toolkit-10-0 cuda-libraries-dev-10-0 && \
+    apt-get install --no-install-recommends -y cuda-toolkit-10-0 cuda-libraries-dev-10-0 && \
     dpkg -i libnvinfer5_5.1.6-1+cuda10.0_arm64.deb \
     libnvinfer-dev_5.1.6-1+cuda10.0_arm64.deb && \
     # Remove packages files
@@ -130,7 +130,7 @@ RUN apt update && apt-get install --no-install-recommends -y \
     apt update && \ 
     # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
     # command line tools. No GUI tools.
-    apt-get install -y ros-dashing-ros-base \ 
+    apt-get install --no-install-recommends -y ros-dashing-ros-base \ 
     ros-dashing-diagnostic-updater \
     python3-colcon-common-extensions \ 
     # ROS 2 command line tools use argcomplete to autocompletion
