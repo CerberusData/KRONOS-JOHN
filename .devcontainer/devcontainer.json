@@ -1,5 +1,5 @@
 {
-    "name": "Jarvis for Medusa in Balena",
+    "name": "Dev container for Medussa",
     "dockerComposeFile": "docker-compose.yml",
     "service": "balena-cli",
     "workspaceFolder": "/workspace",
@@ -7,8 +7,6 @@
     "settings": {
         "terminal.integrated.automationShell.linux": "/bin/bash"
     },
-
-    // "postCreateCommand": ". /workspace/scripts/add-keys.sh"
 
     "extensions": [
 		"ms-azuretools.vscode-docker",
@@ -25,5 +23,8 @@
 		"dbaeumer.vscode-eslint",
 		"2gua.rainbow-brackets",
         "ajshort.msg"
-	]
+	],
+
+	"postCreateCommand": "/workspace/scripts/add-keys.sh"
+
 }

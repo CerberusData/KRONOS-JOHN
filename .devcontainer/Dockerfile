@@ -35,11 +35,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     cmake \ 
     openssh-client && \
     # Install Docker CE CLI
-    apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release && \
+    apt-get install --no-install-recommends -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release && \
     curl -fsSL https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]')/gpg | (OUT=$(apt-key add - 2>&1) || echo $OUT) && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]') $(lsb_release -cs) stable" && \
     apt-get update && \
-    apt-get install -y docker-ce-cli  && \
+    apt-get install --no-install-recommends -y docker-ce-cli  && \
     # Install Docker Compose
     curl -sSL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
     chmod +x /usr/local/bin/docker-compose && \
@@ -51,7 +51,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     groupadd --gid $USER_GID $USERNAME  && \
     useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME && \
     # [Optional] Add sudo support for non-root user
-    apt-get install -y sudo && \
+    apt-get install --no-install-recommends -y sudo && \
     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME && \
     #
@@ -110,7 +110,7 @@ RUN apt update && apt install -y \
     rm -rf /var/lib/apt/lists/*
 
 
-RUN apt update && apt-get install -y \ 
+RUN apt update && apt-get install --no-install-recommends -y \ 
     # Base Installation (Bare Bones): Communication libraries, message packages.
     ros-dashing-ros-base \     
     ros-dashing-diagnostic-updater \ 
