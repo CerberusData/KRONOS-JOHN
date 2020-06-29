@@ -229,8 +229,9 @@ bool UbloxFirmware8::configureUblox(std::shared_ptr<ublox_gps::Gps> gps) {
   return true;
 }
 
-void UbloxFirmware8::subscribe(std::shared_ptr<ublox_gps::Gps> gps) {
-  // Subscribe to Nav PVT
+void UbloxFirmware8::subscribe(std::shared_ptr<ublox_gps::Gps> gps) 
+{
+  // Subscribe to Nav PVT - FIX is published on its callback
   gps->subscribe<ublox_msgs::msg::NavPVT>(
     std::bind(&UbloxFirmware7Plus::callbackNavPvt, this, std::placeholders::_1), 1);
 
