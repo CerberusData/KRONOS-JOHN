@@ -19,5 +19,6 @@ rover/configs/Extrinsic_640_360_B.yaml
 rover/socketio-server
 rover/usb
 rover/tmp
+balena_cli_configs/
 *.pyc
 .vscode
