@@ -3,7 +3,8 @@
 # Kmilo7204 (camiloalvis@kiwibot.com)
 
 # https://www.balena.io/docs/reference/base-images/base-images/#balena-base-images?ref=dockerhub
-FROM balenalib/jetson-tx2-ubuntu:bionic
+# FROM balenalib/jetson-tx2-ubuntu:bionic
+FROM balenalib/jetson-xavier-ubuntu:bionic
 
 ENV DEBIAN_FRONTEND noninteractive
 
