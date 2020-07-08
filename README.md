@@ -2,22 +2,22 @@
 
 <img src="./media/Kiwibot_clou.jpeg" alt="drawing" width="1200"/>  
 
+Since early stages **Kiwibot** has shown amazing ideas, strategies, and developments to propose a new way to perform the last mile delivery, all of that was embodied in a single box (Our first version); however, over the years, and different versions we improved significantly in our logistics, operations, design, and specially the software by using not only pure Robotics but Artificial Intelligence as well. At this stage we are ready to perform new, and astonishing developments for our industry as a world leading company in the last mile delivery with Robots with a new version.
 
-Since early stages **Kiwibot** has shown amazing ideas, strategies and developments to propose a new way to perform the last mile delivery, all of that was embodied in a single box (Our first version); however, over the years and different versions we improved significantly in our logistics, operations, design and specially the software by using not only pure Robotics but Artificial Intelligence as well. At this stage we are ready to perform new and astonishing developments for our industry as a world leading company in the last mile delivery with Robots with a new version.
+**Medusa Project** will contain within an amazing development environment all the software for the new version of the *Kiwibot*. By providing a completely new development environment with the most powerful tools for our developers, we will be able to focus on what is important for us: Make the best *Kiwibot* you've ever seen. We want to give a step forward in every single aspect to keep our little friend at the very top in this field.
 
-**Medusa Project** will contain within an amazing development environment all the software for the new version of the Kiwibot. By providing a completely new development environment with the most powerful tools for our developers, we will be able to focus on what is important for us: Make the best Kiwibot you've ever seen. We want to give a step forward in every single aspect to keep our little friend at the very top in this field.
-
----
 ## **Motivation**
-We have been recollecting and reusing many old scripts from the last two Kiwibot versions (Rover and Apollo), which has led to a considerable technical debt. With that factor in mind with this project we want to provide a wide range of advantages as stated below:
-
-  * The base image and the requirements are allocated in the same repository.
-  * The package requirements are managed in the right way (Good practices).
-  * An easy way to contribute and develop packages for Kiwibot 4.0 which is ROS 2 based.
-  * An easy and fast setup for installation of developer tools within a Dev Container for VS Code.
-
 ---
+We have been recollecting, and reusing many old scripts from the last two *Kiwibot* versions (*Rover 2.x*, and *Apollo 3.x*), which has led to a considerable technical debt. With that factor in mind with this project we want to provide a wide range of advantages as stated below:
+
+  * The base image, and the requirements are allocated in this repository.
+  * The package requirements are managed in the right way ([Good practices](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/s)).
+  * An easy way to contribute, and develop packages for Kiwibot 4.x which is a [ROS 2](https://index.ros.org/doc/ros2/) based platform.
+  * An easy, and fast setup for installation of developer tools within a [Dev Container for VS Code](https://code.visualstudio.com/docs/remote/containers).
+
+
 ## **Project architecture**
+---
 Find the distribution of the project in the next list:
 
 - **media:** Media elements to be used in the container
@@ -34,7 +34,7 @@ Find the distribution of the project in the next list:
 
 Find useful information of: 
 - [Balena](https://www.balena.io/what-is-balena/): Balena primer (Good overall description about this incredible platform).
----
+
 ## **Requirements**
 
 A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main IDE for development. Also:
@@ -58,7 +58,6 @@ We are providing the [balena staged-releases](https://github.com/balena-io-proje
 
    * `staged-releases/balena.env`
 
----
 ## **Running our stack**
 Find a brief explanation on how to run our stack in your IDE and the explanation of the launch file as this is the key to manage which nodes are going to be launched.
 
@@ -101,7 +100,6 @@ For ROS 2 development workspace
 4. Downloads and runs the SocketIO server for Kiwibot local console.
 5. Executes `ros2 launch /configs/bot.launch.py`
 
----
 ## **Kiwibot**
 [Kiwibot](https://www.kiwibot.com/) links on-demand customers with you, we move atoms from point A to B in a safe, efficient, and affordable way.
 
@@ -141,10 +139,8 @@ Meet our incredible team in charge of designing, building, manufacturing and giv
       - [Github](https://github.com/kmilo7204)
 
 
-
 There is also a huge team out of the engineering area which gives a lot of work for our Kiwibot. Even if they are not listed here, they are the key to achieve our goals as a company.
 
----
 ## **Contributing**
 
 ### Code of conduct
@@ -152,7 +148,6 @@ We welcome contributions from everyone, and to ensure our community stays open a
 
 Everyone participating in the Kiwibot development is expected to follow the code of conduct. If someone in the community happens to be violating these terms, please let the project leads know, and we will address it as soon as possible.
 
----
 ## **Support**
 
 Please feel free to contact any of our developers for any questions and help, we will be more than happy to help you:
