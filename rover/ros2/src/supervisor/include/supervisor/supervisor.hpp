@@ -2,6 +2,7 @@
 #define SUPERVISOR_H_INCLUDED
 
 #include <memory>
+#include <chrono>
 #include <utility>
 
 #include "rclcpp/rclcpp.hpp"
@@ -30,6 +31,13 @@ class Supervisor : public rclcpp::Node
 
         // Subscribers callbacks
         void ArmCb(const std_msgs::msg::Bool::SharedPtr msg);
+
+        rclcpp::SyncParametersClient::SharedPtr parameters_client_; 
+
+    private:
+        // ToDo (Kmilo7204) setter and getter
+        double can_test_param_ = 0.0;
+
 };
 
 

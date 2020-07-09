@@ -153,7 +153,8 @@ class Chassis : public rclcpp::Node
         std::shared_ptr<CANDriver> can_driver_;
 
         // Member Messages
-        std::shared_ptr<usr_msgs::msg::Configuration> chassis_cfg_;
+        // std::shared_ptr<usr_msgs::msg::Configuration> chassis_cfg_;
+        usr_msgs::msg::Configuration chassis_cfg_;
 
         // Member Functions
         bool SendMotorsCmd();
