@@ -86,7 +86,7 @@ Set the `default` argument to 1 or 0 to launch a node (Within the described file
 ### **Bash script startBot.sh**
 In order to launch locally (Inside your IDE), please locate into the`configs/` folder and please execute the following bash command.
 
-> bash startBot.sh start
+> bash config/startBot.sh start
 
 This bash performs the following steps to launch the Kiwibot stack:
 
