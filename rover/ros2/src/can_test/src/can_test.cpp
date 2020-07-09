@@ -34,6 +34,15 @@ CANTest::CANTest(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
 
     // Thread to read Socket CAN
     read_thread_ = std::thread(&CANTest::StartCANBusRead, this);
+
+    // Parameters 
+    double numero = 1.5;
+    std::cout << "Harley: >>>" << numero << std::endl;
+    this->declare_parameter("davidson", 20.5); 
+    this->get_parameter("davidson", numero);
+
+    std::cout << "Davidson: >>>" << numero << std::endl;
+
 }
 
 void CANTest::TimerCb()

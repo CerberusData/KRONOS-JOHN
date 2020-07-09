@@ -33,6 +33,16 @@ WheelOdometry::WheelOdometry(const rclcpp::NodeOptions & options)
 
     global_wheel_odom_msg_.header.frame_id = "global_odom";
     global_wheel_odom_msg_.child_frame_id = "base_link";
+
+    this->declare_parameter("odometry_int", 5);
+    int odometry_value = 0;
+    this->get_parameter("odometry_int", odometry_value);
+    double davidson_value = 0.0;
+    this->get_parameter("/can_test/davidson", davidson_value);
+
+    RCLCPP_WARN(this->get_logger(),"Odometry: %x", odometry_value);
+    RCLCPP_WARN(this->get_logger(),"Davidson: %0.2f", davidson_value);
+
 }
 
 /* ------------------------------------------------------------------------- */
@@ -134,9 +144,9 @@ float WheelOdometry::CalculateSlipFactor(float kin_omega, float imu_omega)
     /*
         Difference calculation between the kinematic and IMU angular speed.
     */
-    RCLCPP_INFO(this->get_logger(), 
-        "Kinematic: %0.4f, IMU: %0.4f", 
-        kin_omega, imu_omega);
+    // RCLCPP_INFO(this->get_logger(), 
+    //     "Kinematic: %0.4f, IMU: %0.4f", 
+    //     kin_omega, imu_omega);
 
     float alpha = 1.0f;
     if (kin_omega != 0.0f)
