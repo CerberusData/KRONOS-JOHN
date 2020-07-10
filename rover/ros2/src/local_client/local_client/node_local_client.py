@@ -196,7 +196,7 @@ class ClientNode(Node, Thread):
         # ---------------------------------------------------------------------
         # Publishers
         self.pub_arm_request = self.create_publisher(
-            Bool, "/canlink/chassis/arm", 5, callback_group=self.callback_group,
+            Bool, "/local_client/arm", 5, callback_group=self.callback_group,
         )
 
         self.pwm_msg = PWMOut()
