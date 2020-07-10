@@ -84,7 +84,7 @@ This script contains the nodes information and arguments within our ROS 2 develo
 Set the `default` argument to 1 or 0 to launch a node (Within the described file). This can also be set at `nodes_local_launch.yaml` which will be created when you run the `startBot.sh` script.
 
 ### **Bash script startBot.sh**
-In order to launch locally (Inside your IDE), please locate into the`configs/` folder and please execute the following bash command.
+In order to launch locally (Inside your IDE), please locate into the `rover/` folder and execute the following bash command.
 
 > bash config/startBot.sh start
 
