@@ -78,7 +78,7 @@ class SpeedController : public rclcpp::Node
         float kff_str_ = getEnv("SPEED_CONTROLLER_FF_STEERING", 2.5f);
 
         // Objects
-        std::shared_ptr<SoftSpeedSpline> linear_soft_spline;
+        std::shared_ptr<SoftSpeedSpline> linear_soft_spline_;
 
         // Member attributes
         rclcpp::Time prev_time_;
