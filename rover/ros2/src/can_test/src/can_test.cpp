@@ -37,11 +37,11 @@ CANTest::CANTest(const rclcpp::NodeOptions & options, std::shared_ptr<CANDriver>
 
     // Parameters 
     double numero = 1.5;
-    std::cout << "Harley: >>>" << numero << std::endl;
+    std::cout << "Harley: >>> " << numero << std::endl;
     this->declare_parameter("davidson", 20.5); 
     this->get_parameter("davidson", numero);
 
-    std::cout << "Davidson: >>>" << numero << std::endl;
+    std::cout << "Davidson: >>> " << numero << std::endl;
 
 }
 

@@ -10,10 +10,10 @@ NVIDIA_URL="http://169.44.201.108:7002/jetpacks/4.3/"
 FILE_LIST=(
     "Jetson_Linux_R32.2.3_aarch64.tbz2"
     "cuda-repo-l4t-10-0-local-10.0.326_1.0-1_arm64.deb"
-    "libcudnn7_7.5.0.56-1+cuda10.0_arm64.deb"       // Checked
-    "libcudnn7-dev_7.5.0.56-1+cuda10.0_arm64.deb"   // Checked
-    "libnvinfer5_5.1.6-1+cuda10.0_arm64.deb"        // Checked
-    "libnvinfer-dev_5.1.6-1+cuda10.0_arm64.deb"     // Checked
+    "libcudnn7_7.5.0.56-1+cuda10.0_arm64.deb"       
+    "libcudnn7-dev_7.5.0.56-1+cuda10.0_arm64.deb"   
+    "libnvinfer5_5.1.6-1+cuda10.0_arm64.deb"        
+    "libnvinfer-dev_5.1.6-1+cuda10.0_arm64.deb"     
 )
 URL_LIST=()
 TEGRA_DRIVERS=${FILE_LIST[0]}
