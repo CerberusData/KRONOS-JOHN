@@ -1,31 +1,40 @@
+
+import os 
+import ament_index_python.packages
+import launch
+
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    
     return LaunchDescription([
         # Node(
         #     package = 'canlink',
         #     node_executable = 'canlink_cabin',
         #     output = 'screen'
         # ),
-        Node(
-            package = 'canlink',
-            node_executable = 'canlink_chassis',
-            output = 'screen',
-            arguments = [('__log_level:=info')]
-        ),
         # Node(
-        #     package = 'can_test',
-        #     node_executable = 'test_node',
-        #     output = 'screen'
+        #     package = 'canlink',
+        #     node_executable = 'canlink_chassis',
+        #     output = 'screen',
+        #     arguments = [('__log_level:=info')]
         # ),
+        
         Node(
-            package = 'bosch_imu',
-            node_executable = 'imu',
-            output = 'screen',
-            arguments = [('__log_level:=info')]
+            package = "can_test",
+            node_executable = "test_node",
+            output = "screen",
+            arguments=[("__log_level:=info")]
         ),
+
+        # Node(
+        #     package = 'bosch_imu',
+        #     node_executable = 'imu',
+        #     output = 'screen',
+        #     arguments = [('__log_level:=info')]
+        # ),
         Node(
             package = 'wheel_odometry',
             node_executable = 'wheel_odometry',

@@ -137,6 +137,11 @@ class ImuNode(Node):
             Imu, 'imu/raw_data', 1)         # Raw data - imu_raw_msg
         """
 
+        # Parameters
+        self.declare_parameter("Davidson", 15.2)
+        int_num = self.get_parameter("Davidson").value
+        print(int_num)
+
         # Publisher flags
         self._counter = 0
         self._acc_values = np.array([])

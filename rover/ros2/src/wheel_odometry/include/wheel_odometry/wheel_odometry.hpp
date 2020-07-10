@@ -6,30 +6,30 @@
 #include <vector>
 #include <math.h>
 
-/* ROS2 Default */
+// ROS2 Default 
 #include <rclcpp/rclcpp.hpp>
 
-/* TF2 Transformations */
+// TF2 Transformations
 #include "tf2/convert.h"
 #include "tf2/transform_datatypes.h"
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-/* Custom libraries */
+// Custom libraries
 #include "utils/console.hpp"
 
-/* ROS2 Messages */
+// ROS2 Messages
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 
-/* ROS2 Services */
+// ROS2 Services
 #include "std_srvs/srv/set_bool.hpp"
 
-/* Custom Messages */
+// Custom Messages
 #include "usr_msgs/msg/motors.hpp"
 
 using std::placeholders::_1;

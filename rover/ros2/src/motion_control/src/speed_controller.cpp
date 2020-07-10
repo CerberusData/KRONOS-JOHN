@@ -27,7 +27,7 @@ SpeedController::SpeedController(rclcpp::NodeOptions & options)
     prev_time_ = this->now();
 
     // Soft Speed object
-    linear_soft_spline = std::make_shared<SoftSpeedSpline>(0.8f);
+    linear_soft_spline_ = std::make_shared<SoftSpeedSpline>(0.8f);
 }
 
 void SpeedController::ImuStatusCb(const std_msgs::msg::String::SharedPtr msg)
@@ -200,7 +200,7 @@ void SpeedController::Controller()
     prev_time_ = this->now();
 
     // Arguments: (Reference, Acceleration Factor)
-    float vx_ref = linear_soft_spline->CalculateSoftSpeed(lin_vx, 1.0f);
+    float vx_ref = linear_soft_spline_->CalculateSoftSpeed(lin_vx, 1.0f);
     output_cmd_msg->header.stamp = this->now();
 
     // Arguments: (Reference, Current, dt)
@@ -208,5 +208,3 @@ void SpeedController::Controller()
     output_cmd_msg->twist.linear.x = ThrottlePID(vx_ref, robot_twist_.twist.linear.x, dt); 
     output_cmd_pub_->publish(std::move(output_cmd_msg));
 }
-
-// ToDo: Smart break conditions for handling the speed scaling factor

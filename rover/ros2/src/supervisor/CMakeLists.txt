@@ -19,7 +19,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(usr_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(utils REQUIRED)
 
 include_directories(include)
 
@@ -27,6 +29,8 @@ set(DEPENDENCIES
   rclcpp
   std_msgs
   std_srvs
+  usr_msgs
+  utils
 )
 
 add_executable(supervisor
@@ -34,6 +38,7 @@ add_executable(supervisor
   src/supervisor.cpp
 )
 
+target_link_libraries(supervisor utils::utils)
 ament_target_dependencies(supervisor ${DEPENDENCIES})
 
 install(TARGETS

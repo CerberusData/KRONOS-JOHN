@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # Davidnet (david@kiwibot.com)
 # JohnBetaCode (john@kiwibot.com)
-
+# kmilo7204 (camiloalvis@kiwibot.com)
 # -----------------------------------------------------------------------------
 FROM ubuntu:bionic
 
@@ -14,62 +14,61 @@ ARG USER_GID=$USER_UID
 ENV DEBIAN_FRONTEND=noninteractive
 
 # -----------------------------------------------------------------------------
-RUN echo "Devcontainer"
 RUN apt-get update && apt-get install --no-install-recommends -y \
     apt-utils \
-    dialog \
-    iproute2 \
-    procps \
-    curl \
-    gnupg \
-    python3 \
+    apt-transport-https \
     build-essential \
-    git \
-    jq \
-    sudo \
-    vim \
-    tar \
     bzip2 \
-    lbzip2 \ 
-    wget \ 
+    ca-certificates \
     cmake \ 
-    openssh-client && \
+    curl \
+    dialog \
+    git \
+    gnupg2 \
+    gnupg-agent \
+    iproute2 \
+    jq \
+    lbzip2 \ 
+    procps \
+    python3 \
+    software-properties-common \
+    tar \
+    vim \
+    wget \ 
+    openssh-client \
     # Install Docker CE CLI
-    apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release && \
-    curl -fsSL https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]')/gpg | (OUT=$(apt-key add - 2>&1) || echo $OUT) && \
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]') $(lsb_release -cs) stable" && \
-    apt-get update && \
-    apt-get install -y docker-ce-cli  && \
+    && curl -fsSL https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]')/gpg | (OUT=$(apt-key add - 2>&1) || echo $OUT) \
+    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/$(lsb_release -is | tr '[:upper:]' '[:lower:]') $(lsb_release -cs) stable" \
+    && apt-get update && apt-get install -y docker-ce-cli \
     # Install Docker Compose
-    curl -sSL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
-    chmod +x /usr/local/bin/docker-compose && \
+    && curl -sSL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose \
     # Install Node
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
-    apt-get install -y nodejs && \
+    && curl -sL https://deb.nodesource.com/setup_12.x | bash - \
     # Create a non-root user to use if preferred - see 
     # https://aka.ms/vscode-remote/containers/non-root-user.
-    groupadd --gid $USER_GID $USERNAME  && \
-    useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME && \
+    && apt-get install -y nodejs \
+    && groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
     # [Optional] Add sudo support for non-root user
-    apt-get install -y sudo && \
-    echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
-    chmod 0440 /etc/sudoers.d/$USERNAME && \
-    #
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
     # Clean up
-    apt-get autoremove -y && \
-    apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/*
+    && apt-get autoremove && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN npm install balena-cli -g --production --unsafe-perm && \
     curl -L https://raw.githubusercontent.com/balena-io/balena-cli/master/balena-completion.bash -o /etc/bash_completion.d/balena-completion.bash
 
 # -----------------------------------------------------------------------------
 # Install and upgrade pip3
-RUN \
-    apt-get update && \
-    apt-get -y install python3-pip && \
-    pip3 install -U pip testresources \
-    setuptools
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    && pip3 install -U pip testresources \
+    setuptools \
+    && apt-get autoremove && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # Installing GStreaming
@@ -95,29 +94,30 @@ RUN \
 # -----------------------------------------------------------------------------
 # Installing ros2
 # https://index.ros.org/doc/ros2/Installation/Crystal/Linux-Install-Debians/
+
+## CHECK POINT
+
 ENV ROS_DISTRO=dashing
 
 # Editors and so on
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
-RUN \ 
-    apt update && \ 
-    apt-get install -y curl \ 
-    gnupg2 \ 
-    lsb-release && \ 
-    apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
-    sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list' && \
-    apt update && \ 
-    # ROS-Base Install (Bare Bones): Communication libraries, message packages, 
-    # command line tools. No GUI tools.
-    apt-get install -y ros-dashing-ros-base \ 
+RUN curl -sSL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xC1CF6E31E6BADE8868B172B4F42ED6FBAB17C654' | apt-key add - \
+    && sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
+    # apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 && \
+
+
+RUN apt update && apt-get install -y \ 
+    # Base Installation (Bare Bones): Communication libraries, message packages.
+    ros-dashing-ros-base \     
+    ros-dashing-diagnostic-updater \ 
     python3-colcon-common-extensions \ 
-    # ROS 2 command line tools use argcomplete to autocompletion
-    python3-argcomplete
+    # ROS 2 CLI use argcomplete to autocompletion
+    python3-argcomplete && \ 
+    rm -rf /var/lib/apt/lists/*
 
 # Rosedep
-RUN \ 
-    pip3 install rosdep && \ 
+RUN pip3 install rosdep && \ 
     rosdep init && rosdep update
 
 # Logging variables
@@ -137,8 +137,7 @@ ENV RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED=1
 ENV OPENCV_VERSION=3.3.0
 ENV OPENCV_CONTRIB_VERSION=3.3.0
 ENV OPENCV_LOG_LEVEL=ERROR
-RUN  \ 
-    apt install -y \
+RUN apt update && apt install -y \
     build-essential \
     cmake \
     git \
@@ -156,14 +155,14 @@ RUN  \
     gfortran  \
     openexr \
     libatlas-base-dev \
-    # python3-dev \
     python3-numpy \
     libtbb2 \
     libtbb-dev \
     libdc1394-22-dev \
-    udev
-RUN \
-    mkdir ~/opencv_build && \
+    udev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir ~/opencv_build && \
     cd ~/opencv_build && \
     git clone -q --branch $OPENCV_VERSION https://github.com/opencv/opencv.git && \
     git clone -q --branch $OPENCV_CONTRIB_VERSION https://github.com/opencv/opencv_contrib.git && \
@@ -187,41 +186,51 @@ RUN \
 
 # -----------------------------------------------------------------------------
 # for cv_bridge package
-RUN  \
-    apt-get install -y cmake \ 
+RUN apt update && apt install -y\
+    cmake \ 
     libblkid-dev \
     e2fslibs-dev \
     libboost-all-dev \
-    libaudit-dev  \
-    can-utils
+    libaudit-dev && \
+    rm -rf /var/lib/apt/lists/*
 
+# -----------------------------------------------------------------------------
+# Sensors and perpection dependencies in here
+RUN apt update && apt install --no-install-recommends -y \
+    can-utils \
+    # Install Fast-RTPS dependencies
+    libasio-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
 RUN export PATH="${PATH}:/home/ada/.local/bin/rosdep-source" && \
     export PATH="${PATH}:/home/ada/.local/bin"
 
 # http://wiki.ros.org/docker/Tutorials/GUI
-RUN  \
-    sudo apt install -y \
+RUN apt update && apt install -y \
     libcanberra-gtk-module \
     libcanberra-gtk3-module
 
 # -----------------------------------------------------------------------------
 # Add Python dependencies in here
-RUN \
-    python3 -m pip install pyserial \
+RUN python3 -m pip install pyserial \
     socketIO-client3
 
 # -----------------------------------------------------------------------------
 # Install stuff of freedoom roboticsp
 # https://docs.freedomrobotics.ai/docs/install
 # USER ada 
-RUN \
-    curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
+RUN curl -sSf "https://api.freedomrobotics.ai/accounts/INSTALL_ONLY/devices/GENERIC_DEVICE/installscript?mc_token=INSTALL_ONLY_DEVICE_TOKEN&install_elements=no_ssh,no_credentials,webrtc,service_none,ros2" | python3 
+
+# -----------------------------------------------------------------------------
+# ${USERNAME} as a user for dialout devices
+RUN adduser ${USERNAME} dialout
 
 # -----------------------------------------------------------------------------
 # For wifi configuration and settings
 ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
-RUN  \
-    apt-get install -y network-manager
+RUN apt install --no-install-recommends -y network-manager \
+    && rm -rf /var/lib/apt/lists/*
 
 # -----------------------------------------------------------------------------
 # Switch back to dialog for any ad-hoc use of apt-get

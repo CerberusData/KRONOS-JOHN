@@ -13,17 +13,17 @@
 #include <vector>
 #include <math.h>
 
-/* ROS2 Default */
+// ROS2 Default
 #include <rclcpp/rclcpp.hpp>
 #include <tf2/transform_datatypes.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
-/* Custom libraries */
+// Custom libraries
 #include "canlink/socketCAN.hpp"
 #include "utils/console.hpp"
 
-/* ROS2 Messages */
+// ROS2 Messages
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -32,10 +32,10 @@
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
-/* ROS2 Services */
+// ROS2 Services
 #include "std_srvs/srv/set_bool.hpp"
 
-/* Custom Messages */
+// Custom Messages 
 #include "usr_msgs/msg/configuration.hpp"
 #include "usr_msgs/msg/motors.hpp"
 #include "usr_msgs/msg/test_motors.hpp"
@@ -153,7 +153,8 @@ class Chassis : public rclcpp::Node
         std::shared_ptr<CANDriver> can_driver_;
 
         // Member Messages
-        std::shared_ptr<usr_msgs::msg::Configuration> chassis_cfg_;
+        // std::shared_ptr<usr_msgs::msg::Configuration> chassis_cfg_;
+        usr_msgs::msg::Configuration chassis_cfg_;
 
         // Member Functions
         bool SendMotorsCmd();

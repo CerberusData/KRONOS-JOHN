@@ -52,6 +52,11 @@ case "$1" in
       fi
 
       #  ----------------------------------------------------------------------
+      # Mount USB device
+      mkdir ${PWD%}/usb || true
+      mount /dev/sdb1 usb/ || true
+
+      #  ----------------------------------------------------------------------
       #  ROS2 cv_bridge dependency
       if [ -d "${PWD%}/ros2/src/vision_opencv" ] 
       then
