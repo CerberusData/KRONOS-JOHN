@@ -40,7 +40,7 @@ Tools like ttygif can help, but check out Asciinema for a more sophisticated met
 
 [**Kiwibot**](https://www.kiwibot.com/) links on-demand customers with you, we move atoms from point A to B in a safe, efficient, and affordable way. We are improving people's lives with the world's most affordable and technologic delivery service for local commerce around the world, Since our start in 2017, *Kiwibot* has made over 90,000 deliveries and built over 200 robots to be the number one robot delivery platform on earth.
 
-Since early stages **Kiwibot** has shown amazing ideas, strategies, and developments to propose a new way to perform the last mile delivery, all of that was embodied in a single box (Our first version); however, over the years, and different versions we improved significantly in our logistics, operations, design, and specially the software by using not only pure Robotics but Artificial Intelligence as well. At this stage we are ready to perform new, and astonishing developments for our industry as a world leading company in the last mile delivery with Robots with a new version.
+Since early stages **Kiwibot** has shown amazing ideas, strategies, and developments to propose a new way to perform the last-mile delivery, all of that was embodied in a single box (Our first version); however, over the years, and different versions we improved significantly in our logistics, operations, design, and especially the software by using not only pure Robotics but Artificial Intelligence as well. At this stage, we are ready to perform new, and astonishing developments for our industry as a world-leading company in the last mile delivery with Robots with a new version.
 
 Kiwibot v1.0 | Kiwibot v2.0 | Kiwibot v3.0 | Kiwibot v4.0
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
@@ -66,9 +66,6 @@ We have been recollecting, and reusing many old scripts from the last two *Kiwib
   * An easy way to contribute, and develop packages for Kiwibot 4.x which is a [ROS 2](https://index.ros.org/doc/ros2/) based platform.
   * An easy, and fast setup for installation of developer tools within a [Dev Container for VS Code](https://code.visualstudio.com/docs/remote/containers).
 
-## **Project architecture**
-
-
 <!-- ---------------------------------------------------------------------- -->
 <!-- 
 Installation: Within a particular ecosystem, there may be a common way of 
@@ -85,35 +82,65 @@ while providing links to more sophisticated examples if they are too long to
 reasonably include in the README. 
 -->
 
-Find useful information of: 
-- [Balena](https://www.balena.io/what-is-balena/): Balena primer (Good overall description about this incredible platform).
-
 ## **Installation Requirements**
 
-A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main IDE for development. Make sure you also have:
+A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main IDE for development. Make sure you also have installed:
 
    1. [docker-ce](https://docs.docker.com/install/)
    2. [docker-compose](https://docs.docker.com/compose/install/)
+   3. [Remote development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extensions for VSCode
 
-And for the extensions required:
+## **Balena for Code Deployment**
 
-   1. [Remote development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
-
-As far for installation requirements, the required secrets should be present in:
+As far for production requirements, the required secrets should be present in:
 
    1. `balena_cli_configs/token` --> Token so that `balena-cli` can work without problems. Get it on [balena access-tokens page](https://dashboard.balena-cloud.com/preferences/access-tokens)
-   2. `ssh-keys/id_balena` and `ssh-keys/id_balena.pubkey` --> Pair of ssh keys that should be registered in [balena cloud](https://dashboard.balena-cloud.com/preferences/sshkeys)
+   2. `ssh-keys/id_balena` and `ssh-keys/id_balena.pub` --> Pair of public and private [ssh keys](https://confluence.atlassian.com/bitbucketserver/creating-ssh-keys-776639788.html) that should be registered in [balena cloud](https://dashboard.balena-cloud.com/preferences/sshkeys).
 
 Please stick to the provided names, otherwise it won't work as out-of-the-box. Notice you shouldn't **ADD SECRET KEYS TO THE REPO**.
 
-### **Add-ons Provided**
-We are providing the [balena staged-releases](https://github.com/balena-io-projects/staged-releases) as a `git submodule`, you can init the submodule and change the required variables in:
+Find useful information of: 
+- [Balena](https://www.balena.io/what-is-balena/): Balena primer (Good overall description about this incredible platform).
+
+**Add-ons Provided**: We are providing the [balena staged-releases](https://github.com/balena-io-projects/staged-releases) as a `git submodule`, you can init the submodule and change the required variables in:
 
    * `staged-releases/balena.env`
 
+## **Architecture**
+
+Find the distribution of Medussa project in the next list:
+
+- **[rover](https://github.com/kiwicampus/medusa-project/tree/master/rover):** Main folder where most of the source code is located
+   - **[balena_configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/balena_configs)**
+   - **[configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs):** kiwibot config files as cameras ports, calibrations, and other scripts to launch and keep process alive.
+      - [*startBot.sh:*](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/startBot.sh) bash script to run stack of robot
+      - [*local_env_vars.sh:*](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/local_env_vars.sh) local environment variables
+      - [*cams_conf.yaml:*](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/cams_conf.yaml) configuration of cameras ports (There's a local-run version) 
+      - *nodes_local_launch.yaml:* nodes to launch
+   - **[data](https://github.com/kiwicampus/medusa-project/tree/master/rover/data):** media data to be used in code as videos or images
+   - **[packages](https://github.com/kiwicampus/medusa-project/tree/master/rover/packages):** Download script for searching and decompressing the Nvidia packages to build GPU containers for Balena. Cuda DNN (cuDNN) is included here.
+   - **[ros2/src](https://github.com/kiwicampus/medusa-project/tree/master/rover/ros2/src):** Development workspace & ROS 2 packages 
+   - **[Dockerfile](https://github.com/kiwicampus/medusa-project/blob/master/rover/Dockerfile):** Dockerfile built in Balena Cloud Build Server
+- **[scripts](https://github.com/kiwicampus/medusa-project/tree/master/scripts):** rover scripts, example add ssh keys to session
+- **ssh-keys:** pair of ssh keys for authentication in deployment
+   - *id_balena*
+   - *id_balena.pub*
+- **staged-releases:** balena git sub-module
+- **[.devcontainer](https://github.com/kiwicampus/medusa-project/tree/master/.devcontainer):** VSCode development container configs, and dev-docker file
+
+Only some files are listed, and explained (most important).
+
 ## **Running our stack**
 
-Find a brief explanation on how to run our stack in your IDE and the explanation of the launch file as this is the key to manage which nodes are going to be launched.
+Find a brief explanation on how to run our stack in your IDE and the explanation of the launch file, and config files as the key to managing which nodes are going to be launched and how they're going to work.
+
+You can compile and launch everything by your own if you already have a background an experience with ROS/ROS2, but for those who want everything easy, and fast we have created a bash script to set up and run everything for you. The bash script ``bot.launch.py`` have all instruction to download third-party packages, setup, and source the ros2 workspace, and then launch the nodes specified in the file ``nodes_local_launch.yaml`` (File created when you start or run the script for the first time).
+
+      Starting Robot
+      /workspace/rover/configs/cams_conf_local.yaml no exist, creating one
+      cams_conf_local.yaml file created, run again script!
+
+      socketio-server installed, run again script!
 
 ### **Python script bot.launch.py**
 This script contains the nodes information and arguments within our ROS 2 development workspace in order to launch them in a single command (ros2 launch <name>). Please note that this is the standard form to launch nodes in ROS 2.
@@ -136,13 +163,8 @@ This script contains the nodes information and arguments within our ROS 2 develo
 
 Set the `default` argument to 1 or 0 to launch a node (Within the described file). This can also be set at `nodes_local_launch.yaml` which will be created when you run the `startBot.sh` script.
 
-<<<<<<< HEAD
-### **Starting the Bot**
-In order to launch locally (Inside your IDE), please locate into the`configs/` folder and please execute the following bash command.
-=======
 ### **Bash script startBot.sh**
 In order to launch locally (Inside your IDE), please locate into the `rover/` folder and execute the following bash command.
->>>>>>> origin
 
 > bash config/startBot.sh start
 
