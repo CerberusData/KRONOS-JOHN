@@ -44,6 +44,8 @@ set(MSG_FILES
   "msg/web_client/Control.msg"
   # Data Capture
   "msg/data_capture/CaptureStatus.msg"
+  # Control
+  # include here your message!!
 )
 
 # Message generation

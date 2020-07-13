@@ -9,7 +9,7 @@
 #include "std_msgs/msg/float32.hpp"
 
 // Custom messages
-//#include "usr_msgs/msg/robot_position.hpp"
+// #include "usr_msgs/msg/robot_position.hpp"
 
 using std::placeholders::_1;
 
@@ -19,11 +19,10 @@ public:
     Control(const rclcpp::NodeOptions & options, double angle);
     ~Control(){};
 
-
-// private:
+// Publishers
+//private:
     /*
-        Name here both publishers, one with the std_msgs [Float32] and other 
-        with usr_msgs [RobotPosition]
+        Name here the publisherm with usr_msgs [RobotPosition]
 
         Find more information about creating publishers:
             https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/
@@ -31,6 +30,7 @@ public:
         Example:
             rclcpp::Publisher<message_type>::SharedPtr pub_name;
     */
+
 
 // Timers
 private: 
@@ -45,7 +45,12 @@ private:
     void PubTimerCb();
     
     /*
-        This function will calculate the Robot position based on the unit circle
+        Desc:
+            This function will calculate the Robot position based on the unit circle
+        Args:
+            Angle: Current unit alpha angle in Rad for the unit circle
+        Returns:
+            std::vector<double> of two positions (X and Y)
     */
     std::vector<double> CalculatePosition(double angle);
 

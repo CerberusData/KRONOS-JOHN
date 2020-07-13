@@ -10,7 +10,7 @@ Control::Control(const rclcpp::NodeOptions & options, double angle)
             https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/
 
         Example:
-            pub_name = this->create_publisher<msg_type>("topic_name", queue_size)
+            pub_name = this->create_publisher<msg_type>("/control_node/robot_position", 10)
     */
 
     // Timer definitions - 500 ms
@@ -28,8 +28,9 @@ void Control::PubTimerCb()
         Example for message definition: 
             auto msg = std::make_unique<msg_type>();
             msg->data = value;
-            pub_name->publish(msg);
-
+            pub_name->publish(std::move(msg));
+        
+        Note: For filling the timestamp you can use this->now()
     */
     
     RCLCPP_WARN(this->get_logger(),
@@ -53,7 +54,6 @@ std::vector<double> Control::CalculatePosition(double angle)
     
     return pos;
 }
-
 
 
 int main(int argc, char *argv[])
