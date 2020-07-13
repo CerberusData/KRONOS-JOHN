@@ -44,7 +44,7 @@ Since early stages **Kiwibot** has shown amazing ideas, strategies, and developm
 
 Kiwibot v1.0 | Kiwibot v2.0 | Kiwibot v3.0 | Kiwibot v4.0
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-<img src="http://drive.google.com/uc?export=view&id=1GOcFQt8wGng8ymqBtVweETj49wUv4q0w" alt="drawing" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1ppBbyP2G2DhslTTYs5nEtaWRXLJf3iV7" alt="drawing" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=11FoNzn1UaJP1YVBZO6tEF4JxQL0UtnRF" alt="drawing" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1bSNtAqbCF_sOXJrbDsTwRsg7RW-H-d-m" alt="drawing" width="500"/> 
+<img src="http://drive.google.com/uc?export=view&id=1GOcFQt8wGng8ymqBtVweETj49wUv4q0w" alt="kiwibot_v1" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1ppBbyP2G2DhslTTYs5nEtaWRXLJf3iV7" alt="kiwibot_v2" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=11FoNzn1UaJP1YVBZO6tEF4JxQL0UtnRF" alt="kiwibot_v3" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1bSNtAqbCF_sOXJrbDsTwRsg7RW-H-d-m" alt="kiwibot_v4" width="500"/> 
 
 
 <!-- ---------------------------------------------------------------------- -->
@@ -191,7 +191,6 @@ Please feel free to contact any of our developers for any questions and help, we
 to list them in the README.  -->
 
 ## **Shortcomings & Improvements**
----
 
 <!-- ---------------------------------------------------------------------- -->
 <!-- License: For open source projects, say how it is licensed.  -->
@@ -208,7 +207,7 @@ contributed to the project.  -->
 
 Meet our incredible team in charge of designing, building, manufacturing and giving life to our most loved friend the *Kiwibot*.
 
-<img src="http://drive.google.com/uc?export=view&id=1qo3nVPn5kqNNMWJtORuZQRyNRUgeceAP" alt="kiwi_banner" width="1200"> 
+<img src="http://drive.google.com/uc?export=view&id=1qo3nVPn5kqNNMWJtORuZQRyNRUgeceAP" alt="kiwi_ai_team" width="1200"> 
 
 **AI & Robotics**: [John Betancourt ](https://www.linkedin.com/in/john-betancourt-345557129/) [AI Team Leader - Robotics Engineer], [Camilo Alvis](https://www.linkedin.com/in/camiloalvis/) [Control and Robotics], [Marcela Gomez](https://www.linkedin.com/in/marcela-gomez-cardona-7b2190161/) [QA and testing] / **Old Members** (We couldn't have done it without you): [David Cardozo](https://www.linkedin.com/in/davidcardozo/), [Juan Galvis](https://www.linkedin.com/in/jdgalviss/), [Robin Deuber](https://www.linkedin.com/in/robin-deuber/), [Juan Jurado](https://www.linkedin.com/in/juanfjuradop/), [Jason Oviedo](https://www.linkedin.com/in/jason-oviedo-46611914/), [Juan Rios](https://www.linkedin.com/in/juan-david-r%C3%ADos-ruiz-81474b54/), [Camila Rincones](https://www.linkedin.com/in/camila-rincones-casta%C3%B1eda/), [Juan Ramirez](https://www.linkedin.com/in/juan-pablo-ramirez-franco-530b80129/), [Mario Morales](https://www.linkedin.com/in/emetricz/), [Carlos Alvarez](https://www.linkedin.com/in/calvarez92/), [Milad Noori](https://www.linkedin.com/in/milad-noori-2854b8191/), [Mauricio Reyes](https://www.linkedin.com/in/mauricio-reyes-hurtado/), [Cristian Garcia](https://www.linkedin.com/in/cgarciae/).
 
@@ -221,7 +220,7 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 (USA) Berkeley | (Asia) Taipei | (LATAM) Medellin | Around The World
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-<img src="http://drive.google.com/uc?export=view&id=1USGSr7vA8cEZ7iT2BEdkfuX7BU0IY8mL" alt="drawing" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1VzQ535RN66FJvvaKpNHgEX_YPgl4WYH4" alt="drawing" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1XO0QbDhHlhn4ENVqVAUebt5cdxvtxtKq" alt="drawing" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1gyndVpR2_r9NvZP8zokTDQJcqFBorv-v" alt="drawing" width="500"/> 
+<img src="http://drive.google.com/uc?export=view&id=1USGSr7vA8cEZ7iT2BEdkfuX7BU0IY8mL" alt="kiwibot_berkeley" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1VzQ535RN66FJvvaKpNHgEX_YPgl4WYH4" alt="kiwibot_taipei" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1XO0QbDhHlhn4ENVqVAUebt5cdxvtxtKq" alt="kiwibot_medellin" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1gyndVpR2_r9NvZP8zokTDQJcqFBorv-v" alt="kiwibot_streets" width="500"/> 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot in the News**
@@ -229,7 +228,7 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot's Media**
-g src="https://img.youtube.com/vi/zwO4Pw6FNCU/0.jpg" width="220">](https://www.youtube.com/watch?v=zwO4Pw6FNCU)
+[<img src="https://img.youtube.com/vi/zwO4Pw6FNCU/0.jpg" width="220">](https://www.youtube.com/watch?v=zwO4Pw6FNCU)
 [<img src="https://img.youtube.com/vi/iyO9TJHEQ7E/0.jpg" width="220">](https://www.youtube.com/watch?v=iyO9TJHEQ7E)
 [<img src="https://img.youtube.com/vi/4l6janxFHyg/0.jpg" width="220">](https://www.youtube.com/watch?v=4l6janxFHyg)
 [<img src="https://img.youtube.com/vi/0BKYZx42hwg/0.jpg" width="220">](https://www.youtube.com/watch?v=0BKYZx42hwg)
