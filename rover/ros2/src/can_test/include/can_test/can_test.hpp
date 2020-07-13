@@ -118,6 +118,10 @@ class CANTest : public rclcpp::Node
 
         /* Socket CAN thread */
         std::thread read_thread_;
+
+        // Parameters 
+        // rclcpp::Parameter debug_int 
+        // int debug_ = 0;
 };
 
 #endif

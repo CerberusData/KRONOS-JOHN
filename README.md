@@ -90,7 +90,7 @@ Find useful information of:
 
 ## **Installation Requirements**
 
-A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main IDE for development. Also:
+A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main IDE for development. Make sure you also have:
 
    1. [docker-ce](https://docs.docker.com/install/)
    2. [docker-compose](https://docs.docker.com/compose/install/)
@@ -104,7 +104,7 @@ As far for installation requirements, the required secrets should be present in:
    1. `balena_cli_configs/token` --> Token so that `balena-cli` can work without problems. Get it on [balena access-tokens page](https://dashboard.balena-cloud.com/preferences/access-tokens)
    2. `ssh-keys/id_balena` and `ssh-keys/id_balena.pubkey` --> Pair of ssh keys that should be registered in [balena cloud](https://dashboard.balena-cloud.com/preferences/sshkeys)
 
-Please stick to the provided names, otherwise it won't work as out-of-the-box. Also **DO NOT ADD SECRETS TO THE REPO**.
+Please stick to the provided names, otherwise it won't work as out-of-the-box. Notice you shouldn't **ADD SECRET KEYS TO THE REPO**.
 
 ### **Add-ons Provided**
 We are providing the [balena staged-releases](https://github.com/balena-io-projects/staged-releases) as a `git submodule`, you can init the submodule and change the required variables in:
@@ -136,10 +136,15 @@ This script contains the nodes information and arguments within our ROS 2 develo
 
 Set the `default` argument to 1 or 0 to launch a node (Within the described file). This can also be set at `nodes_local_launch.yaml` which will be created when you run the `startBot.sh` script.
 
+<<<<<<< HEAD
 ### **Starting the Bot**
 In order to launch locally (Inside your IDE), please locate into the`configs/` folder and please execute the following bash command.
+=======
+### **Bash script startBot.sh**
+In order to launch locally (Inside your IDE), please locate into the `rover/` folder and execute the following bash command.
+>>>>>>> origin
 
-> bash startBot.sh start
+> bash config/startBot.sh start
 
 This bash performs the following steps to launch the *Kiwibot* stack:
 
