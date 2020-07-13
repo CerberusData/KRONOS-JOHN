@@ -54,12 +54,11 @@ or a Background subsection can also be added here. If there are alternatives
 to your project, this is a good place to list differentiating factors.  -->
 
 ## **Description**
----
 
 **Medusa Project** will contain within an amazing development environment all the software for the new version of the [*Kiwibot*](https://www.kiwibot.com/). By providing a completely new development environment with the most powerful tools for our developers, we will be able to focus on what is important for us: Make the best *Kiwibot* you've ever seen. We want to give a step forward in every single aspect to keep our little friend at the very top in this field.
 
 ## **Motivation**
----
+
 We have been recollecting, and reusing many old scripts from the last two *Kiwibot* versions (*Rover 2.x*, and *Apollo 3.x*), which have led to a considerable technical debt. With that factor in mind with this project we want to provide a wide range of advantages as stated below:
 
   * The base image, and the requirements are allocated in this [repository](https://github.com/kiwicampus/medusa-project).
@@ -68,7 +67,6 @@ We have been recollecting, and reusing many old scripts from the last two *Kiwib
   * An easy, and fast setup for installation of developer tools within a [Dev Container for VS Code](https://code.visualstudio.com/docs/remote/containers).
 
 ## **Project architecture**
----
 
 
 <!-- ---------------------------------------------------------------------- -->
@@ -173,7 +171,7 @@ especially helpful if it requires external setup, such as starting a Selenium
 server for testing in a browser.  -->
 
 ## **Contributing**
----
+
 We welcome contributions from everyone, and to ensure our community stays open and healthy we adhere to the Contributor Covenant, a widely used code of conduct adopted by many other communities such as Linux, Ruby on Rails and GitLab. Everyone participating in the *Kiwibot* development is expected to follow the code of conduct. If someone in the community happens to be violating these terms, please let the project leads know, and we will address it as soon as possible.
 
 <!-- ---------------------------------------------------------------------- -->
@@ -181,7 +179,7 @@ We welcome contributions from everyone, and to ensure our community stays open a
 combination of an issue tracker, a chat room, an email address, etc.  -->
 
 ## **Support**
----
+
 Please feel free to contact any of our developers for any questions and help, we will be more than happy to help you:
 
 * [Camilo Alvis](https://www.linkedin.com/in/camiloalvis/): `camiloalvis@kiwicampus.com` 
@@ -199,14 +197,14 @@ to list them in the README.  -->
 <!-- License: For open source projects, say how it is licensed.  -->
 
 ## **License**
----
 
+---
 <!-- ---------------------------------------------------------------------- -->
 <!-- Authors and acknowledgment: Show your appreciation to those who have 
 contributed to the project.  -->
 
 ## **Kiwibot Ai & Robotics Team**
----
+
 
 Meet our incredible team in charge of designing, building, manufacturing and giving life to our most loved friend the *Kiwibot*.
 
@@ -220,7 +218,6 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot Around the World**
----
 
 (USA) Berkeley | (Asia) Taipei | (LATAM) Medellin | Around The World
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
@@ -228,19 +225,18 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot in the News**
----
+
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot's Media**
----
-[<img src="https://img.youtube.com/vi/zwO4Pw6FNCU/0.jpg" width="220">](https://www.youtube.com/watch?v=zwO4Pw6FNCU)
+g src="https://img.youtube.com/vi/zwO4Pw6FNCU/0.jpg" width="220">](https://www.youtube.com/watch?v=zwO4Pw6FNCU)
 [<img src="https://img.youtube.com/vi/iyO9TJHEQ7E/0.jpg" width="220">](https://www.youtube.com/watch?v=iyO9TJHEQ7E)
 [<img src="https://img.youtube.com/vi/4l6janxFHyg/0.jpg" width="220">](https://www.youtube.com/watch?v=4l6janxFHyg)
 [<img src="https://img.youtube.com/vi/0BKYZx42hwg/0.jpg" width="220">](https://www.youtube.com/watch?v=0BKYZx42hwg)
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot's Projects Media**
----
+
 [<img src="https://img.youtube.com/vi/Z4jQc3-psy8/0.jpg" width="220">](https://www.youtube.com/watch?v=Z4jQc3-psy8)
 [<img src="https://img.youtube.com/vi/0U3lQ1u-Hd4/0.jpg" width="220">](https://www.youtube.com/watch?v=0U3lQ1u-Hd4)
 [<img src="https://img.youtube.com/vi/VX4ywdUtaI4/0.jpg" width="220">](https://www.youtube.com/watch?v=VX4ywdUtaI4)
