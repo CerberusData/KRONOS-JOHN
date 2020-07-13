@@ -5,9 +5,11 @@ Control::Control(const rclcpp::NodeOptions & options)
 {
     /*
         Define here both publishers publishers
+        
+        Find more information:
+            https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/
 
         Example:
-            https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/
             pub_name = this->create_publisher<msg_type>("topic_name", queue_size)
     */
 
@@ -22,7 +24,7 @@ void Control::PubTimerCb()
     /*
         Use this timer callback to publish your messages.
         
-        Example: 
+        Example for message definition: 
             auto msg = std::make_unique<msg_type>();
             pub_name->publish(msg);
 
