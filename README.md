@@ -94,7 +94,7 @@ A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main
 
 If you have your [VSCode](https://code.visualstudio.com/) with the right extensions, and if you have Docker and Docker-compose installed in your system, when you open the Mudussa Project's main folder you'll see a window on the bottom right corner, click in "reopen in container" button, if you don't see anything press `Ctrl+Shift+P` and type `Remote-Containers: Rebuild and Reopen in container` option. When the container is opened, and executed for the first time or when there're changes on it, you can go for a walk because the building image process will start which it'll take a while due to the installation of all packages and dependencies of the dev-environment as [ROS2](https://index.ros.org/doc/ros2/), [OpenCV](https://opencv.org/), [Python](https://www.python.org/), [TensorFlow](https://www.tensorflow.org/), and more stuff related to, while the process is complete here are some videos of [puppies](https://www.youtube.com/watch?v=mRf3-JkwqfU). You can see at any time the logs of the building process clicking in `Starting with Dev Container` on the bottom right corner. When the process is done you'll see some messages of process succeed.
 
-<img src="http://drive.google.com/uc?export=view&id=1aJJtdZl8BvQN48k0wBaNq3hBTq6HZPDK" alt="kiwi_banner" width="1200"> 
+<img src="https://user-images.githubusercontent.com/43115782/87437367-d5806200-c5b3-11ea-9bf2-836e45f46ed8.gif" alt="building_dev-container" width="1200"> 
 
 When the process is done you can open a terminal in the dev-container going to the menu bar `Terminal` and then `New Terminal`. Congratulations now you have everything that we use for our deployments and developments.
 
@@ -172,7 +172,7 @@ The script creates missing files when is launched for the first time, so, you ha
 
 When the script finishes the building, and the compilation process you'll see the local console window with default configs as shown next:
 
-<img src="http://drive.google.com/uc?export=view&id=1jkhcazUrQ76aaOhOmrsW_O8i3DXq_nkV" alt="kiwi_banner" width="1200"> 
+<img src="https://user-images.githubusercontent.com/43115782/87437303-beda0b00-c5b3-11ea-8bdb-3a3d050a4fab.gif" alt="starting_kiwibot" width="1200"> 
 
 *Note:* if you are having troubles or errors getting the user interface window, read about [Docker image with OpenCV with X11 forwarding for GUI](https://marcosnietoblog.wordpress.com/2017/04/30/docker-image-with-opencv-with-x11-forwarding-for-gui/) for explanations, and then run the  [``startXHost.sh``](https://github.com/kiwicampus/medusa-project/blob/feature/readme/rover/configs/startXHost.sh) script in the host terminal, or just run the prompt command (Do not this in the dev-container terminal):
 
@@ -204,7 +204,7 @@ For more config files check the [configs](https://github.com/kiwicampus/medusa-p
 
 ## **Launching Local Console**
 
-<img src="http://drive.google.com/uc?export=view&id=1kO1jZ8A1Px5o64SVunupojsA7MWimOqt" alt="kiwi_local_console" width="1200"> 
+<img src="https://user-images.githubusercontent.com/43115782/87437246-ac5fd180-c5b3-11ea-9e63-1a2bda975f3a.gif" alt="kiwi_local_console" width="1200"> 
 
 <!-- ---------------------------------------------------------------------- -->
 <!-- State if you are open to contributions and what your requirements are for 
