@@ -180,25 +180,27 @@ When the script finishes the building, and the compilation process you'll see th
 
 ## **Launching Specific Nodes**
 
-This script contains the nodes information and arguments within our ROS 2 development workspace in order to launch them in a single command (ros2 launch <name>). Please note that this is the standard form to launch nodes in ROS 2.
+The file ``nodes_local_launch.yaml`` created by [``bot.launch.py ``](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/bot.launch.py) if there's no one when running [``startBot.sh``](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/startBot.sh), allows to you to select or config the nodes that you want to run. 
 
-   - Vision nodes:
-      - NODE_VIDEO_MAPPING
-      - NODE_VIDEO_CALIBRATION
-      - NODE_VIDEO_PARTICLE
-      - NODE_LOCAL_CONSOLE
+In ``nodes_local_launch.yaml`` set the argument ``launch`` of every element in the yaml list to 1 or 0 to launch a node or not. Belows there's a description of the actually node by packages that currently the project has:
+
+   - [``Vision nodes``](rover/ros2/src/vision):Nodes, and packages for cameras handling, computer vision, and vision perception algorithms, and other vision utils
+      - [``NODE_VIDEO_MAPPING``](rover/ros2/src/vision/node_video_mapping.py): Cameras handling, video streaming publishers, and local user graphics
+      - NODE_VIDEO_CALIBRATION: Cameras stereo and mono calibration algorithms
+      - NODE_VIDEO_PARTICLE: Cameras stereo and mono calibration algorithms
+      - NODE_LOCAL_CONSOLE:
 
    - Control nodes
-      - NODE_CANLINK_CHASSIS: 
-      - NODE_CANLINK_CABIN
+      - NODE_CANLINK_CHASSIS: Managment of the connection between the main board and the kiwibot's system. This node contains the logic and tools to read and share, the battery status, the chassis status (Including motors), as well as managing of other chassis and control features.
+      - NODE_CANLINK_CABIN: Similar to the Chassis Node it is on charge of managing the lock system and the lights of the robot.
    
    - Local client node
-      - NODE_LOCAL_CLIENT
+      - NODE_LOCAL_CLIENT:
    
    - Data capture node
-      - NODE_DATA_CAPTURE
+      - NODE_DATA_CAPTURE:
 
-Set the `default` argument to 1 or 0 to launch a node (Within the described file). This can also be set at `nodes_local_launch.yaml` which will be created when you run the `startBot.sh` script.
+You can launch them in a single command (ros2 launch <name>) if you want as well, please note that this is the standard form to launch nodes in ROS 2.
 
 For more config files check the [configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs) folder.
 
