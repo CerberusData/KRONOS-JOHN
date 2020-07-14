@@ -139,7 +139,8 @@ def generate_launch_description():
             "node_name": "local_console",
             "package": "vision",
             "output": "screen",
-            "launch": int(os.getenv(key="NODE_LOCAL_CONSOLE", default=0)),
+            "launch": int(os.getenv(key="NODE_LOCAL_CONSOLE", 
+                default=1 if int(os.getenv(key="LOCAL_LAUNCH", default=0)) else 0)),
         },
         # ---------------------------------------------------------------------
         # Control Nodes
@@ -161,7 +162,7 @@ def generate_launch_description():
             "node_executable": "local_client",
             "package": "local_client",
             "output": "screen",
-            "launch": int(os.getenv(key="NODE_LOCAL_CLIENT", default=0)),
+            "launch": int(os.getenv(key="NODE_LOCAL_CLIENT", default=1)),
         },
         # ---------------------------------------------------------------------
         # Data Capture
@@ -169,7 +170,7 @@ def generate_launch_description():
             "node_executable": "data_capture",
             "package": "data_capture",
             "output": "screen",
-            "launch": int(os.getenv(key="NODE_DATA_CAPTURE", default=0)),
+            "launch": int(os.getenv(key="NODE_DATA_CAPTURE", default=1)),
         },
         # ---------------------------------------------------------------------
         # Incredible node
