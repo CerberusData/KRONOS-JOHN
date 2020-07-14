@@ -157,9 +157,9 @@ This bash performs the following steps to launch the *Kiwibot* stack:
 For ROS 2 development workspace
 
 1. Sources ROS Dashing and clean the older development workspace (If enabled).
-2. Builds the development workspace at `rover/ros2/`
+2. Builds the development workspace at [`rover/ros2/`](rover/ros2)
 3. Sources the resulting setup in the install folder `. install/setup.bash`
-4. Executes `ros2 launch /configs/bot.launch.py`
+4. Executes [`ros2 launch /configs/bot.launch.py`](rover/configs/bot.launch.py)
 
 You can compile and launch everything by your own if you already have a background an experience with ROS/ROS2, but for those who want everything easy, and fast the bash script will set up and run everything for you. With the [``startBot.sh``](rover/configs/startBot.sh) bash script you can run the stack of the robot, this file has all instruction to download third-party packages, other required dependencies if they're missing, and setup, source, and run the ros2 workspace, launching the nodes specified in the file ``nodes_local_launch.yaml`` (File created when you start or run the script for the first time). 
 
@@ -297,6 +297,12 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot in the News**
+
+
+ | | | | | |
+:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
+Portafolio | Businessinsider | The New York Times | Techcrunch | Newscientist
+[<img src="https://www.portafolio.co/files/article_multimedia/uploads/2020/04/16/5e98bba4b76d0.jpeg" width="150">](https://www.portafolio.co/negocios/empresas/colombia-hoy-rappi-pone-en-marcha-plan-piloto-para-entregas-con-robots-539959)| [<img src="https://i.insider.com/5eaadbd1cdfd48542c3e6a48?width=900&format=jpeg&auto=webp" width="150">](https://www.businessinsider.com/delivery-startup-using-robots-in-colombia-to-avoid-coronavirus-2020-4)| [<img src="https://static01.nyt.com/images/2019/11/08/business/07wheels-oak1/merlin_163524789_c8c7379d-6f33-4008-92c7-1c5adc3991aa-superJumbo.jpg?quality=90&auto=webp" width="150">](https://www.nytimes.com/2019/11/07/business/kiwibot-delivery-bots-drones.html)| [<img src="https://media.metrolatam.com/2019/08/26/kiwibot1-7ecb4d6a040f81f0af995e9c9064dfcf.jpg" width="150">](https://techcrunch.com/2019/04/25/kiwis-food-delivery-bots-are-rolling-out-to-12-new-colleges/?guccounter=1&guce_referrer=aHR0cHM6Ly93d3cua2l3aWJvdC5jb20v&guce_referrer_sig=AQAAAI2Kb9jFB6ouWToUhpiZszmts3-4fsGKzyxGs1naC3LNkv7Ra7ye5VMEkmx66Z_ZN16i-pax1clzWpcj4OQ4FcWFgSEs0h5yvp0URTcr_streMHeGdn6X5z06TDTkN0PjRHFClW8yuSPlvqb7gjSQ7yQxITVfr_rhgThkA9SsOKy) | [<img src="https://images.newscientist.com/wp-content/uploads/2017/12/07174953/kj9fw9.jpg?width=778" width="170">](https://www.newscientist.com/article/2155830-food-delivery-robots-are-teaching-themselves-how-to-cross-roads/)
 
 
 <!-- ---------------------------------------------------------------------- -->
