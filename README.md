@@ -118,23 +118,23 @@ Find useful information of:
 
 Find the distribution of Medussa project in the next list:
 
-- **[rover](https://github.com/kiwicampus/medusa-project/tree/master/rover):** Main folder where most of the source code is located
-   - **[balena_configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/balena_configs)**
-   - **[configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs):** kiwibot config files as cameras ports, calibrations, and other scripts to launch and keep process alive.
-      - [*startBot.sh:*](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/startBot.sh) bash script to run stack of robot
-      - [*local_env_vars.sh:*](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/local_env_vars.sh) local environment variables
-      - [*cams_conf.yaml:*](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/cams_conf.yaml) configuration of cameras ports (There's a local-run version) 
+- **[rover](rover):** Main folder where most of the source code is located
+   - **[balena_configs](rover/balena_configs)**
+   - **[configs](rover/configs):** kiwibot config files as cameras ports, calibrations, and other scripts to launch and keep process alive.
+      - [*startBot.sh:*](rover/configs/startBot.sh) bash script to run stack of robot
+      - [*local_env_vars.sh:*](rover/configs/local_env_vars.sh) local environment variables
+      - [*cams_conf.yaml:*](rover/configs/cams_conf.yaml) configuration of cameras ports (There's a local-run version) 
       - *nodes_local_launch.yaml:* nodes to launch
-   - **[data](https://github.com/kiwicampus/medusa-project/tree/master/rover/data):** media data to be used in code as videos or images
-   - **[packages](https://github.com/kiwicampus/medusa-project/tree/master/rover/packages):** Download script for searching and decompressing the Nvidia packages to build GPU containers for Balena. Cuda DNN (cuDNN) is included here.
-   - **[ros2/src](https://github.com/kiwicampus/medusa-project/tree/master/rover/ros2/src):** Development workspace & ROS 2 packages 
-   - **[Dockerfile](https://github.com/kiwicampus/medusa-project/blob/master/rover/Dockerfile):** Dockerfile built in Balena Cloud Build Server
-- **[scripts](https://github.com/kiwicampus/medusa-project/tree/master/scripts):** rover scripts, example add ssh keys to session
+   - **[data](rover/data):** media data to be used in code as videos or images
+   - **[packages](rover/packages):** Download script for searching and decompressing the Nvidia packages to build GPU containers for Balena. Cuda DNN (cuDNN) is included here.
+   - **[ros2/src](rover/ros2/src):** Development workspace & ROS 2 packages 
+   - **[Dockerfile](rover/Dockerfile):** Dockerfile built in Balena Cloud Build Server
+- **[scripts](scripts):** rover scripts, example add ssh keys to session
 - **ssh-keys:** pair of ssh keys for authentication in deployment
    - *id_balena*
    - *id_balena.pub*
 - **staged-releases:** balena git sub-module
-- **[.devcontainer](https://github.com/kiwicampus/medusa-project/tree/master/.devcontainer):** VSCode development container configs, and dev-docker file
+- **[.devcontainer](.devcontainer):** VSCode development container configs, and dev-docker file
 
 Only some files are listed, and explained (most important).
 
@@ -148,7 +148,7 @@ In order to launch locally (Inside your IDE), please locate into the `rover/` fo
 
 This bash performs the following steps to launch the *Kiwibot* stack:
 
-1. Sources the [`local_env_vars.sh`](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/local_env_vars.sh) which contains the *Kiwibot* local environment variables. 
+1. Sources the [`local_env_vars.sh`](rover/configs/local_env_vars.sh) which contains the *Kiwibot* local environment variables. 
 2. Creates a local configuration file for the cameras (`cams_conf_local.yaml`).
 3. [On firsts run] downloads [cv-bridge package for ros2](https://github.com/ros-perception/vision_opencv)
 4. [On firsts run] downloads, install, and upgrade [npm](https://www.npmjs.com/)
@@ -161,7 +161,7 @@ For ROS 2 development workspace
 3. Sources the resulting setup in the install folder `. install/setup.bash`
 4. Executes `ros2 launch /configs/bot.launch.py`
 
-You can compile and launch everything by your own if you already have a background an experience with ROS/ROS2, but for those who want everything easy, and fast the bash script will set up and run everything for you. With the [``startBot.sh``](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/startBot.sh) bash script you can run the stack of the robot, this file has all instruction to download third-party packages, other required dependencies if they're missing, and setup, source, and run the ros2 workspace, launching the nodes specified in the file ``nodes_local_launch.yaml`` (File created when you start or run the script for the first time). 
+You can compile and launch everything by your own if you already have a background an experience with ROS/ROS2, but for those who want everything easy, and fast the bash script will set up and run everything for you. With the [``startBot.sh``](rover/configs/startBot.sh) bash script you can run the stack of the robot, this file has all instruction to download third-party packages, other required dependencies if they're missing, and setup, source, and run the ros2 workspace, launching the nodes specified in the file ``nodes_local_launch.yaml`` (File created when you start or run the script for the first time). 
 
 The script creates missing files when is launched for the first time, so, you have to run the script again every time that a missing file is detected. You'll see some logs as shown below:
 
@@ -174,13 +174,13 @@ When the script finishes the building, and the compilation process you'll see th
 
 <img src="https://user-images.githubusercontent.com/43115782/87437303-beda0b00-c5b3-11ea-8bdb-3a3d050a4fab.gif" alt="starting_kiwibot" width="1200"> 
 
-*Note:* if you are having troubles or errors getting the user interface window, read about [Docker image with OpenCV with X11 forwarding for GUI](https://marcosnietoblog.wordpress.com/2017/04/30/docker-image-with-opencv-with-x11-forwarding-for-gui/) for explanations, and then run the  [``startXHost.sh``](https://github.com/kiwicampus/medusa-project/blob/feature/readme/rover/configs/startXHost.sh) script in the host terminal, or just run the prompt command (Do not this in the dev-container terminal):
+*Note:* if you are having troubles or errors getting the user interface window, read about [Docker image with OpenCV with X11 forwarding for GUI](https://marcosnietoblog.wordpress.com/2017/04/30/docker-image-with-opencv-with-x11-forwarding-for-gui/) for explanations, and then run the  [``startXHost.sh``](rover/configs/startXHost.sh) script in the host terminal, or just run the prompt command (Do not this in the dev-container terminal):
 
       xhost +
 
 ## **Launching Specific Nodes**
 
-The file ``nodes_local_launch.yaml`` created by [``bot.launch.py ``](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/bot.launch.py) if there's no one when running [``startBot.sh``](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/startBot.sh), allows to you to select or config the nodes that you want to run. 
+The file ``nodes_local_launch.yaml`` created by [``bot.launch.py ``](rover/configs/bot.launch.py) if there's no one when running [``startBot.sh``](rover/configs/startBot.sh), allows to you to select or config the nodes that you want to run. 
 
 In ``nodes_local_launch.yaml`` set the argument ``launch`` of every element in the yaml list to 1 or 0 to launch a node or not. Belows there's a description of the actually node by packages that currently the project has:
 
@@ -190,19 +190,19 @@ In ``nodes_local_launch.yaml`` set the argument ``launch`` of every element in t
       - [``NODE_VIDEO_PARTICLE``](rover/ros2/src/vision/vision/node_video_particle.py): Cameras stereo and mono calibration algorithms
       - [``NODE_LOCAL_CONSOLE``](rover/ros2/src/vision/vision/node_local_console.py): Local console to test visual features, and get local cameras streaming
 
-   - Control nodes
-      - NODE_CANLINK_CHASSIS: Management of the connection between the main board and the kiwibot's system. This node contains the logic and tools to read and share, the battery status, the chassis status (Including motors), as well as managing of other chassis and control features.
-      - NODE_CANLINK_CABIN: Similar to the Chassis Node it is on charge of managing the lock system and the lights of the robot.
+   - ``Control nodes``
+      - [``NODE_CANLINK_CHASSIS``](rover/ros2/src/canlink): Management of the connection between the main board and the kiwibot's system. This node contains the logic and tools to read and share, the battery status, the chassis status (Including motors), as well as managing of other chassis and control features.
+      - [``NODE_CANLINK_CABIN``](rover/ros2/src/canlink): Similar to the Chassis Node it is on charge of managing the lock system and the lights of the robot.
    
-   - Local client node
-      - NODE_LOCAL_CLIENT:
+   - [``Local client node``](rover/ros2/src/local_client)
+      - [``NODE_LOCAL_CLIENT``](rover/ros2/src/local_client/local_client/node_local_client.py): Local client for Socket-IO server, and local control of the Kiwibot
    
-   - Data capture node
-      - NODE_DATA_CAPTURE:
+   - [``Data capture node``](rover/ros2/src/data_capture)
+      - [``NODE_DATA_CAPTURE``](rover/ros2/src/data_capture/data_capture/node_data_capture.py): Data capture node to store information, video and information of sensors in a USB or in a local host folder.
 
 You can launch them in a single command (ros2 launch <name>) if you want as well, please note that this is the standard form to launch nodes in ROS 2.
 
-For more config files check the [configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs) folder.
+For more config files check the [configs](rover/configs) folder.
 
 ## **Launching Local Console**
 
@@ -258,7 +258,7 @@ to list them in the README.  -->
 
 ## **License**
 
-Kiwibot's Medussa Project is licensed under [Apache 2](https://github.com/kiwicampus/medusa-project/blob/master/LICENSE), and thus all contributions will be licensed as such
+Kiwibot's Medussa Project is licensed under [Apache 2](LICENSE), and thus all contributions will be licensed as such
 as per clause 5 of the Apache 2 License:
 
 5. Submission of Contributions. Unless You explicitly state otherwise,
