@@ -201,7 +201,7 @@ This script contains the nodes information and arguments within our ROS 2 develo
 
 Set the `default` argument to 1 or 0 to launch a node (Within the described file). This can also be set at `nodes_local_launch.yaml` which will be created when you run the `startBot.sh` script.
 
-For more config files check the folder [configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs).
+For more config files check the [configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs) folder.
 
 ## **Launching Local Console**
 
@@ -224,7 +224,15 @@ server for testing in a browser.  -->
 
 ## **Contributing**
 
-We welcome contributions from everyone, and to ensure our community stays open and healthy we adhere to the Contributor Covenant, a widely used code of conduct adopted by many other communities such as Linux, Ruby on Rails and GitLab. Everyone participating in the *Kiwibot* development is expected to follow the code of conduct. If someone in the community happens to be violating these terms, please let the project leads know, and we will address it as soon as possible.
+We welcome contributions from everyone, and to ensure our community stays open and healthy we adhere to the Contributor Covenant, a widely used [code of conduct](https://github.com/Autoware-AI/autoware.ai/wiki/Contributing-to-Autoware)(Same as Autoware) adopted by many other communities such as Linux, Ruby on Rails and GitHub. Everyone participating in the *Kiwibot* developments is expected to follow the code of conduct. If someone in the community happens to be violating these terms, please let the project leads know, and we will address it as soon as possible.
+
+To contributing:
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 <!-- ---------------------------------------------------------------------- -->
 <!-- Support: Tell people where they can go to for help. It can be any 
@@ -249,6 +257,17 @@ to list them in the README.  -->
 
 ## **License**
 
+Kiwibot's Medussa Project is licensed under [Apache 2](https://github.com/kiwicampus/medusa-project/blob/master/LICENSE), and thus all contributions will be licensed as such
+as per clause 5 of the Apache 2 License:
+
+5. Submission of Contributions. Unless You explicitly state otherwise,
+any Contribution intentionally submitted for inclusion in the Work
+by You to the Licensor shall be under the terms and conditions of
+this License, without any additional terms or conditions.
+Notwithstanding the above, nothing herein shall supersede or modify
+the terms of any separate license agreement you may have executed
+with Licensor regarding such Contributions.
+
 ---
 <!-- ---------------------------------------------------------------------- -->
 <!-- Authors and acknowledgment: Show your appreciation to those who have 
@@ -261,7 +280,8 @@ Meet our incredible team in charge of designing, building, manufacturing and giv
 
 <img src="http://drive.google.com/uc?export=view&id=1qo3nVPn5kqNNMWJtORuZQRyNRUgeceAP" alt="kiwi_ai_team" width="1200"> 
 
-**AI & Robotics**: [John Betancourt ](https://www.linkedin.com/in/john-betancourt-345557129/) [AI Team Leader - Robotics Engineer], [Camilo Alvis](https://www.linkedin.com/in/camiloalvis/) [Control and Robotics], [Marcela Gomez](https://www.linkedin.com/in/marcela-gomez-cardona-7b2190161/) [QA and testing] / **Old Members** (We couldn't have done it without you): [David Cardozo](https://www.linkedin.com/in/davidcardozo/), [Juan Galvis](https://www.linkedin.com/in/jdgalviss/), [Robin Deuber](https://www.linkedin.com/in/robin-deuber/), [Juan Jurado](https://www.linkedin.com/in/juanfjuradop/), [Jason Oviedo](https://www.linkedin.com/in/jason-oviedo-46611914/), [Juan Rios](https://www.linkedin.com/in/juan-david-r%C3%ADos-ruiz-81474b54/), [Camila Rincones](https://www.linkedin.com/in/camila-rincones-casta%C3%B1eda/), [Juan Ramirez](https://www.linkedin.com/in/juan-pablo-ramirez-franco-530b80129/), [Mario Morales](https://www.linkedin.com/in/emetricz/), [Carlos Alvarez](https://www.linkedin.com/in/calvarez92/), [Milad Noori](https://www.linkedin.com/in/milad-noori-2854b8191/), [Mauricio Reyes](https://www.linkedin.com/in/mauricio-reyes-hurtado/), [Cristian Garcia](https://www.linkedin.com/in/cgarciae/).
+
+🤖 **AI & Robotics**: [John Betancourt ](https://www.linkedin.com/in/john-betancourt-345557129/) [AI Team Leader - Robotics Engineer], [Camilo Alvis](https://www.linkedin.com/in/camiloalvis/) [Control and Robotics], [Marcela Gomez](https://www.linkedin.com/in/marcela-gomez-cardona-7b2190161/) [QA and testing] / **Old Members** (❤️ We couldn't have done it without you - may the force be with you ❤️): [David Cardozo](https://www.linkedin.com/in/davidcardozo/), [Juan Galvis](https://www.linkedin.com/in/jdgalviss/), [Robin Deuber](https://www.linkedin.com/in/robin-deuber/), [Juan Jurado](https://www.linkedin.com/in/juanfjuradop/), [Jason Oviedo](https://www.linkedin.com/in/jason-oviedo-46611914/), [Juan Rios](https://www.linkedin.com/in/juan-david-r%C3%ADos-ruiz-81474b54/), [Camila Rincones](https://www.linkedin.com/in/camila-rincones-casta%C3%B1eda/), [Juan Ramirez](https://www.linkedin.com/in/juan-pablo-ramirez-franco-530b80129/), [Mario Morales](https://www.linkedin.com/in/emetricz/), [Carlos Alvarez](https://www.linkedin.com/in/calvarez92/), [Milad Noori](https://www.linkedin.com/in/milad-noori-2854b8191/), [Mauricio Reyes](https://www.linkedin.com/in/mauricio-reyes-hurtado/), [Cristian Garcia](https://www.linkedin.com/in/cgarciae/).
 
 There is also a huge team out of the engineering area which gives a lot of work for our *Kiwibot*. Even if they are not listed here, they are the key to achieve our goals as a company:
 
@@ -284,6 +304,10 @@ There is also a huge team out of the engineering area which gives a lot of work 
 [<img src="https://img.youtube.com/vi/iyO9TJHEQ7E/0.jpg" width="200">](https://www.youtube.com/watch?v=iyO9TJHEQ7E)
 [<img src="https://img.youtube.com/vi/4l6janxFHyg/0.jpg" width="200">](https://www.youtube.com/watch?v=4l6janxFHyg)
 [<img src="https://img.youtube.com/vi/0BKYZx42hwg/0.jpg" width="200">](https://www.youtube.com/watch?v=0BKYZx42hwg)
+
+📷 **Instagram**: [kiwibot_us](https://www.instagram.com/kiwibot_us/), [kiwibot.taipei](https://www.instagram.com/kiwibot.taipei/), [kiwicampus](https://www.instagram.com/kiwicampus/)/ 
+🤖 **Facebook**: [kiwicampus](https://www.facebook.com/kiwicampus/) /
+🐦 **Twitter**: [kiwicampus](https://twitter.com/kiwicampus). Follow us and give a star ⭐ if this project helped you or you like it!
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot's Projects Media**
