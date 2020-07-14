@@ -118,14 +118,14 @@ def generate_launch_description():
             "node_name": "video_mapping",
             "package": "vision",
             "output": "screen",
-            "launch": int(os.getenv(key="NODE_VIDEO_MAPPING", default=1)),
+            "launch": int(os.getenv(key="NODE_VIDEO_MAPPING", default=0)),
         },
         "NODE_VIDEO_CALIBRATION": {
             "node_executable": "video_calibrator",
             "node_name": "video_calibrator",
             "package": "vision",
             "output": "screen",
-            "launch": int(os.getenv(key="NODE_VIDEO_CALIBRATION", default=1)),
+            "launch": int(os.getenv(key="NODE_VIDEO_CALIBRATION", default=0)),
         },
         "NODE_VIDEO_PARTICLE": {
             "node_executable": "video_particle",
@@ -170,6 +170,14 @@ def generate_launch_description():
             "package": "data_capture",
             "output": "screen",
             "launch": int(os.getenv(key="NODE_DATA_CAPTURE", default=0)),
+        },
+        # ---------------------------------------------------------------------
+        # Incredible node
+        "NODE_INCREDIBLE_NODE": {
+            "node_executable": "control_node",
+            "package": "incredible_control",
+            "output": "screen",
+            "launch": int(os.getenv(key="NODE_INCREDIBLE_NODE", default=1)),
         },
     }
 
