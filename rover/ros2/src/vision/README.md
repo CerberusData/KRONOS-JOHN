@@ -5,8 +5,7 @@
 This node is in charge of: 
     
     John Alberto Betancourt Gonzalez 
-    john@kiwicampus.com 
-    +57 350 283 5122 
+    john@kiwicampus.com
 
 For diagrams and more node, topics, services, parameters and information go to:
 - [Environment variables: KIWIBOT_APOLLO/configs/local_env_vars.sh](https://drive.google.com/open?id=1QrTXTuZKveOrdQR2NBoVC5LDX_zD9jKv)

@@ -82,7 +82,7 @@ while providing links to more sophisticated examples if they are too long to
 reasonably include in the README. 
 -->
 
-## **Installation Requirements**
+## **Installation & Requirements**
 
 A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main IDE for development. Make sure you also have installed:
 
@@ -90,7 +90,15 @@ A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main
    2. [docker-compose](https://docs.docker.com/compose/install/)
    3. [Remote development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extensions for VSCode
 
-## **Balena for Code Deployment**
+## **Running the Dev-Container**
+
+If you have your VSCode with the right extensions, and if you have Docker and Docker-compose installed in your system, when you open the Mudussa Project's main folder you'll see a window on the bottom right corner, click in "reopen in container" button, if you don't see anything press `Ctrl+Shift+P` and type `Remote-Containers: Rebuild and Reopen in container` option. When the container is opened, and executed for the first time or when there're changes on it, you can go for a walk because the building image process will start which it'll take a while due to the installation of all packages and dependencies of the dev-environment as ROS2, OpenCV, Python, TensorFlow, and more stuff related to. You can see at any time the logs of the building process clicking in `Starting with Dev Container` on the bottom right corner. When the process is done you'll see some messages of process succeed.
+
+<img src="http://drive.google.com/uc?export=view&id=1aJJtdZl8BvQN48k0wBaNq3hBTq6HZPDK" alt="kiwi_banner" width="1200"> 
+
+When the process is done you can open a terminal in the dev-container going to the menu bar `Terminal` and then `New Terminal`. Congratulations now you have everything that we use for our deployments and developments.
+
+## **(Optional) Balena for Code Deployment**
 
 As far for production requirements, the required secrets should be present in:
 
@@ -130,11 +138,32 @@ Find the distribution of Medussa project in the next list:
 
 Only some files are listed, and explained (most important).
 
-## **Running our stack**
+## **Running The Kiwibot Stack**
 
 Find a brief explanation on how to run our stack in your IDE and the explanation of the launch file, and config files as the key to managing which nodes are going to be launched and how they're going to work.
 
-You can compile and launch everything by your own if you already have a background an experience with ROS/ROS2, but for those who want everything easy, and fast we have created a bash script to set up and run everything for you. The bash script ``bot.launch.py`` have all instruction to download third-party packages, setup, and source the ros2 workspace, and then launch the nodes specified in the file ``nodes_local_launch.yaml`` (File created when you start or run the script for the first time).
+In order to launch locally (Inside your IDE), please locate into the `rover/` folder in the dev-container terminal and execute the following promt command:
+
+      bash config/startBot.sh start
+
+This bash performs the following steps to launch the *Kiwibot* stack:
+
+1. Sources the [`local_env_vars.sh`](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/local_env_vars.sh) which contains the *Kiwibot* local environment variables. 
+2. Creates a local configuration file for the cameras (`cams_conf_local.yaml`).
+3. [On firsts run] downloads [cv-bridge package for ros2](https://github.com/ros-perception/vision_opencv)
+4. [On firsts run] downloads, install, and upgrade [npm](https://www.npmjs.com/)
+5. [On firsts run] downloads, and compile the [SocketIO server](https://github.com/kiwicampus/socketio-server) for *Kiwibot* local console.
+
+For ROS 2 development workspace
+
+1. Sources ROS Dashing and clean the older development workspace (If enabled).
+2. Builds the development workspace at `rover/ros2/`
+3. Sources the resulting setup in the install folder `. install/setup.bash`
+4. Executes `ros2 launch /configs/bot.launch.py`
+
+You can compile and launch everything by your own if you already have a background an experience with ROS/ROS2, but for those who want everything easy, and fast the bash script will set up and run everything for you. With the [``startBot.sh``](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/startBot.sh) bash script you can run the stack of the robot, this file has all instruction to download third-party packages, other required dependencies if they're missing, and setup, source, and run the ros2 workspace, launching the nodes specified in the file ``nodes_local_launch.yaml`` (File created when you start or run the script for the first time). 
+
+You'll see some logs as shown below when the script creates missing files, so, you have to run the script again:
 
       Starting Robot
       /workspace/rover/configs/cams_conf_local.yaml no exist, creating one
@@ -142,17 +171,22 @@ You can compile and launch everything by your own if you already have a backgrou
 
       socketio-server installed, run again script!
 
-### **Python script bot.launch.py**
+When the script finishes you'll see the local console window with default configs as shown next:
+
+<img src="http://drive.google.com/uc?export=view&id=1jkhcazUrQ76aaOhOmrsW_O8i3DXq_nkV" alt="kiwi_banner" width="1200"> 
+
+## **Launching Specific Nodes**
+
 This script contains the nodes information and arguments within our ROS 2 development workspace in order to launch them in a single command (ros2 launch <name>). Please note that this is the standard form to launch nodes in ROS 2.
 
-   - Vision nodes
+   - Vision nodes:
       - NODE_VIDEO_MAPPING
       - NODE_VIDEO_CALIBRATION
       - NODE_VIDEO_PARTICLE
       - NODE_LOCAL_CONSOLE
 
    - Control nodes
-      - NODE_CANLINK_CHASSIS
+      - NODE_CANLINK_CHASSIS: 
       - NODE_CANLINK_CABIN
    
    - Local client node
@@ -163,23 +197,7 @@ This script contains the nodes information and arguments within our ROS 2 develo
 
 Set the `default` argument to 1 or 0 to launch a node (Within the described file). This can also be set at `nodes_local_launch.yaml` which will be created when you run the `startBot.sh` script.
 
-### **Bash script startBot.sh**
-In order to launch locally (Inside your IDE), please locate into the `rover/` folder and execute the following bash command.
-
-> bash config/startBot.sh start
-
-This bash performs the following steps to launch the *Kiwibot* stack:
-
-1. Sources the `local_env_vars.sh` which contains the *Kiwibot* local environment variables. 
-2. Creates a local configuration file for the cameras.
-
-For ROS 2 development workspace
-
-1. Sources ROS Dashing and clean the older development workspace.
-2. Builds the development workspace at `rover/ros2/`
-3. Sources the resulting setup in the install folder `. install/setup.bash`
-4. Downloads and runs the SocketIO server for *Kiwibot* local console.
-5. Executes `ros2 launch /configs/bot.launch.py`
+For more config files check the folder [configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs).
 
 
 <!-- ---------------------------------------------------------------------- -->
