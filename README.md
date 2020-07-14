@@ -20,8 +20,7 @@ Tools like ttygif can help, but check out Asciinema for a more sophisticated met
 ![Twitter Follow](https://img.shields.io/twitter/follow/kiwicampus?style=social) 
 
 
-<img src="http://drive.google.com/uc?export=view&id=1-xDiSnZrSAlwMGKBJBeAUMGpfAa8tJEA" alt="kiwi_banner" width="1200"> 
-<!-- <img src="http://drive.google.com/uc?export=view&id=1jccpLkbuekven7Ju7CDx8NBt4lF7Px-N" alt="kiwi_banner" width="1200">  -->
+<img src="https://user-images.githubusercontent.com/43115782/87436693-feecbe00-c5b2-11ea-9939-9411ab7dcf2a.jpg" alt="kiwi_banner" width="1200"> 
 
 ![GitHub labels](https://img.shields.io/github/labels/kiwicampus/medusa-project/Work%20in%20Progess) 
 ![GitHub repo size](https://img.shields.io/github/repo-size/kiwicampus/medusa-project?label=Repo%20Size) 
@@ -44,12 +43,12 @@ Since early stages **Kiwibot** has shown amazing ideas, strategies, and developm
 
 Kiwibot v1.0 | Kiwibot v2.0 | Kiwibot v3.0 | Kiwibot v4.0
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-<img src="http://drive.google.com/uc?export=view&id=1mLSCUfZZll_Ng9E7yC_jrBNvQyKx_i5W" alt="kiwibot_v1" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1JOZngT0sm4PGHj-mMvTOkrgb2CGieMwA" alt="kiwibot_v2" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1FdW9-O30NYemVHayMr_NcTizYcq9tx5X" alt="kiwibot_v3" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1fHRMfWpEJOtOEjQfaKQ0qKQ6GGgd4dt5" alt="kiwibot_v4" width="500"/> 
+<img src="https://user-images.githubusercontent.com/43115782/87436895-4115ff80-c5b3-11ea-9b02-eee1a8b6b2d1.png" alt="kiwibot_v1" width="500"/>    | <img src="https://user-images.githubusercontent.com/43115782/87436845-30fe2000-c5b3-11ea-8ebf-3e8c2c3e7df2.png" alt="kiwibot_v2" width="500"/> | <img src="https://user-images.githubusercontent.com/43115782/87436789-1deb5000-c5b3-11ea-91b4-2ae71ef22a34.png" alt="kiwibot_v3" width="500"/> | <img src="https://user-images.githubusercontent.com/43115782/87436751-1035ca80-c5b3-11ea-901b-05f68b09b8b2.png" alt="kiwibot_v4" width="500"/> 
 
 
 <!-- ---------------------------------------------------------------------- -->
 <!-- Let people know what your project can do specifically. Provide context and 
-add a link to any reference visitors might be unfamiliar with. A list of Features 
+add a link to any reference visitors might be unfamiliar with. A trrlist of Features 
 or a Background subsection can also be added here. If there are alternatives 
 to your project, this is a good place to list differentiating factors.  -->
 
@@ -278,7 +277,7 @@ contributed to the project.  -->
 
 Meet our incredible team in charge of designing, building, manufacturing and giving life to our most loved friend the *Kiwibot*.
 
-<img src="http://drive.google.com/uc?export=view&id=1qo3nVPn5kqNNMWJtORuZQRyNRUgeceAP" alt="kiwi_ai_team" width="1200"> 
+<img src="https://user-images.githubusercontent.com/43115782/87436944-4f641b80-c5b3-11ea-928e-2f1087d76ea7.png" alt="kiwi_ai_team" width="1200"> 
 
 
 🤖 **AI & Robotics**: [John Betancourt ](https://www.linkedin.com/in/john-betancourt-345557129/) [AI Team Leader - Robotics Engineer], [Camilo Alvis](https://www.linkedin.com/in/camiloalvis/) [Control and Robotics], [Marcela Gomez](https://www.linkedin.com/in/marcela-gomez-cardona-7b2190161/) [QA and testing] / **Old Members** (❤️ We couldn't have done it without you - may the force be with you ❤️): [David Cardozo](https://www.linkedin.com/in/davidcardozo/), [Juan Galvis](https://www.linkedin.com/in/jdgalviss/), [Robin Deuber](https://www.linkedin.com/in/robin-deuber/), [Juan Jurado](https://www.linkedin.com/in/juanfjuradop/), [Jason Oviedo](https://www.linkedin.com/in/jason-oviedo-46611914/), [Juan Rios](https://www.linkedin.com/in/juan-david-r%C3%ADos-ruiz-81474b54/), [Camila Rincones](https://www.linkedin.com/in/camila-rincones-casta%C3%B1eda/), [Juan Ramirez](https://www.linkedin.com/in/juan-pablo-ramirez-franco-530b80129/), [Mario Morales](https://www.linkedin.com/in/emetricz/), [Carlos Alvarez](https://www.linkedin.com/in/calvarez92/), [Milad Noori](https://www.linkedin.com/in/milad-noori-2854b8191/), [Mauricio Reyes](https://www.linkedin.com/in/mauricio-reyes-hurtado/), [Cristian Garcia](https://www.linkedin.com/in/cgarciae/).
@@ -292,7 +291,7 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 (USA) Berkeley | (Asia) Taipei | (LATAM) Medellin | Around The World
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-<img src="http://drive.google.com/uc?export=view&id=1fFjstHvnlhcLQt9NCev0kcSmF3wYSbdq" alt="kiwibot_berkeley" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1xqwlkoUybmHTj72pbOEciNvwpMzWcO6b" alt="kiwibot_taipei" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1D4OTEeXJXMgDoj4VBQa78T58vSkN-be7" alt="kiwibot_medellin" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1TlZuUCtFRgzhTZNpzpqgiHy8J-SWHnWj" alt="kiwibot_streets" width="500"/> 
+<img src="https://user-images.githubusercontent.com/43115782/87437073-76bae880-c5b3-11ea-8edc-0ffb7b558137.png" alt="kiwibot_berkeley" width="500"/>    | <img src="https://user-images.githubusercontent.com/43115782/87437036-6c005380-c5b3-11ea-9de6-51b3fb6a33de.png" alt="kiwibot_taipei" width="500"/> | <img src="https://user-images.githubusercontent.com/43115782/87436986-5b4fdd80-c5b3-11ea-872e-9912f88cd66b.png" alt="kiwibot_medellin" width="500"/> | <img src="https://user-images.githubusercontent.com/43115782/87437115-833f4100-c5b3-11ea-9da9-6755f9095545.png" alt="kiwibot_streets" width="500"/> 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot in the News**
