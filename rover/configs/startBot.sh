@@ -107,7 +107,6 @@ case "$1" in
 
       #  ----------------------------------------------------------------------
       #  ROS2 Launching
-      clear
       echo  "[INFO]: ROS2 launching ... "
       ros2 launch "${PWD%}/configs/bot.launch.py"
 

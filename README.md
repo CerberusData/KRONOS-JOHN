@@ -89,10 +89,11 @@ A recommendation is to use [VS Code](https://code.visualstudio.com/) as the main
    1. [docker-ce](https://docs.docker.com/install/)
    2. [docker-compose](https://docs.docker.com/compose/install/)
    3. [Remote development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extensions for VSCode
+   4. [Ubuntu 18.04](https://releases.ubuntu.com/18.04/)
 
 ## **Running the Dev-Container**
 
-If you have your VSCode with the right extensions, and if you have Docker and Docker-compose installed in your system, when you open the Mudussa Project's main folder you'll see a window on the bottom right corner, click in "reopen in container" button, if you don't see anything press `Ctrl+Shift+P` and type `Remote-Containers: Rebuild and Reopen in container` option. When the container is opened, and executed for the first time or when there're changes on it, you can go for a walk because the building image process will start which it'll take a while due to the installation of all packages and dependencies of the dev-environment as ROS2, OpenCV, Python, TensorFlow, and more stuff related to. You can see at any time the logs of the building process clicking in `Starting with Dev Container` on the bottom right corner. When the process is done you'll see some messages of process succeed.
+If you have your [VSCode](https://code.visualstudio.com/) with the right extensions, and if you have Docker and Docker-compose installed in your system, when you open the Mudussa Project's main folder you'll see a window on the bottom right corner, click in "reopen in container" button, if you don't see anything press `Ctrl+Shift+P` and type `Remote-Containers: Rebuild and Reopen in container` option. When the container is opened, and executed for the first time or when there're changes on it, you can go for a walk because the building image process will start which it'll take a while due to the installation of all packages and dependencies of the dev-environment as [ROS2](https://index.ros.org/doc/ros2/), [OpenCV](https://opencv.org/), [Python](https://www.python.org/), [TensorFlow](https://www.tensorflow.org/), and more stuff related to, while the process is complete here are some videos of [puppies](https://www.youtube.com/watch?v=mRf3-JkwqfU). You can see at any time the logs of the building process clicking in `Starting with Dev Container` on the bottom right corner. When the process is done you'll see some messages of process succeed.
 
 <img src="http://drive.google.com/uc?export=view&id=1aJJtdZl8BvQN48k0wBaNq3hBTq6HZPDK" alt="kiwi_banner" width="1200"> 
 
@@ -163,17 +164,20 @@ For ROS 2 development workspace
 
 You can compile and launch everything by your own if you already have a background an experience with ROS/ROS2, but for those who want everything easy, and fast the bash script will set up and run everything for you. With the [``startBot.sh``](https://github.com/kiwicampus/medusa-project/blob/master/rover/configs/startBot.sh) bash script you can run the stack of the robot, this file has all instruction to download third-party packages, other required dependencies if they're missing, and setup, source, and run the ros2 workspace, launching the nodes specified in the file ``nodes_local_launch.yaml`` (File created when you start or run the script for the first time). 
 
-You'll see some logs as shown below when the script creates missing files, so, you have to run the script again:
+The script creates missing files when is launched for the first time, so, you have to run the script again every time that a missing file is detected. You'll see some logs as shown below:
 
       Starting Robot
       /workspace/rover/configs/cams_conf_local.yaml no exist, creating one
       cams_conf_local.yaml file created, run again script!
-
       socketio-server installed, run again script!
 
-When the script finishes you'll see the local console window with default configs as shown next:
+When the script finishes the building, and the compilation process you'll see the local console window with default configs as shown next:
 
 <img src="http://drive.google.com/uc?export=view&id=1jkhcazUrQ76aaOhOmrsW_O8i3DXq_nkV" alt="kiwi_banner" width="1200"> 
+
+*Note:* if you are having troubles or errors getting the user interface window, read about [Docker image with OpenCV with X11 forwarding for GUI](https://marcosnietoblog.wordpress.com/2017/04/30/docker-image-with-opencv-with-x11-forwarding-for-gui/) for explanations, and then run the  [``startXHost.sh``](https://github.com/kiwicampus/medusa-project/blob/feature/readme/rover/configs/startXHost.sh) script in the host terminal, or just run the prompt command (Do not this in the dev-container terminal):
+
+      xhost +
 
 ## **Launching Specific Nodes**
 
@@ -199,6 +203,9 @@ Set the `default` argument to 1 or 0 to launch a node (Within the described file
 
 For more config files check the folder [configs](https://github.com/kiwicampus/medusa-project/tree/master/rover/configs).
 
+## **Launching Local Console**
+
+<img src="http://drive.google.com/uc?export=view&id=1kO1jZ8A1Px5o64SVunupojsA7MWimOqt" alt="kiwi_local_console" width="1200"> 
 
 <!-- ---------------------------------------------------------------------- -->
 <!-- State if you are open to contributions and what your requirements are for 
@@ -273,15 +280,14 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot's Media**
-[<img src="https://img.youtube.com/vi/zwO4Pw6FNCU/0.jpg" width="220">](https://www.youtube.com/watch?v=zwO4Pw6FNCU)
-[<img src="https://img.youtube.com/vi/iyO9TJHEQ7E/0.jpg" width="220">](https://www.youtube.com/watch?v=iyO9TJHEQ7E)
-[<img src="https://img.youtube.com/vi/4l6janxFHyg/0.jpg" width="220">](https://www.youtube.com/watch?v=4l6janxFHyg)
-[<img src="https://img.youtube.com/vi/0BKYZx42hwg/0.jpg" width="220">](https://www.youtube.com/watch?v=0BKYZx42hwg)
+[<img src="https://img.youtube.com/vi/zwO4Pw6FNCU/0.jpg" width="200">](https://www.youtube.com/watch?v=zwO4Pw6FNCU)
+[<img src="https://img.youtube.com/vi/iyO9TJHEQ7E/0.jpg" width="200">](https://www.youtube.com/watch?v=iyO9TJHEQ7E)
+[<img src="https://img.youtube.com/vi/4l6janxFHyg/0.jpg" width="200">](https://www.youtube.com/watch?v=4l6janxFHyg)
+[<img src="https://img.youtube.com/vi/0BKYZx42hwg/0.jpg" width="200">](https://www.youtube.com/watch?v=0BKYZx42hwg)
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot's Projects Media**
 
-[<img src="https://img.youtube.com/vi/Z4jQc3-psy8/0.jpg" width="220">](https://www.youtube.com/watch?v=Z4jQc3-psy8)
-[<img src="https://img.youtube.com/vi/0U3lQ1u-Hd4/0.jpg" width="220">](https://www.youtube.com/watch?v=0U3lQ1u-Hd4)
-[<img src="https://img.youtube.com/vi/VX4ywdUtaI4/0.jpg" width="220">](https://www.youtube.com/watch?v=VX4ywdUtaI4)
-[<img src="https://img.youtube.com/vi/0BHpz8lCFfc/0.jpg" width="220">](https://www.youtube.com/watch?v=0BHpz8lCFfc)
+[<img src="https://img.youtube.com/vi/Z4jQc3-psy8/0.jpg" width="200.com/vi/0U3lQ1u-Hd4/0.jpg" width="200">](https://www.youtube.com/watch?v=0U3lQ1u-Hd4)
+[<img src="https://img.youtube.com/vi/VX4ywdUtaI4/0.jpg" width="200">](https://www.youtube.com/watch?v=VX4ywdUtaI4)
+[<img src="https://img.youtube.com/vi/0BHpz8lCFfc/0.jpg" width="200">](https://www.youtube.com/watch?v=0BHpz8lCFfc)
