@@ -44,7 +44,7 @@ Since early stages **Kiwibot** has shown amazing ideas, strategies, and developm
 
 Kiwibot v1.0 | Kiwibot v2.0 | Kiwibot v3.0 | Kiwibot v4.0
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-<img src="http://drive.google.com/uc?export=view&id=1GOcFQt8wGng8ymqBtVweETj49wUv4q0w" alt="kiwibot_v1" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1ppBbyP2G2DhslTTYs5nEtaWRXLJf3iV7" alt="kiwibot_v2" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=11FoNzn1UaJP1YVBZO6tEF4JxQL0UtnRF" alt="kiwibot_v3" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1bSNtAqbCF_sOXJrbDsTwRsg7RW-H-d-m" alt="kiwibot_v4" width="500"/> 
+<img src="http://drive.google.com/uc?export=view&id=1mLSCUfZZll_Ng9E7yC_jrBNvQyKx_i5W" alt="kiwibot_v1" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1JOZngT0sm4PGHj-mMvTOkrgb2CGieMwA" alt="kiwibot_v2" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1FdW9-O30NYemVHayMr_NcTizYcq9tx5X" alt="kiwibot_v3" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1fHRMfWpEJOtOEjQfaKQ0qKQ6GGgd4dt5" alt="kiwibot_v4" width="500"/> 
 
 
 <!-- ---------------------------------------------------------------------- -->
@@ -292,7 +292,7 @@ There is also a huge team out of the engineering area which gives a lot of work 
 
 (USA) Berkeley | (Asia) Taipei | (LATAM) Medellin | Around The World
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-<img src="http://drive.google.com/uc?export=view&id=1USGSr7vA8cEZ7iT2BEdkfuX7BU0IY8mL" alt="kiwibot_berkeley" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1VzQ535RN66FJvvaKpNHgEX_YPgl4WYH4" alt="kiwibot_taipei" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1XO0QbDhHlhn4ENVqVAUebt5cdxvtxtKq" alt="kiwibot_medellin" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1gyndVpR2_r9NvZP8zokTDQJcqFBorv-v" alt="kiwibot_streets" width="500"/> 
+<img src="http://drive.google.com/uc?export=view&id=1fFjstHvnlhcLQt9NCev0kcSmF3wYSbdq" alt="kiwibot_berkeley" width="500"/>    | <img src="http://drive.google.com/uc?export=view&id=1xqwlkoUybmHTj72pbOEciNvwpMzWcO6b" alt="kiwibot_taipei" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1D4OTEeXJXMgDoj4VBQa78T58vSkN-be7" alt="kiwibot_medellin" width="500"/> | <img src="http://drive.google.com/uc?export=view&id=1TlZuUCtFRgzhTZNpzpqgiHy8J-SWHnWj" alt="kiwibot_streets" width="500"/> 
 
 <!-- ---------------------------------------------------------------------- -->
 ## **Kiwibot in the News**
