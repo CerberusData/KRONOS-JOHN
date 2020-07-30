@@ -1,1 +1,0 @@
-string[] cams_status
